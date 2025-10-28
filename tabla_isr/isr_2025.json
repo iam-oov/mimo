@@ -1,0 +1,155 @@
+{
+  "ejercicio": 2024,
+  "constantes": {
+    "valor_uma_diario": 108.57,
+    "valor_uma_anual": 39606.36,
+    "exencion_aguinaldo_umas": 30,
+    "exencion_prima_vacacional_umas": 15,
+    "tope_lentes_mxn": 2500.0,
+    "tope_general_deducciones_umas": 5.0,
+    "tope_ppr_deducciones_umas": 5.0
+  },
+  "topes_colegiaturas": {
+    "preescolar": 14200.0,
+    "primaria": 12900.0,
+    "secundaria": 19900.0,
+    "profesional_tecnico": 17100.0,
+    "preparatoria": 24500.0
+  },
+  "tabla_isr_mensual": [
+    {
+      "limite_inferior": 0.01,
+      "limite_superior": 746.04,
+      "cuota_fija": 0.0,
+      "porcentaje_excedente": 0.0192
+    },
+    {
+      "limite_inferior": 746.05,
+      "limite_superior": 6332.05,
+      "cuota_fija": 14.32,
+      "porcentaje_excedente": 0.064
+    },
+    {
+      "limite_inferior": 6332.06,
+      "limite_superior": 11128.01,
+      "cuota_fija": 371.83,
+      "porcentaje_excedente": 0.1088
+    },
+    {
+      "limite_inferior": 11128.02,
+      "limite_superior": 12935.82,
+      "cuota_fija": 893.63,
+      "porcentaje_excedente": 0.16
+    },
+    {
+      "limite_inferior": 12935.83,
+      "limite_superior": 15487.71,
+      "cuota_fija": 1182.88,
+      "porcentaje_excedente": 0.1792
+    },
+    {
+      "limite_inferior": 15487.72,
+      "limite_superior": 31236.49,
+      "cuota_fija": 1640.18,
+      "porcentaje_excedente": 0.2136
+    },
+    {
+      "limite_inferior": 31236.5,
+      "limite_superior": 49233.0,
+      "cuota_fija": 5004.32,
+      "porcentaje_excedente": 0.2352
+    },
+    {
+      "limite_inferior": 49233.01,
+      "limite_superior": 93993.9,
+      "cuota_fija": 9236.89,
+      "porcentaje_excedente": 0.3
+    },
+    {
+      "limite_inferior": 93993.91,
+      "limite_superior": 125325.2,
+      "cuota_fija": 22665.16,
+      "porcentaje_excedente": 0.32
+    },
+    {
+      "limite_inferior": 125325.21,
+      "limite_superior": 375975.61,
+      "cuota_fija": 32691.18,
+      "porcentaje_excedente": 0.34
+    },
+    {
+      "limite_inferior": 375975.62,
+      "limite_superior": 999999999.0,
+      "cuota_fija": 117912.32,
+      "porcentaje_excedente": 0.35
+    }
+  ],
+  "tabla_isr_anual": [
+    {
+      "limite_inferior": 0.01,
+      "limite_superior": 8952.49,
+      "cuota_fija": 0.0,
+      "porcentaje_excedente": 0.0192
+    },
+    {
+      "limite_inferior": 8952.5,
+      "limite_superior": 75984.55,
+      "cuota_fija": 171.88,
+      "porcentaje_excedente": 0.064
+    },
+    {
+      "limite_inferior": 75984.56,
+      "limite_superior": 133536.07,
+      "cuota_fija": 4461.95,
+      "porcentaje_excedente": 0.1088
+    },
+    {
+      "limite_inferior": 133536.08,
+      "limite_superior": 155229.8,
+      "cuota_fija": 10723.59,
+      "porcentaje_excedente": 0.16
+    },
+    {
+      "limite_inferior": 155229.81,
+      "limite_superior": 185852.57,
+      "cuota_fija": 14194.57,
+      "porcentaje_excedente": 0.1792
+    },
+    {
+      "limite_inferior": 185852.58,
+      "limite_superior": 374837.88,
+      "cuota_fija": 19682.13,
+      "porcentaje_excedente": 0.2136
+    },
+    {
+      "limite_inferior": 374837.89,
+      "limite_superior": 590795.99,
+      "cuota_fija": 60051.81,
+      "porcentaje_excedente": 0.2352
+    },
+    {
+      "limite_inferior": 590796.0,
+      "limite_superior": 1127926.84,
+      "cuota_fija": 110842.66,
+      "porcentaje_excedente": 0.3
+    },
+    {
+      "limite_inferior": 1127926.85,
+      "limite_superior": 1503902.46,
+      "cuota_fija": 271981.93,
+      "porcentaje_excedente": 0.32
+    },
+    {
+      "limite_inferior": 1503902.47,
+      "limite_superior": 4511707.37,
+      "cuota_fija": 392294.13,
+      "porcentaje_excedente": 0.34
+    },
+    {
+      "limite_inferior": 4511707.38,
+      "limite_superior": 999999999.0,
+      "cuota_fija": 1414947.81,
+      "porcentaje_excedente": 0.35
+    }
+  ]
+}

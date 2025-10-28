@@ -1,0 +1,97 @@
+
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>{{ messages.report_title }} - {{ fiscal_year }}</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; color: #333; }
+                .header { text-align: center; border-bottom: 3px solid #2c5530; padding-bottom: 20px; margin-bottom: 30px; }
+                .header h1 { color: #2c5530; margin: 0; font-size: 24px; }
+                .header h2 { color: #666; margin: 5px 0; font-size: 18px; font-weight: normal; }
+                .info-section { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+                .info-section h3 { color: #2c5530; margin-top: 0; border-bottom: 1px solid #dee2e6; padding-bottom: 5px; }
+                .calculation-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                .calculation-table th, .calculation-table td { border: 1px solid #dee2e6; padding: 10px; text-align: left; }
+                .calculation-table th { background-color: #2c5530; color: white; font-weight: bold; }
+                .calculation-table .amount { text-align: right; font-family: 'Courier New', monospace; }
+                .highlight { background-color: #d4edda; font-weight: bold; }
+                .saldo-favor { background-color: #d1ecf1; border: 2px solid #bee5eb; padding: 20px; border-radius: 10px; text-align: center; margin: 20px 0; }
+                .saldo-favor h3 { color: #0c5460; margin: 0; font-size: 20px; }
+                .saldo-favor .amount { font-size: 28px; font-weight: bold; color: #155724; font-family: 'Courier New', monospace; }
+                .saldo-pagar { background-color: #f8d7da; border: 2px solid #f5c6cb; padding: 20px; border-radius: 10px; text-align: center; margin: 20px 0; }
+                .saldo-pagar h3 { color: #721c24; margin: 0; font-size: 20px; }
+                .saldo-pagar .amount { font-size: 28px; font-weight: bold; color: #721c24; font-family: 'Courier New', monospace; }
+                .recommendations { background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 20px; border-radius: 5px; margin-top: 30px; }
+                .recommendations h3 { color: #856404; margin-top: 0; }
+                .recommendations ul { margin: 10px 0; padding-left: 20px; }
+                .recommendations li { margin-bottom: 10px; text-align: justify; }
+                .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #dee2e6; text-align: center; color: #666; font-size: 12px; }
+                .deduction-header td { background-color: #e9ecef; font-weight: bold; color: #495057; }
+                .deduction-detail td { background-color: #f8f9fa; color: #6c757d; font-size: 14px; }
+                .deduction-total td { background-color: #d4edda; font-weight: bold; color: #155724; border-top: 2px solid #c3e6cb; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>{{ messages.report_title }}</h1>
+                <h2>{{ fiscal_year }}</h2>
+                <p><strong>{{ messages.taxpayer }}:</strong> {{ taxpayer_name }}</p>
+            </div>
+
+            <div class="info-section">
+                <h3>{{ messages.income_summary }}</h3>
+                <table class="calculation-table">
+                    <tr><th>{{ messages.concept }}</th><th>{{ messages.amount }}</th></tr>
+                    <tr><td>{{ messages.gross_annual_income }}</td><td class="amount">${{ "{:,.2f}".format(calculation.gross_annual_income) }}</td></tr>
+                    {% if 'ingreso_neto_mensual_ordinario' in user_data.ingresos %}
+                    <tr><td>{{ messages.net_annual_income }}</td><td class="amount">${{ "{:,.2f}".format(user_data.ingresos.ingreso_neto_mensual_ordinario * 12) }}</td></tr>
+                    {% endif %}
+                    <tr><td>{{ messages.taxable_bonus }}</td><td class="amount">${{ "{:,.2f}".format(calculation.taxable_bonus) }}</td></tr>
+                    <tr><td>{{ messages.taxable_vacation_premium }}</td><td class="amount">${{ "{:,.2f}".format(calculation.taxable_vacation_premium) }}</td></tr>
+                    <tr class="highlight"><td><strong>{{ messages.total_taxable_income }}</strong></td><td class="amount"><strong>${{ "{:,.2f}".format(calculation.total_taxable_income) }}</strong></td></tr>
+                </table>
+            </div>
+
+            <div class="info-section">
+                <h3>{{ messages.tax_calculation }}</h3>
+                <table class="calculation-table">
+                    <tr><th>{{ messages.concept }}</th><th>{{ messages.amount }}</th></tr>
+                    <tr class="deduction-header"><td colspan="2"><strong>{{ messages.authorized_deductions }}</strong></td></tr>
+                    <tr class="deduction-detail"><td>&nbsp;&nbsp;&nbsp;&nbsp;• {{ messages.personal_deductions }}</td><td class="amount">${{ "{:,.2f}".format(calculation.personal_deductions) }}</td></tr>
+                    <tr class="deduction-detail"><td>&nbsp;&nbsp;&nbsp;&nbsp;• {{ messages.ppr_contributions }}</td><td class="amount">${{ "{:,.2f}".format(calculation.ppr_deductions) }}</td></tr>
+                    <tr class="deduction-detail"><td>&nbsp;&nbsp;&nbsp;&nbsp;• {{ messages.education_expenses }}</td><td class="amount">${{ "{:,.2f}".format(calculation.education_deductions) }}</td></tr>
+                    <tr class="deduction-total"><td><strong>{{ messages.total_authorized_deductions }}</strong></td><td class="amount"><strong>${{ "{:,.2f}".format(calculation.authorized_deductions) }}</strong></td></tr>
+                    <tr><td>{{ messages.taxable_base }}</td><td class="amount">${{ "{:,.2f}".format(calculation.taxable_base) }}</td></tr>
+                    <tr><td>{{ messages.determined_tax }}</td><td class="amount">${{ "{:,.2f}".format(calculation.determined_tax) }}</td></tr>
+                    <tr><td>{{ messages.withheld_tax }}</td><td class="amount">${{ "{:,.2f}".format(calculation.withheld_tax) }}</td></tr>
+                </table>
+            </div>
+
+            {% if calculation.balance_in_favor > 0 %}
+            <div class="saldo-favor"><h3>💰 {{ messages.balance_in_favor }}</h3><div class="amount">${{ "{:,.2f}".format(calculation.balance_in_favor) }}</div></div>
+            {% elif calculation.balance_to_pay > 0 %}
+            <div class="saldo-pagar"><h3>⚠️ {{ messages.balance_to_pay }}</h3><div class="amount">${{ "{:,.2f}".format(calculation.balance_to_pay) }}</div></div>
+            {% else %}
+            <div class="saldo-favor"><h3>⚖️ {{ messages.no_balance }}</h3><div class="amount">$0.00</div></div>
+            {% endif %}
+
+            <div class="recommendations">
+                <h3>🎯 {{ messages.fiscal_recommendations }}</h3>
+                <ul>
+                    <li><strong>{{ messages.recommendations.deduction_optimization.split(':')[0] }}:</strong> {{ messages.recommendations.deduction_optimization.split(':')[1] }}</li>
+                    <li><strong>{{ messages.recommendations.investment_planning.split(':')[0] }}:</strong> {{ messages.recommendations.investment_planning.split(':')[1] }}</li>
+                    <li><strong>{{ messages.recommendations.income_diversification.split(':')[0] }}:</strong> {{ messages.recommendations.income_diversification.split(':')[1] }}</li>
+                    <li><strong>{{ messages.recommendations.tax_benefits.split(':')[0] }}:</strong> {{ messages.recommendations.tax_benefits.split(':')[1] }}</li>
+                    <li><strong>{{ messages.recommendations.tax_savings_strategies.split(':')[0] }}:</strong> {{ messages.recommendations.tax_savings_strategies.split(':')[1] }}</li>
+                    <li><strong>{{ messages.recommendations.compliance_and_documentation.split(':')[0] }}:</strong> {{ messages.recommendations.compliance_and_documentation.split(':')[1] }}</li>
+                </ul>
+            </div>
+
+            <div class="footer">
+                <p>{{ messages.report_generated_automatically }} • {{ generation_date }}</p>
+                <p>{{ messages.projection_based_on_data }}</p>
+            </div>
+        </body>
+        </html>
+        

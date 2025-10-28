@@ -1,0 +1,52 @@
+{
+  "contribuyente": {
+    "nombre_o_referencia": "EG",
+    "ejercicio_fiscal": 2024
+  },
+  "ingresos": {
+    "ingreso_bruto_mensual_ordinario": 12000.0,
+    "ingreso_neto_mensual_ordinario": 10500.0,
+    "dias_aguinaldo": 15,
+    "dias_vacaciones_anuales": 12,
+    "porcentaje_prima_vacacional": 0.25
+  },
+  "deducciones_personales": {
+    "general": {
+      "honorarios_medicos_dentales_psic_nut": 50000.0,
+      "gastos_hospitalarios": 21000.0,
+      "medicinas_incluidas_factura_hospital": 0.0,
+      "analisis_clinicos_y_protesis": 0.0,
+      "lentes_opticos_graduados": 0.0,
+      "primas_seguros_gastos_medicos": 0.0,
+      "gastos_funerarios": 0.0,
+      "intereses_reales_credito_hipotecario": 0.0,
+      "donativos_no_onerosos_ni_remunerativos": 0.0,
+      "transporte_escolar_obligatorio": 0.0
+    },
+    "ppr": {
+      "aportaciones_ppr_art_151_frac_v": 0.0
+    },
+    "colegiaturas": [
+      {
+        "nivel_educativo": "preescolar",
+        "monto_pagado": 0.0
+      },
+      {
+        "nivel_educativo": "primaria",
+        "monto_pagado": 0.0
+      },
+      {
+        "nivel_educativo": "secundaria",
+        "monto_pagado": 0.0
+      },
+      {
+        "nivel_educativo": "profesional_tecnico",
+        "monto_pagado": 0.0
+      },
+      {
+        "nivel_educativo": "preparatoria",
+        "monto_pagado": 0.0
+      }
+    ]
+  }
+}

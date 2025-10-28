@@ -1,0 +1,14 @@
+[project]
+name = "mimo"
+version = "0.1.0"
+description = "Calculadora de Saldo a Favor - Declaración Anual"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "jinja2>=3.1.0"
+]
+
+[project.optional-dependencies]
+pdf = [
+    "weasyprint>=62.0"
+]

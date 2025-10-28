@@ -2,10 +2,10 @@
 import json
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from jinja2 import Template
-from fiscal_recommendations import RecommendationFactory
+from fiscal_recommendations import RecommendationFactory, RecommendationService
 from dotenv import load_dotenv
 
 # Cargar variables de entorno desde archivo .env
@@ -220,7 +220,6 @@ class ReportGenerator:
         self.messages = messages
         self.template_path = template_path
         self.template_html = self._load_template()
-        self.recommendation_service = RecommendationFactory.create_service()
 
     def _load_template(self) -> str:
         with open(self.template_path, "r", encoding="utf-8") as f:
@@ -231,21 +230,17 @@ class ReportGenerator:
         calculation: TaxCalculationResult,
         user_data: Dict[str, Any],
         fiscal_year: int,
+        recommendations: List[str],
         output_path: str = "tax_balance_report",
         output_format: str = "html",
     ):
-        # Generar recomendaciones fiscales personalizadas
-        fiscal_recommendations = self.recommendation_service.get_recommendations(
-            calculation, user_data, fiscal_year
-        )
-
         template_data = {
             "messages": self.messages,
             "fiscal_year": fiscal_year,
             "taxpayer_name": user_data["contribuyente"]["nombre_o_referencia"],
             "user_data": user_data,
             "calculation": calculation,
-            "fiscal_recommendations": fiscal_recommendations,
+            "fiscal_recommendations": recommendations,
             "generation_date": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
         }
 
@@ -335,9 +330,14 @@ def main():
         print("=" * 60)
 
         print(f"\n{messages['generating_report']}")
+        recommendation_service = RecommendationFactory.create_service()
+        recommendations = recommendation_service.get_recommendations(
+            result, user_data, fiscal_year
+        )
+
         report_generator = ReportGenerator(messages, "report_template.html")
         report_generator.generate_report(
-            result, user_data, fiscal_year, "tax_balance_report", "html"
+            result, user_data, fiscal_year, recommendations, "tax_balance_report", "html"
         )
 
     except Exception as e:

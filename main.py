@@ -5,6 +5,11 @@ from datetime import datetime
 from typing import Any, Dict
 
 from jinja2 import Template
+from fiscal_recommendations import RecommendationFactory
+from dotenv import load_dotenv
+
+# Cargar variables de entorno desde archivo .env
+load_dotenv()
 
 
 @dataclass
@@ -215,6 +220,7 @@ class ReportGenerator:
         self.messages = messages
         self.template_path = template_path
         self.template_html = self._load_template()
+        self.recommendation_service = RecommendationFactory.create_service()
 
     def _load_template(self) -> str:
         with open(self.template_path, "r", encoding="utf-8") as f:
@@ -228,12 +234,18 @@ class ReportGenerator:
         output_path: str = "tax_balance_report",
         output_format: str = "html",
     ):
+        # Generar recomendaciones fiscales personalizadas
+        fiscal_recommendations = self.recommendation_service.get_recommendations(
+            calculation, user_data, fiscal_year
+        )
+
         template_data = {
             "messages": self.messages,
             "fiscal_year": fiscal_year,
             "taxpayer_name": user_data["contribuyente"]["nombre_o_referencia"],
             "user_data": user_data,
             "calculation": calculation,
+            "fiscal_recommendations": fiscal_recommendations,
             "generation_date": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
         }
 
@@ -314,17 +326,15 @@ def main():
         print("-" * 60)
 
         if result.balance_in_favor > 0:
-            print(
-                f"💰 {messages['balance_in_favor']:<25} ${result.balance_in_favor:,.2f}"
-            )
+            print(f"{messages['balance_in_favor']:<25} ${result.balance_in_favor:,.2f}")
         elif result.balance_to_pay > 0:
-            print(f"⚠️ {messages['balance_to_pay']:<25} ${result.balance_to_pay:,.2f}")
+            print(f"{messages['balance_to_pay']:<25} ${result.balance_to_pay:,.2f}")
         else:
-            print(f"⚖️ {messages['no_balance']}")
+            print(f"{messages['no_balance']}")
 
         print("=" * 60)
 
-        print(f"\n📄 {messages['generating_report']}")
+        print(f"\n{messages['generating_report']}")
         report_generator = ReportGenerator(messages, "report_template.html")
         report_generator.generate_report(
             result, user_data, fiscal_year, "tax_balance_report", "html"

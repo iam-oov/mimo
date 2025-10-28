@@ -22,14 +22,20 @@
   "balance_to_pay": "Balance to Pay",
   "no_balance": "No Balance",
   "fiscal_recommendations": "Fiscal Recommendations",
-  "recommendations": {
-    "deduction_optimization": "Deduction Optimization: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.",
-    "investment_planning": "Investment Planning: Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.",
-    "income_diversification": "Income Diversification: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco.",
-    "tax_benefits": "Tax Benefits: Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.",
-    "tax_savings_strategies": "Tax Savings Strategies: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud.",
-    "compliance_and_documentation": "Compliance and Documentation: Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris."
-  },
+  "recommendations": [
+    {
+      "title": "Maximize Your Deductions",
+      "text": "Review your annual expenses and ensure you are claiming all eligible deductions. This includes medical expenses, mortgage interest, and charitable donations. Keeping detailed records throughout the year can help you maximize your tax savings."
+    },
+    {
+      "title": "Contribute to a Retirement Plan",
+      "text": "Contributions to a personal retirement plan (PPR) are tax-deductible up to a certain limit. This is a great way to save for the future while reducing your current tax burden."
+    },
+    {
+      "title": "Explore Investment Opportunities",
+      "text": "Consider investing in financial instruments that offer tax benefits. Some investments may offer tax-free growth or preferential tax rates on capital gains."
+    }
+  ],
   "report_generated_automatically": "Report generated automatically",
   "projection_based_on_data": "This document is a projection based on the data provided",
   "calculating_balance": "🧮 Calculating tax balance...",

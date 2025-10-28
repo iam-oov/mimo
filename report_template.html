@@ -1,5 +1,4 @@
-
-        <!DOCTYPE html>
+<!DOCTYPE html>
         <html>
         <head>
             <meta charset="UTF-8">
@@ -79,12 +78,9 @@
             <div class="recommendations">
                 <h3>🎯 {{ messages.fiscal_recommendations }}</h3>
                 <ul>
-                    <li><strong>{{ messages.recommendations.deduction_optimization.split(':')[0] }}:</strong> {{ messages.recommendations.deduction_optimization.split(':')[1] }}</li>
-                    <li><strong>{{ messages.recommendations.investment_planning.split(':')[0] }}:</strong> {{ messages.recommendations.investment_planning.split(':')[1] }}</li>
-                    <li><strong>{{ messages.recommendations.income_diversification.split(':')[0] }}:</strong> {{ messages.recommendations.income_diversification.split(':')[1] }}</li>
-                    <li><strong>{{ messages.recommendations.tax_benefits.split(':')[0] }}:</strong> {{ messages.recommendations.tax_benefits.split(':')[1] }}</li>
-                    <li><strong>{{ messages.recommendations.tax_savings_strategies.split(':')[0] }}:</strong> {{ messages.recommendations.tax_savings_strategies.split(':')[1] }}</li>
-                    <li><strong>{{ messages.recommendations.compliance_and_documentation.split(':')[0] }}:</strong> {{ messages.recommendations.compliance_and_documentation.split(':')[1] }}</li>
+                    {% for recommendation in fiscal_recommendations %}
+                    {{ recommendation|safe }}
+                    {% endfor %}
                 </ul>
             </div>
 
@@ -94,4 +90,3 @@
             </div>
         </body>
         </html>
-        

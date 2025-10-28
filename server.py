@@ -6,28 +6,61 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
 import google.oauth2.id_token
+import google.auth.transport.requests as google_requests
 from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from google.auth.transport import requests
 from jose import JWTError, jwt
 from pydantic import BaseModel
 from starlette.middleware.sessions import SessionMiddleware
 
 from fiscal_recommendations import RecommendationFactory
+from datetime import date
+import sqlite3
+from pathlib import Path
+# from main import calculate_tax, TaxData, TaxCalculationResult  # Using local definitions instead
 
 # Load environment variables
 from dotenv import load_dotenv
 
 load_dotenv()
 
-app = FastAPI()
-app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY"))
 
-templates = Jinja2Templates(directory="templates")
+# Initialize SQLite database for tracking recommendation usage
+def init_db():
+    db_path = Path("recommendations.db")
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS recommendation_usage (
+            user_id TEXT,
+            date TEXT,
+            count INTEGER,
+            PRIMARY KEY (user_id, date)
+        )
+    """)
+
+    conn.commit()
+    conn.close()
+
+
+# Initialize database on startup
+init_db()
+
+app = FastAPI()
 
 # OAuth2 settings
-GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "your-google-client-id")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "your-google-client-secret")
+GOOGLE_REDIRECT_URI = os.getenv(
+    "GOOGLE_REDIRECT_URI", "http://localhost:8000/auth/callback"
+)
+SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here")
+
+app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
+
+templates = Jinja2Templates(directory="templates")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI")
 
@@ -248,8 +281,12 @@ async def read_root(
 
 
 @app.get("/calculator", response_class=HTMLResponse)
-async def calculator(request: Request):
-    return templates.TemplateResponse("calculator.html", {"request": request})
+async def calculator(
+    request: Request, user: Optional[Dict[str, Any]] = Depends(get_current_user)
+):
+    return templates.TemplateResponse(
+        "calculator.html", {"request": request, "user": user}
+    )
 
 
 class TaxInputData(BaseModel):
@@ -367,6 +404,119 @@ def calculate_tax_dynamic(tax_data: TaxInputData):
     }
 
 
+# Helper functions for recommendation limits
+def get_user_recommendation_usage(user_id: str) -> int:
+    """Get today's recommendation usage count for a user"""
+    today = date.today().isoformat()
+
+    conn = sqlite3.connect("recommendations.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT count FROM recommendation_usage WHERE user_id = ? AND date = ?",
+        (user_id, today),
+    )
+
+    result = cursor.fetchone()
+    conn.close()
+
+    return result[0] if result else 0
+
+
+def increment_user_recommendation_usage(user_id: str) -> int:
+    """Increment today's recommendation usage count for a user"""
+    today = date.today().isoformat()
+
+    conn = sqlite3.connect("recommendations.db")
+    cursor = conn.cursor()
+
+    # Try to update existing record
+    cursor.execute(
+        "UPDATE recommendation_usage SET count = count + 1 WHERE user_id = ? AND date = ?",
+        (user_id, today),
+    )
+
+    # If no existing record, insert new one
+    if cursor.rowcount == 0:
+        cursor.execute(
+            "INSERT INTO recommendation_usage (user_id, date, count) VALUES (?, ?, 1)",
+            (user_id, today),
+        )
+
+    # Get the updated count
+    cursor.execute(
+        "SELECT count FROM recommendation_usage WHERE user_id = ? AND date = ?",
+        (user_id, today),
+    )
+
+    result = cursor.fetchone()
+    count = result[0] if result else 1
+
+    conn.commit()
+    conn.close()
+
+    return count
+
+
+@app.get("/api/recommendations/usage")
+async def get_recommendation_usage(
+    user: Optional[Dict[str, Any]] = Depends(get_current_user),
+):
+    """Get current user's recommendation usage for today"""
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    user_id = user.get("sub", user.get("email", "unknown"))
+    used_today = get_user_recommendation_usage(user_id)
+    daily_limit = 2
+
+    return {
+        "used_today": used_today,
+        "daily_limit": daily_limit,
+        "remaining": max(0, daily_limit - used_today),
+    }
+
+
+@app.post("/api/recommendations")
+async def generate_recommendations(
+    tax_data: TaxInputData, user: Optional[Dict[str, Any]] = Depends(get_current_user)
+) -> Dict[str, Any]:
+    """Generate fiscal recommendations with daily limit"""
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    user_id = user.get("sub", user.get("email", "unknown"))
+    used_today = get_user_recommendation_usage(user_id)
+    daily_limit = 2
+
+    if used_today >= daily_limit:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Daily recommendation limit reached ({daily_limit}/day). Try again tomorrow!",
+        )
+
+    # For now, return fallback recommendations
+    # In a complete implementation, you would use the Gemini API
+    fallback_recommendations = [
+        "Consider maximizing your personal deductions to reduce taxable income.",
+        "Review your withholding tax to avoid large payments at year-end.",
+        "Keep detailed records of all deductible expenses throughout the year.",
+        "Consider contributing to a retirement plan for additional tax benefits.",
+    ]
+
+    # Increment usage count
+    new_count = increment_user_recommendation_usage(user_id)
+
+    return {
+        "recommendations": fallback_recommendations,
+        "usage_info": {
+            "used_today": new_count,
+            "daily_limit": daily_limit,
+            "remaining": max(0, daily_limit - new_count),
+        },
+    }
+
+
 @app.get("/api/calculate")
 def calculate_tax():
     data_reader = DataReader("data/sim1.json")
@@ -441,7 +591,7 @@ async def auth_google_callback(request: Request, code: str):
         id_token = token_json["id_token"]
 
         user_info = google.oauth2.id_token.verify_oauth2_token(
-            id_token, requests.Request(), GOOGLE_CLIENT_ID
+            id_token, google_requests.Request(), GOOGLE_CLIENT_ID
         )
 
         request.session["user"] = {
@@ -458,7 +608,61 @@ async def auth_google_callback(request: Request, code: str):
     return RedirectResponse(url="/")
 
 
+@app.get("/auth/google")
+async def google_auth():
+    """Redirect to Google OAuth"""
+    google_auth_url = (
+        f"https://accounts.google.com/o/oauth2/auth?"
+        f"client_id={GOOGLE_CLIENT_ID}&"
+        f"redirect_uri={urllib.parse.quote(GOOGLE_REDIRECT_URI)}&"
+        f"scope=openid%20email%20profile&"
+        f"response_type=code&"
+        f"access_type=offline"
+    )
+    return RedirectResponse(url=google_auth_url)
+
+
+@app.get("/auth/callback")
+async def google_callback(request: Request, code: str):
+    """Google OAuth callback"""
+    try:
+        token_url = "https://oauth2.googleapis.com/token"
+        token_data = {
+            "client_id": GOOGLE_CLIENT_ID,
+            "client_secret": GOOGLE_CLIENT_SECRET,
+            "code": code,
+            "grant_type": "authorization_code",
+            "redirect_uri": GOOGLE_REDIRECT_URI,
+        }
+
+        token_response = requests.post(token_url, data=token_data)
+        token_json = token_response.json()
+        id_token = token_json["id_token"]
+
+        user_info = google.oauth2.id_token.verify_oauth2_token(
+            id_token, google_requests.Request(), GOOGLE_CLIENT_ID
+        )
+
+        # Store user info in session
+        request.session["user"] = {
+            "sub": user_info["sub"],
+            "email": user_info["email"],
+            "name": user_info.get("name", user_info["email"]),
+        }
+
+        return RedirectResponse(url="/calculator", status_code=302)
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Authentication failed: {str(e)}")
+
+
 @app.get("/logout")
 async def logout(request: Request):
     request.session.pop("user", None)
     return RedirectResponse(url="/")
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=8000)

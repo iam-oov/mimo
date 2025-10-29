@@ -531,7 +531,7 @@ async def get_recommendation_usage(
 
     user_id = user.get("sub", user.get("email", "unknown"))
     used_today = get_user_recommendation_usage(user_id)
-    daily_limit = 20
+    daily_limit = 3
 
     return {
         "used_today": used_today,
@@ -550,7 +550,7 @@ async def generate_recommendations(
 
     user_id = user.get("sub", user.get("email", "unknown"))
     used_today = get_user_recommendation_usage(user_id)
-    daily_limit = 20
+    daily_limit = 3
 
     if used_today >= daily_limit:
         raise HTTPException(
@@ -648,7 +648,7 @@ async def generate_recommendations_stream(
 
     user_id = user.get("sub", user.get("email", "unknown"))
     used_today = get_user_recommendation_usage(user_id)
-    daily_limit = 20
+    daily_limit = 3
 
     if used_today >= daily_limit:
         raise HTTPException(

@@ -747,13 +747,15 @@ async def generate_recommendations_stream(
 @fastapi_app.get("/auth/google")
 async def google_auth():
     """Redirects to Google OAuth for authentication."""
+    params = {
+        "client_id": GOOGLE_CLIENT_ID,
+        "redirect_uri": GOOGLE_REDIRECT_URI,
+        "scope": "openid email profile",
+        "response_type": "code",
+        "access_type": "offline",
+    }
     google_auth_url = (
-        f"https://accounts.google.com/o/oauth2/auth?"
-        f"client_id={GOOGLE_CLIENT_ID}&"
-        f"redirect_uri={urllib.parse.quote(GOOGLE_REDIRECT_URI or '')}&"
-        f"scope=openid%20email%20profile&"
-        f"response_type=code&"
-        f"access_type=offline"
+        "https://accounts.google.com/o/oauth2/auth?" + urllib.parse.urlencode(params)
     )
     return RedirectResponse(url=google_auth_url)
 

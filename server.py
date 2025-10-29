@@ -1,32 +1,28 @@
-#!/usr/bin/env python3
 import json
 import os
-from dataclasses import dataclass
+import urllib.parse
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
 import google.oauth2.id_token
 import google.auth.transport.requests as google_requests
+import requests
 from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from jose import JWTError, jwt
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from starlette.middleware.sessions import SessionMiddleware
 
 from fiscal_recommendations import RecommendationFactory
 from datetime import date
 import sqlite3
 from pathlib import Path
-# from main import calculate_tax, TaxData, TaxCalculationResult  # Using local definitions instead
 
-# Load environment variables
 from dotenv import load_dotenv
 
 load_dotenv()
 
 
-# Initialize SQLite database for tracking recommendation usage
 def init_db():
     db_path = Path("recommendations.db")
     conn = sqlite3.connect(db_path)
@@ -45,12 +41,10 @@ def init_db():
     conn.close()
 
 
-# Initialize database on startup
 init_db()
 
 app = FastAPI()
 
-# OAuth2 settings
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "your-google-client-id")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "your-google-client-secret")
 GOOGLE_REDIRECT_URI = os.getenv(
@@ -61,25 +55,122 @@ SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here")
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 
 templates = Jinja2Templates(directory="templates")
-GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
-GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI")
 
 
-@dataclass
-class TaxCalculationResult:
-    gross_annual_income: float
-    taxable_bonus: float
-    taxable_vacation_premium: float
-    total_taxable_income: float
-    authorized_deductions: float
-    personal_deductions: float
-    ppr_deductions: float
-    education_deductions: float
-    taxable_base: float
-    determined_tax: float
-    withheld_tax: float
-    balance_in_favor: float
-    balance_to_pay: float
+class TaxCalculationResult(BaseModel):
+    """
+    Tax Calculation Result Model
+
+    This model represents the complete results of tax calculations,
+    including income, deductions, tax determinations, and final balance.
+    """
+
+    # === INCOME CALCULATIONS ===
+    gross_annual_income: float = Field(
+        description="Total gross annual income including bonuses and premiums", ge=0.0
+    )
+    taxable_bonus: float = Field(
+        description="Taxable portion of bonus (aguinaldo) after exemptions", ge=0.0
+    )
+    taxable_vacation_premium: float = Field(
+        description="Taxable portion of vacation premium after exemptions", ge=0.0
+    )
+    total_taxable_income: float = Field(
+        description="Total income subject to taxation", ge=0.0
+    )
+
+    # === DEDUCTION CALCULATIONS ===
+    authorized_deductions: float = Field(
+        description="Total authorized deductions after caps and limits", ge=0.0
+    )
+    personal_deductions: float = Field(
+        description="Personal deductions (medical, donations, etc.)", ge=0.0
+    )
+    ppr_deductions: float = Field(description="PPR (retirement) deductions", ge=0.0)
+    education_deductions: float = Field(
+        description="Education/tuition deductions", ge=0.0
+    )
+
+    # === TAX CALCULATIONS ===
+    taxable_base: float = Field(
+        description="Final tax base after all deductions", ge=0.0
+    )
+    determined_tax: float = Field(
+        description="Tax determined based on taxable base", ge=0.0
+    )
+    withheld_tax: float = Field(description="Tax withheld during the year", ge=0.0)
+
+    # === FINAL BALANCE ===
+    balance_in_favor: float = Field(
+        description="Amount in favor of taxpayer (refund)", ge=0.0
+    )
+    balance_to_pay: float = Field(description="Additional tax amount to pay", ge=0.0)
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "gross_annual_income": 151200.00,
+                "taxable_bonus": 3150.00,
+                "taxable_vacation_premium": 787.50,
+                "total_taxable_income": 155137.50,
+                "authorized_deductions": 71000.00,
+                "personal_deductions": 58000.00,
+                "ppr_deductions": 8000.00,
+                "education_deductions": 5000.00,
+                "taxable_base": 84137.50,
+                "determined_tax": 12500.25,
+                "withheld_tax": 15000.00,
+                "balance_in_favor": 2499.75,
+                "balance_to_pay": 0.00,
+            }
+        }
+    }
+
+    def get_effective_tax_rate(self) -> float:
+        """Calculate effective tax rate as percentage"""
+        if self.total_taxable_income > 0:
+            return (self.determined_tax / self.total_taxable_income) * 100
+        return 0.0
+
+    def get_deduction_efficiency(self) -> float:
+        """Calculate deduction efficiency as percentage of gross income"""
+        if self.gross_annual_income > 0:
+            return (self.authorized_deductions / self.gross_annual_income) * 100
+        return 0.0
+
+    def is_refund_due(self) -> bool:
+        """Check if taxpayer is due a refund"""
+        return self.balance_in_favor > 0
+
+    def get_net_tax_impact(self) -> float:
+        """Get net tax impact (positive = owe, negative = refund)"""
+        return self.balance_to_pay - self.balance_in_favor
+
+    def get_summary(self) -> Dict[str, Any]:
+        """Get a comprehensive summary of tax calculation results"""
+        return {
+            "income_summary": {
+                "gross_annual": self.gross_annual_income,
+                "total_taxable": self.total_taxable_income,
+                "effective_tax_rate": f"{self.get_effective_tax_rate():.2f}%",
+            },
+            "deduction_summary": {
+                "total_deductions": self.authorized_deductions,
+                "deduction_efficiency": f"{self.get_deduction_efficiency():.2f}%",
+                "breakdown": {
+                    "personal": self.personal_deductions,
+                    "ppr": self.ppr_deductions,
+                    "education": self.education_deductions,
+                },
+            },
+            "tax_summary": {
+                "taxable_base": self.taxable_base,
+                "determined_tax": self.determined_tax,
+                "withheld_tax": self.withheld_tax,
+                "net_impact": self.get_net_tax_impact(),
+                "refund_due": self.is_refund_due(),
+            },
+        }
 
 
 class DataReader:
@@ -112,15 +203,14 @@ class TaxCalculator:
         self.isr_table = isr_table
 
     def calculate_tax_balance(self) -> TaxCalculationResult:
-        incomes = self.user_data["ingresos"]
-        gross_annual_income = incomes["ingreso_bruto_mensual_ordinario"] * 12
+        gross_annual_income = self.user_data["monthly_gross_income"] * 12
 
-        daily_salary = incomes["ingreso_bruto_mensual_ordinario"] / 30
-        gross_bonus = daily_salary * incomes["dias_aguinaldo"]
+        daily_salary = self.user_data["monthly_gross_income"] / 30
+        gross_bonus = daily_salary * self.user_data["bonus_days"]
         gross_vacation_premium = (
             daily_salary
-            * incomes["dias_vacaciones_anuales"]
-            * incomes["porcentaje_prima_vacacional"]
+            * self.user_data["vacation_days"]
+            * self.user_data["vacation_premium_percentage"]
         )
 
         total_gross_income = gross_annual_income + gross_bonus + gross_vacation_premium
@@ -183,9 +273,9 @@ class TaxCalculator:
         return monthly_tax * 12
 
     def _calculate_taxable_bonus(self) -> float:
-        incomes = self.user_data["ingresos"]
-        monthly_income = incomes["ingreso_bruto_mensual_ordinario"]
-        bonus_days = incomes["dias_aguinaldo"]
+        # Use new TaxInputData structure
+        monthly_income = self.user_data["monthly_gross_income"]
+        bonus_days = self.user_data["bonus_days"]
 
         total_bonus = (monthly_income / 30) * bonus_days
 
@@ -196,10 +286,10 @@ class TaxCalculator:
         return max(0, total_bonus - bonus_exemption)
 
     def _calculate_taxable_vacation_premium(self) -> float:
-        incomes = self.user_data["ingresos"]
-        monthly_income = incomes["ingreso_bruto_mensual_ordinario"]
-        vacation_days = incomes["dias_vacaciones_anuales"]
-        premium_percentage = incomes["porcentaje_prima_vacacional"]
+        # Use new TaxInputData structure
+        monthly_income = self.user_data["monthly_gross_income"]
+        vacation_days = self.user_data["vacation_days"]
+        premium_percentage = self.user_data["vacation_premium_percentage"]
 
         total_premium = (monthly_income / 30) * vacation_days * premium_percentage
 
@@ -219,34 +309,34 @@ class TaxCalculator:
         self,
         total_gross_income: float,
     ) -> tuple[float, float, float, float]:
-        deductions = self.user_data["deducciones_personales"]
-        total_deductions = sum(deductions["general"].values())
+        # Use new TaxInputData structure with unified deduction fields
+        total_general_deductions = self.user_data["general_deductions"]
+        total_ppr = self.user_data["total_ppr"]
+        total_tuition = self.user_data["total_tuition"]
 
         uma_annual = self.isr_table["constantes"]["valor_uma_anual"]
+
+        # Apply caps to each deduction type
         general_cap = (
             uma_annual * self.isr_table["constantes"]["tope_general_deducciones_umas"]
         )
-        limited_general_deductions = min(total_deductions, general_cap)
+        limited_general_deductions = min(total_general_deductions, general_cap)
 
-        ppr = deductions["ppr"]["aportaciones_ppr_art_151_frac_v"]
         ppr_cap = uma_annual * self.isr_table["constantes"]["tope_ppr_deducciones_umas"]
-        limited_ppr = min(ppr, ppr_cap)
+        limited_ppr = min(total_ppr, ppr_cap)
 
-        total_education_deductions = 0.0
+        # For education deductions, apply the maximum cap across all levels
+        # Get the highest cap from education levels as a simplified approach
         education_caps = self.isr_table["topes_colegiaturas"]
-
-        for tuition in deductions["colegiaturas"]:
-            level = tuition["nivel_educativo"]
-            amount = tuition["monto_pagado"]
-            cap = education_caps.get(level, 0)
-            total_education_deductions += min(amount, cap)
+        max_education_cap = max(education_caps.values()) if education_caps else 0
+        limited_education_deductions = min(total_tuition, max_education_cap)
 
         cap_5_umas = uma_annual * 5
         cap_15_percent = total_gross_income * 0.15
         total_legal_cap = min(cap_5_umas, cap_15_percent)
 
         total_uncapped = (
-            limited_general_deductions + limited_ppr + total_education_deductions
+            limited_general_deductions + limited_ppr + limited_education_deductions
         )
         total_capped = min(total_uncapped, total_legal_cap)
 
@@ -256,13 +346,13 @@ class TaxCalculator:
             )
             limited_general_deductions *= adjustment_factor
             limited_ppr *= adjustment_factor
-            total_education_deductions *= adjustment_factor
+            limited_education_deductions *= adjustment_factor
 
         return (
             total_capped,
             limited_general_deductions,
             limited_ppr,
-            total_education_deductions,
+            limited_education_deductions,
         )
 
 
@@ -273,11 +363,10 @@ async def get_current_user(request: Request) -> Optional[Dict[str, Any]]:
     return None
 
 
-@app.get("/", response_class=HTMLResponse)
-async def read_root(
-    request: Request, user: Optional[Dict[str, Any]] = Depends(get_current_user)
-):
-    return templates.TemplateResponse("index.html", {"request": request, "user": user})
+@app.get("/")
+async def read_root():
+    """Redirect root path to calculator"""
+    return RedirectResponse(url="/calculator", status_code=302)
 
 
 @app.get("/calculator", response_class=HTMLResponse)
@@ -289,91 +378,112 @@ async def calculator(
     )
 
 
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+
 class TaxInputData(BaseModel):
-    # Taxpayer data
-    taxpayer_name: str = "Taxpayer"
-    fiscal_year: int = 2024
+    taxpayer_name: str = Field(
+        default="", description="Full name of the taxpayer", max_length=100
+    )
+    fiscal_year: int = Field(
+        default=2025, description="Tax fiscal year", ge=2024, le=2025
+    )
 
-    # Income
-    monthly_gross_income: float
-    monthly_net_income: float = 0
-    bonus_days: int = 15
-    vacation_days: int = 12
-    vacation_premium_percentage: float = 0.25
+    monthly_gross_income: float = Field(
+        default=0.0, description="Monthly gross income in USD", ge=0.0, le=1000000.0
+    )
+    monthly_net_income: float = Field(
+        default=0.0, description="Monthly net income in USD", ge=0.0
+    )
+    bonus_days: int = Field(
+        default=15, description="Number of bonus days (aguinaldo)", ge=0, le=365
+    )
+    vacation_days: int = Field(
+        default=12, description="Number of annual vacation days", ge=0, le=365
+    )
+    vacation_premium_percentage: float = Field(
+        default=0.25,
+        description="Vacation premium percentage (0.25 = 25%)",
+        ge=0.0,
+        le=1.0,
+    )
 
-    # Personal deductions - General
-    medical_dental_expenses: float = 0
-    funeral_expenses: float = 0
-    donations: float = 0
-    mortgage_interest: float = 0
-    voluntary_retirement_contributions: float = 0
-    medical_insurance_premiums: float = 0
-    school_transportation_expenses: float = 0
-    special_savings_account_deposits: float = 0
-    educational_services_payments: float = 0
+    general_deductions: float = Field(
+        default=0.0,
+        description="🏥 Total general deductions (Medical, Funeral, Donations, Mortgage, etc.)",
+        ge=0.0,
+        le=10000000.0,
+    )
+    total_tuition: float = Field(
+        default=0.0,
+        description="🎓 Total tuition expenses for all education levels",
+        ge=0.0,
+        le=1000000.0,
+    )
+    total_ppr: float = Field(
+        default=0.0, description="💰 Total PPR contributions", ge=0.0, le=1000000.0
+    )
 
-    # PPR deductions
-    ppr_contributions: float = 0
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "taxpayer_name": "Juan Pérez",
+                "fiscal_year": 2025,
+                "monthly_gross_income": 12600.00,
+                "monthly_net_income": 10500.00,
+                "bonus_days": 15,
+                "vacation_days": 12,
+                "vacation_premium_percentage": 0.25,
+                "general_deductions": 71000.00,
+                "total_tuition": 25000.00,
+                "total_ppr": 15000.00,
+            }
+        }
+    }
 
-    # Tuition (simplified list)
-    preschool_tuition: float = 0
-    elementary_tuition: float = 0
-    middle_school_tuition: float = 0
-    technical_school_tuition: float = 0
-    high_school_tuition: float = 0
+    def get_total_deductions(self) -> float:
+        """Calculate total unified deductions"""
+        return self.general_deductions + self.total_tuition + self.total_ppr
+
+    def get_annual_gross_income(self) -> float:
+        """Calculate estimated annual gross income"""
+        return self.monthly_gross_income * 12
+
+    def is_valid_fiscal_year(self) -> bool:
+        """Validate fiscal year is supported"""
+        return self.fiscal_year in [2024, 2025]
+
+    def get_summary(self) -> Dict[str, Any]:
+        """Get a summary of the tax input data"""
+        return {
+            "taxpayer": self.taxpayer_name or "Anonymous",
+            "fiscal_year": self.fiscal_year,
+            "estimated_annual_income": self.get_annual_gross_income(),
+            "total_deductions": self.get_total_deductions(),
+            "deduction_breakdown": {
+                "general": self.general_deductions,
+                "tuition": self.total_tuition,
+                "ppr": self.total_ppr,
+            },
+        }
 
 
 @app.post("/api/calculate")
-def calculate_tax_dynamic(tax_data: TaxInputData):
-    # Convert input data to the format expected by the calculator
+def calculate_tax_dynamic(tax_data: TaxInputData) -> Dict[str, Any]:
+    # Convert input data to match TaxInputData interface structure
     user_data = {
-        "contribuyente": {
-            "nombre_o_referencia": tax_data.taxpayer_name,
-            "ejercicio_fiscal": tax_data.fiscal_year,
-        },
-        "ingresos": {
-            "ingreso_bruto_mensual_ordinario": tax_data.monthly_gross_income,
-            "ingreso_neto_mensual_ordinario": tax_data.monthly_net_income,
-            "dias_aguinaldo": tax_data.bonus_days,
-            "dias_vacaciones_anuales": tax_data.vacation_days,
-            "porcentaje_prima_vacacional": tax_data.vacation_premium_percentage,
-        },
-        "deducciones_personales": {
-            "general": {
-                "gastos_medicos_dentales": tax_data.medical_dental_expenses,
-                "gastos_funerarios": tax_data.funeral_expenses,
-                "donativos": tax_data.donations,
-                "intereses_reales_creditos_hipotecarios": tax_data.mortgage_interest,
-                "aportaciones_voluntarias_subcuenta_retiro": tax_data.voluntary_retirement_contributions,
-                "primas_seguros_gastos_medicos": tax_data.medical_insurance_premiums,
-                "gastos_transportacion_escolar": tax_data.school_transportation_expenses,
-                "depositos_cuentas_especiales_ahorro": tax_data.special_savings_account_deposits,
-                "pagos_servicios_educativos": tax_data.educational_services_payments,
-            },
-            "ppr": {"aportaciones_ppr_art_151_frac_v": tax_data.ppr_contributions},
-            "colegiaturas": [
-                {
-                    "nivel_educativo": "preescolar",
-                    "monto_pagado": tax_data.preschool_tuition,
-                },
-                {
-                    "nivel_educativo": "primaria",
-                    "monto_pagado": tax_data.elementary_tuition,
-                },
-                {
-                    "nivel_educativo": "secundaria",
-                    "monto_pagado": tax_data.middle_school_tuition,
-                },
-                {
-                    "nivel_educativo": "profesional_tecnico",
-                    "monto_pagado": tax_data.technical_school_tuition,
-                },
-                {
-                    "nivel_educativo": "preparatoria",
-                    "monto_pagado": tax_data.high_school_tuition,
-                },
-            ],
-        },
+        "taxpayer_name": tax_data.taxpayer_name,
+        "fiscal_year": tax_data.fiscal_year,
+        "monthly_gross_income": tax_data.monthly_gross_income,
+        "monthly_net_income": tax_data.monthly_net_income,
+        "bonus_days": tax_data.bonus_days,
+        "vacation_days": tax_data.vacation_days,
+        "vacation_premium_percentage": tax_data.vacation_premium_percentage,
+        "general_deductions": tax_data.general_deductions,
+        "total_tuition": tax_data.total_tuition,
+        "total_ppr": tax_data.total_ppr,
     }
 
     # Load ISR table for the fiscal year
@@ -495,8 +605,6 @@ async def generate_recommendations(
             detail=f"Daily recommendation limit reached ({daily_limit}/day). Try again tomorrow!",
         )
 
-    # For now, return fallback recommendations
-    # In a complete implementation, you would use the Gemini API
     fallback_recommendations = [
         "Consider maximizing your personal deductions to reduce taxable income.",
         "Review your withholding tax to avoid large payments at year-end.",
@@ -504,7 +612,6 @@ async def generate_recommendations(
         "Consider contributing to a retirement plan for additional tax benefits.",
     ]
 
-    # Increment usage count
     new_count = increment_user_recommendation_usage(user_id)
 
     return {
@@ -515,18 +622,6 @@ async def generate_recommendations(
             "remaining": max(0, daily_limit - new_count),
         },
     }
-
-
-@app.get("/api/calculate")
-def calculate_tax():
-    data_reader = DataReader("data/sim1.json")
-    user_data = data_reader.get_user_data()
-    fiscal_year = user_data["contribuyente"]["ejercicio_fiscal"]
-    isr_table = data_reader.get_isr_table(fiscal_year)
-
-    tax_calculator = TaxCalculator(user_data, isr_table)
-    result = tax_calculator.calculate_tax_balance()
-    return result
 
 
 @app.get("/api/recommendations")
@@ -567,54 +662,12 @@ async def get_recommendations(
 
 
 @app.get("/auth/google")
-async def login_google():
-    return RedirectResponse(
-        f"https://accounts.google.com/o/oauth2/v2/auth?"
-        f"response_type=code&client_id={GOOGLE_CLIENT_ID}&"
-        f"redirect_uri={GOOGLE_REDIRECT_URI}&scope=openid%20email%20profile"
-    )
-
-
-@app.get("/auth/google/callback")
-async def auth_google_callback(request: Request, code: str):
-    try:
-        token_url = "https://oauth2.googleapis.com/token"
-        token_data = {
-            "code": code,
-            "client_id": GOOGLE_CLIENT_ID,
-            "client_secret": GOOGLE_CLIENT_SECRET,
-            "redirect_uri": GOOGLE_REDIRECT_URI,
-            "grant_type": "authorization_code",
-        }
-        token_response = requests.post(token_url, data=token_data)
-        token_json = token_response.json()
-        id_token = token_json["id_token"]
-
-        user_info = google.oauth2.id_token.verify_oauth2_token(
-            id_token, google_requests.Request(), GOOGLE_CLIENT_ID
-        )
-
-        request.session["user"] = {
-            "email": user_info["email"],
-            "name": user_info["name"],
-            "recommendations": [],
-        }
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to authenticate with Google: {e}"
-        )
-
-    return RedirectResponse(url="/")
-
-
-@app.get("/auth/google")
 async def google_auth():
     """Redirect to Google OAuth"""
     google_auth_url = (
         f"https://accounts.google.com/o/oauth2/auth?"
         f"client_id={GOOGLE_CLIENT_ID}&"
-        f"redirect_uri={urllib.parse.quote(GOOGLE_REDIRECT_URI)}&"
+        f"redirect_uri={urllib.parse.quote(GOOGLE_REDIRECT_URI or '')}&"
         f"scope=openid%20email%20profile&"
         f"response_type=code&"
         f"access_type=offline"
@@ -659,7 +712,7 @@ async def google_callback(request: Request, code: str):
 @app.get("/logout")
 async def logout(request: Request):
     request.session.pop("user", None)
-    return RedirectResponse(url="/")
+    return RedirectResponse(url="/calculator")
 
 
 if __name__ == "__main__":

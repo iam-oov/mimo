@@ -283,16 +283,29 @@
             color: #495057;
         }
         
-        .form-group input {
+        .input-subtitle {
+            display: block;
+            font-size: 0.75rem;
+            color: #6c757d;
+            font-style: italic;
+            margin-top: -3px;
+            margin-bottom: 5px;
+            line-height: 1.2;
+        }
+        
+        .form-group input,
+        .form-group select {
             width: 100%;
             padding: 8px;
             border: 1px solid #ced4da;
             border-radius: 4px;
             font-size: 13px;
             transition: border-color 0.3s;
+            background-color: white;
         }
         
-        .form-group input:focus {
+        .form-group input:focus,
+        .form-group select:focus {
             outline: none;
             border-color: #2c5530;
             box-shadow: 0 0 0 2px rgba(44, 85, 48, 0.2);
@@ -429,7 +442,7 @@
     <!-- Navigation Bar -->
     <nav class="navbar">
         <div class="navbar-container">
-            <a href="/" class="navbar-brand">🧮 Tax Calculator</a>
+            <a href="/calculator" class="navbar-brand">🧮 Tax Calculator</a>
             <div class="navbar-nav">
                 {% if user %}
                     <span class="nav-item">Welcome, {{ user.name }}!</span>
@@ -447,177 +460,128 @@
     <!-- Main Container -->
     <div class="main-container">
         <div class="calculator-grid">
-            
             <!-- COLUMN 1: INPUT FORM -->
             <div class="grid-column column-1">
-                <h3 class="column-header">📝 Tax Information</h3>
                 <form id="taxForm">
                     <!-- Personal Information -->
                     <div class="form-section">
-                        <h4>👤 Personal Information</h4>
+                        <h4>👤 Información Personal</h4>
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="taxpayer_name">Taxpayer Name:</label>
-                                <input type="text" id="taxpayer_name" name="taxpayer_name" value="John Doe">
+                                <label for="taxpayer_name">Nombre(s):</label>
+                                <input type="text" id="taxpayer_name" name="taxpayer_name">
                             </div>
                             <div class="form-group">
-                                <label for="fiscal_year">Fiscal Year:</label>
-                                <input type="number" id="fiscal_year" name="fiscal_year" value="2024" min="2024" max="2025">
+                                <label for="fiscal_year">Año Fiscal:</label>
+                                <select id="fiscal_year" name="fiscal_year">
+                                    <option value="2024">2024</option>
+                                    <option value="2025" selected>2025</option>
+                                </select>
                             </div>
                         </div>
                     </div>
 
                     <!-- Income Information -->
                     <div class="form-section">
-                        <h4>💰 Income Information</h4>
+                        <h4>💰 Información de Ingresos</h4>
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="monthly_gross_income">Monthly Gross Income ($):</label>
+                                <label for="monthly_gross_income">Ingreso Bruto Mensual ($):</label>
                                 <input type="number" id="monthly_gross_income" name="monthly_gross_income" step="0.01" min="0" value="12600">
                             </div>
                             <div class="form-group">
-                                <label for="monthly_net_income">Monthly Net Income ($):</label>
+                                <label for="monthly_net_income">Ingreso Neto Mensual ($):</label>
                                 <input type="number" id="monthly_net_income" name="monthly_net_income" step="0.01" min="0" value="10500">
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="bonus_days">Bonus Days:</label>
+                                <label for="bonus_days">Días de Aguinaldo:</label>
                                 <input type="number" id="bonus_days" name="bonus_days" min="0" max="365" value="15">
                             </div>
                             <div class="form-group">
-                                <label for="vacation_days">Vacation Days:</label>
+                                <label for="vacation_days">Días de Vacaciones:</label>
                                 <input type="number" id="vacation_days" name="vacation_days" min="0" max="365" value="12">
                             </div>
                             <div class="form-group">
-                                <label for="vacation_premium_percentage">Vacation Premium (%):</label>
+                                <label for="vacation_premium_percentage">Prima Vacacional (%):</label>
                                 <input type="number" id="vacation_premium_percentage" name="vacation_premium_percentage" step="0.01" min="0" max="1" value="0.25">
                             </div>
                         </div>
                     </div>
 
-                    <!-- Personal Deductions -->
-                    <div class="form-section">
-                        <h4>🏥 Personal Deductions</h4>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="medical_dental_expenses">Medical/Dental Expenses ($):</label>
-                                <input type="number" id="medical_dental_expenses" name="medical_dental_expenses" step="0.01" min="0" value="15000">
-                            </div>
-                            <div class="form-group">
-                                <label for="funeral_expenses">Funeral Expenses ($):</label>
-                                <input type="number" id="funeral_expenses" name="funeral_expenses" step="0.01" min="0" value="0">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="donations">Donations ($):</label>
-                                <input type="number" id="donations" name="donations" step="0.01" min="0" value="5000">
-                            </div>
-                            <div class="form-group">
-                                <label for="mortgage_interest">Mortgage Interest ($):</label>
-                                <input type="number" id="mortgage_interest" name="mortgage_interest" step="0.01" min="0" value="25000">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="voluntary_retirement_contributions">Voluntary Retirement Contributions ($):</label>
-                                <input type="number" id="voluntary_retirement_contributions" name="voluntary_retirement_contributions" step="0.01" min="0" value="10000">
-                            </div>
-                            <div class="form-group">
-                                <label for="medical_insurance_premiums">Medical Insurance Premiums ($):</label>
-                                <input type="number" id="medical_insurance_premiums" name="medical_insurance_premiums" step="0.01" min="0" value="16000">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="school_transportation_expenses">School Transportation ($):</label>
-                                <input type="number" id="school_transportation_expenses" name="school_transportation_expenses" step="0.01" min="0" value="0">
-                            </div>
-                            <div class="form-group">
-                                <label for="special_savings_account_deposits">Special Savings Deposits ($):</label>
-                                <input type="number" id="special_savings_account_deposits" name="special_savings_account_deposits" step="0.01" min="0" value="0">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="educational_services_payments">Educational Services ($):</label>
-                                <input type="number" id="educational_services_payments" name="educational_services_payments" step="0.01" min="0" value="0">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Final Sections Sub-Grid -->
+                <!-- Personal Deductions -->
+                <div class="form-section">
+                    <h3>📋 Deducciones Personales</h3>
+                    
+                    <!-- Unified Deductions -->
                     <div class="final-sections-grid">
+                        <!-- General Deductions -->
+                        <div class="final-section">
+                            <h4>🏥 General</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="general_deductions">Total General Deductions ($):</label>
+                                    <small class="input-subtitle">Médico/Dental • Funeral • Donaciones • Intereses Hipotecarios • Jubilación • Primas de Seguro de Gastos Médicos • Pediatra • Ginecólogo • Psicología • Nutriología</small>
+                                    <input type="number" id="general_deductions" name="general_deductions" step="0.01" min="0" value="71000">
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Tuition Expenses -->
                         <div class="final-section">
-                            <h4>🎓 Tuition Expenses</h4>
+                            <h4>🎓 Tuition</h4>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="preschool_tuition">Preschool ($):</label>
-                                    <input type="number" id="preschool_tuition" name="preschool_tuition" step="0.01" min="0" value="0">
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="elementary_tuition">Elementary ($):</label>
-                                    <input type="number" id="elementary_tuition" name="elementary_tuition" step="0.01" min="0" value="0">
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="middle_school_tuition">Middle School ($):</label>
-                                    <input type="number" id="middle_school_tuition" name="middle_school_tuition" step="0.01" min="0" value="0">
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="technical_school_tuition">Technical ($):</label>
-                                    <input type="number" id="technical_school_tuition" name="technical_school_tuition" step="0.01" min="0" value="0">
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="high_school_tuition">High School ($):</label>
-                                    <input type="number" id="high_school_tuition" name="high_school_tuition" step="0.01" min="0" value="0">
+                                    <label for="total_tuition">Total Tuition Expenses ($):</label>
+                                    <small class="input-subtitle">Preescolar • Primaria • Secundaria • Técnico • Preparatoria</small>
+                                    <input type="number" id="total_tuition" name="total_tuition" step="0.01" min="0" value="0">
                                 </div>
                             </div>
                         </div>
 
-                        <!-- PPR Aportation -->
+                        <!-- PPR Contributions -->
                         <div class="final-section">
-                            <h4>💰 PPR Aportation</h4>
+                            <h4>💰 PPR</h4>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="ppr_contributions">PPR Contributions ($):</label>
-                                    <input type="number" id="ppr_contributions" name="ppr_contributions" step="0.01" min="0" value="0">
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="ppr_additional_contributions">PPR Additional ($):</label>
-                                    <input type="number" id="ppr_additional_contributions" name="ppr_additional_contributions" step="0.01" min="0" value="0">
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="ppr_employer_match">Employer Match ($):</label>
-                                    <input type="number" id="ppr_employer_match" name="ppr_employer_match" step="0.01" min="0" value="0">
+                                    <label for="total_ppr">Total PPR Contributions ($):</label>
+                                    <small class="input-subtitle">Contribuciones PPR • Contribuciones Afore</small>
+                                    <input type="number" id="total_ppr" name="total_ppr" step="0.01" min="0" value="0">
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
+                
+                <!-- Hidden fields for backend compatibility -->
+                <input type="hidden" id="medical_dental_expenses" name="medical_dental_expenses" value="0">
+                <input type="hidden" id="funeral_expenses" name="funeral_expenses" value="0">
+                <input type="hidden" id="donations" name="donations" value="0">
+                <input type="hidden" id="mortgage_interest" name="mortgage_interest" value="0">
+                <input type="hidden" id="voluntary_retirement_contributions" name="voluntary_retirement_contributions" value="0">
+                <input type="hidden" id="medical_insurance_premiums" name="medical_insurance_premiums" value="0">
+                <input type="hidden" id="school_transportation_expenses" name="school_transportation_expenses" value="0">
+                <input type="hidden" id="special_savings_account_deposits" name="special_savings_account_deposits" value="0">
+                <input type="hidden" id="educational_services_payments" name="educational_services_payments" value="0">
+                <input type="hidden" id="preschool_tuition" name="preschool_tuition" value="0">
+                <input type="hidden" id="elementary_tuition" name="elementary_tuition" value="0">
+                <input type="hidden" id="middle_school_tuition" name="middle_school_tuition" value="0">
+                <input type="hidden" id="technical_school_tuition" name="technical_school_tuition" value="0">
+                <input type="hidden" id="high_school_tuition" name="high_school_tuition" value="0">
+                <input type="hidden" id="ppr_contributions" name="ppr_contributions" value="0">
+                <input type="hidden" id="ppr_additional_contributions" name="ppr_additional_contributions" value="0">
+                <input type="hidden" id="ppr_employer_match" name="ppr_employer_match" value="0">
                 </form>
             </div>
-
             <!-- COLUMN 2: RESULTS -->
             <div class="grid-column column-2">
-                <h3 class="column-header">📊 Tax Calculation Results</h3>
-                
+                <h3 class="column-header">📊 Resultados</h3>
+
                 <!-- Loading indicator -->
                 <div class="loading" id="loading">
                     <div class="spinner"></div>
-                    <p>Calculating taxes...</p>
+                    <p>Calculando impuestos...</p>
                 </div>
 
                 <!-- Error message -->
@@ -628,35 +592,30 @@
                     <table class="calculation-table">
                         <thead>
                             <tr>
-                                <th>Concept</th>
-                                <th>Amount</th>
+                                <th>Concepto</th>
+                                <th>Importe</th>
                             </tr>
                         </thead>
                         <tbody id="results-tbody">
-                            <!-- Results will be populated here -->
                         </tbody>
                     </table>
-                    
+
                     <div id="balance-result" class="balance-result">
-                        <!-- Balance result will be shown here -->
                     </div>
                 </div>
             </div>
-
             <!-- COLUMN 3: RECOMMENDATIONS -->
             <div class="grid-column column-3 recommendations-section">
-                <h3 class="column-header">🎯 Fiscal Recommendations</h3>
-                
+                <h3 class="column-header">🎯 Recomendaciones Fiscales</h3>
                 {% if user %}
                     <div class="usage-counter" id="usage-counter">
-                        Loading recommendation usage...
+                        Cargando uso de recomendaciones...
                     </div>
                     <div class="recommendations-content" id="recommendations-content" style="display: none;">
-                        <!-- Recommendations will be populated here -->
                     </div>
                 {% else %}
                     <div class="recommendations-content">
-                        <p>Please <a href="/auth/google">login with Google</a> to get personalized fiscal recommendations.</p>
+                        <p>Por favor <a href="/auth/google">inicia sesión con Google</a> para obtener recomendaciones fiscales personalizadas.</p>
                     </div>
                 {% endif %}
             </div>
@@ -677,8 +636,42 @@
             };
         }
 
+        // Function to distribute unified values to individual hidden fields
+        function distributeUnifiedValues() {
+            // General Deductions - distribute proportionally or use simple equal distribution
+            const generalTotal = parseFloat(document.getElementById('general_deductions').value) || 0;
+            const generalProportion = generalTotal / 9; // 9 categories
+            document.getElementById('medical_dental_expenses').value = generalProportion;
+            document.getElementById('funeral_expenses').value = generalProportion;
+            document.getElementById('donations').value = generalProportion;
+            document.getElementById('mortgage_interest').value = generalProportion;
+            document.getElementById('voluntary_retirement_contributions').value = generalProportion;
+            document.getElementById('medical_insurance_premiums').value = generalProportion;
+            document.getElementById('school_transportation_expenses').value = generalProportion;
+            document.getElementById('special_savings_account_deposits').value = generalProportion;
+            document.getElementById('educational_services_payments').value = generalProportion;
+            
+            // Tuition - distribute equally among 5 levels
+            const tuitionTotal = parseFloat(document.getElementById('total_tuition').value) || 0;
+            const tuitionProportion = tuitionTotal / 5;
+            document.getElementById('preschool_tuition').value = tuitionProportion;
+            document.getElementById('elementary_tuition').value = tuitionProportion;
+            document.getElementById('middle_school_tuition').value = tuitionProportion;
+            document.getElementById('technical_school_tuition').value = tuitionProportion;
+            document.getElementById('high_school_tuition').value = tuitionProportion;
+            
+            // PPR - distribute equally among 3 types
+            const pprTotal = parseFloat(document.getElementById('total_ppr').value) || 0;
+            const pprProportion = pprTotal / 3;
+            document.getElementById('ppr_contributions').value = pprProportion;
+            document.getElementById('ppr_additional_contributions').value = pprProportion;
+            document.getElementById('ppr_employer_match').value = pprProportion;
+        }
+
         // Function to collect form data
         function getFormData() {
+            // First, distribute unified values to hidden fields
+            distributeUnifiedValues();
             const formData = new FormData(document.getElementById('taxForm'));
             const data = {};
             
@@ -760,19 +753,19 @@
             
             // Populate results table
             const rows = [
-                ['Taxpayer', data.taxpayer_name],
-                ['Fiscal Year', data.fiscal_year],
-                ['Gross Annual Income', formatCurrency(data.gross_annual_income)],
-                ['Taxable Bonus', formatCurrency(data.taxable_bonus)],
-                ['Taxable Vacation Premium', formatCurrency(data.taxable_vacation_premium)],
-                ['Total Taxable Income', formatCurrency(data.total_taxable_income)],
-                ['Authorized Deductions', formatCurrency(data.authorized_deductions)],
-                ['Personal Deductions', formatCurrency(data.personal_deductions)],
-                ['PPR Deductions', formatCurrency(data.ppr_deductions)],
-                ['Education Deductions', formatCurrency(data.education_deductions)],
-                ['Taxable Base', formatCurrency(data.taxable_base)],
-                ['Determined Tax', formatCurrency(data.determined_tax)],
-                ['Withheld Tax', formatCurrency(data.withheld_tax)]
+                ['Contribuyente', data.taxpayer_name],
+                ['Año Fiscal', data.fiscal_year],
+                ['Ingreso Bruto Anual', formatCurrency(data.gross_annual_income)],
+                ['Bono Gravable', formatCurrency(data.taxable_bonus)],
+                ['Prima Vacacional Gravable', formatCurrency(data.taxable_vacation_premium)],
+                ['Ingreso Total Gravable', formatCurrency(data.total_taxable_income)],
+                ['Deducciones Autorizadas', formatCurrency(data.authorized_deductions)],
+                ['Deducciones Personales', formatCurrency(data.personal_deductions)],
+                ['Deducciones PPR', formatCurrency(data.ppr_deductions)],
+                ['Deducciones Educativas', formatCurrency(data.education_deductions)],
+                ['Base Gravable', formatCurrency(data.taxable_base)],
+                ['Impuesto Determinado', formatCurrency(data.determined_tax)],
+                ['Impuesto Retenido', formatCurrency(data.withheld_tax)]
             ];
             
             rows.forEach(([concept, amount], index) => {
@@ -785,7 +778,7 @@
                 cellAmount.className = 'amount';
                 
                 // Highlight important rows
-                if (concept === 'Total Taxable Income' || concept === 'Taxable Base') {
+                if (concept === 'Ingreso Total Gravable' || concept === 'Base Gravable') {
                     row.className = 'highlight';
                 }
             });
@@ -838,8 +831,8 @@
             const usageCounter = document.getElementById('usage-counter');
             if (usageCounter) {
                 usageCounter.innerHTML = `
-                    <strong>Daily Recommendations:</strong> ${used}/${limit} used
-                    ${used >= limit ? '<br><small>Daily limit reached. Try again tomorrow!</small>' : ''}
+                    <strong>Recomendaciones hoy:</strong> ${used}/${limit} usadas
+                    ${used >= limit ? '<br><small>Límite diario alcanzado. ¡Intenta de nuevo mañana!</small>' : ''}
                 `;
             }
         }

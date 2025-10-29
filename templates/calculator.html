@@ -2,7 +2,8 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Dynamic Tax Calculator</title>
+    <title>MiMo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         * {
             margin: 0;
@@ -99,6 +100,12 @@
             width: 100% !important;
             max-width: none !important;
             box-sizing: border-box;
+            transition: grid-template-columns 0.8s ease-in-out;
+        }
+        
+        /* Grid layout when generating recommendations - center recommendations */
+        .calculator-grid.generating-recommendations {
+            grid-template-columns: 1fr 2fr 1fr !important;
         }
         
         /* Force grid items to stay in their columns using specific classes */
@@ -117,11 +124,28 @@
             grid-row: 1 !important;
         }
         
+        /* Reorder columns when generating recommendations */
+        .calculator-grid.generating-recommendations > .column-1 {
+            grid-column: 1 !important;
+        }
+        
+        .calculator-grid.generating-recommendations > .column-2 {
+            grid-column: 3 !important;
+        }
+        
+        .calculator-grid.generating-recommendations > .column-3 {
+            grid-column: 2 !important;
+        }
+        
         /* Responsive design for smaller screens */
         @media screen and (max-width: 1024px) {
             .calculator-grid {
                 grid-template-columns: 1fr 1fr !important;
                 gap: 20px !important;
+            }
+            
+            .calculator-grid.generating-recommendations {
+                grid-template-columns: 1fr 1fr !important;
             }
             
             .calculator-grid > .column-1 {
@@ -136,6 +160,22 @@
             
             .calculator-grid > .column-3 {
                 grid-column: 2 !important;
+                grid-row: 2 !important;
+            }
+            
+            /* When generating recommendations, prioritize recommendations column */
+            .calculator-grid.generating-recommendations > .column-1 {
+                grid-column: 1 / -1 !important;
+                grid-row: 1 !important;
+            }
+            
+            .calculator-grid.generating-recommendations > .column-2 {
+                grid-column: 2 !important;
+                grid-row: 2 !important;
+            }
+            
+            .calculator-grid.generating-recommendations > .column-3 {
+                grid-column: 1 !important;
                 grid-row: 2 !important;
             }
         }
@@ -237,6 +277,15 @@
             /* Recommendations column - fiscal recommendations */
             min-height: 400px;
             align-self: start;
+            transition: transform 0.6s ease-in-out, box-shadow 0.6s ease-in-out;
+        }
+        
+        /* Highlight recommendations column when generating */
+        .calculator-grid.generating-recommendations .grid-column:nth-child(3) {
+            transform: scale(1.02);
+            box-shadow: 0 4px 20px rgba(44, 85, 48, 0.15);
+            z-index: 10;
+            position: relative;
         }
         
         .column-header {
@@ -333,23 +382,189 @@
         
         .recommendations-content ul {
             margin: 0;
-            padding-left: 20px;
+            padding: 0;
+            list-style: none;
         }
         
         .recommendations-content li {
-            margin-bottom: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
             text-align: justify;
             font-size: 14px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .recommendations-content li:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
         }
         
         .usage-counter {
-            background-color: #e9ecef;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 15px;
+            font-size: 12px;
+            color: #6c757d;
             text-align: center;
-            font-size: 14px;
+            margin-bottom: 10px;
+            font-style: italic;
+        }
+        
+        .focus-indicator {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border: 1px solid #2196f3;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 12px;
+            color: #1565c0;
+            text-align: center;
+            margin-bottom: 15px;
+            animation: gentle-pulse 3s ease-in-out infinite;
+        }
+        
+        @keyframes gentle-pulse {
+            0%, 100% {
+                opacity: 0.8;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.02);
+            }
+        }
+        
+        /* LLM Recommendation Examples Styles */
+        .recommendation-example {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-top: 10px;
+            font-size: 13px;
+            line-height: 1.5;
             color: #495057;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .recommendation-example strong {
+            color: #2c5530;
+        }
+        
+        .recommendation-example::before {
+            content: "";
+            display: inline-block;
+            width: 3px;
+            height: 100%;
+            background: linear-gradient(to bottom, #28a745, #20c997);
+            position: absolute;
+            left: 0;
+            top: 0;
+            border-radius: 0 2px 2px 0;
+        }
+        
+        .recommendation-example {
+            position: relative;
+            padding-left: 18px;
+        }
+        
+        /* Markdown content styling */
+        .markdown-content {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .markdown-content h3 {
+            color: #2c5530;
+            font-size: 1rem;
+            font-weight: bold;
+            margin: 20px 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .markdown-content h3:first-child {
+            margin-top: 0;
+        }
+        
+        .markdown-content p {
+            margin: 10px 0;
+            text-align: justify;
+        }
+        
+        .markdown-content blockquote {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-left: 3px solid #28a745;
+            margin: 15px 0;
+            padding: 12px 15px;
+            border-radius: 0 8px 8px 0;
+            font-size: 13px;
+            color: #495057;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .markdown-content blockquote p {
+            margin: 0;
+        }
+        
+        .markdown-content blockquote strong {
+            color: #2c5530;
+        }
+        
+        .markdown-content hr {
+            border: none;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #dee2e6, transparent);
+            margin: 25px 0;
+        }
+        
+        .markdown-content strong {
+            color: #2c5530;
+            font-weight: 600;
+        }
+
+        /* Streaming styles */
+        .streaming-indicator {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .streaming-dots {
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        
+        .streaming-dots span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #2c5530;
+            margin: 0 2px;
+            animation: streaming-pulse 1.4s infinite ease-in-out both;
+        }
+        
+        .streaming-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .streaming-dots span:nth-child(2) { animation-delay: -0.16s; }
+        .streaming-dots span:nth-child(3) { animation-delay: 0s; }
+        
+        @keyframes streaming-pulse {
+            0%, 80%, 100% {
+                transform: scale(0);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        
+        #streaming-text {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 10px;
+            min-height: 100px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.5;
         }
         
         .calculation-table {
@@ -436,19 +651,55 @@
             margin: 20px 0;
             display: none;
         }
+        
+        /* Floating cat easter egg */
+        .floating-cat {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            font-size: 30px;
+            cursor: pointer;
+            z-index: 1000;
+            animation: gentle-bounce 3s ease-in-out infinite;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+        
+        .floating-cat:hover {
+            opacity: 1;
+            animation: excited-bounce 0.5s ease-in-out infinite;
+        }
+        
+        @keyframes gentle-bounce {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+        
+        @keyframes excited-bounce {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+            25% {
+                transform: translateY(-5px) rotate(-5deg);
+            }
+            75% {
+                transform: translateY(-5px) rotate(5deg);
+            }
+        }
     </style>
 </head>
 <body>
     <!-- Navigation Bar -->
     <nav class="navbar">
         <div class="navbar-container">
-            <a href="/calculator" class="navbar-brand">🧮 Tax Calculator</a>
+            <a href="/calculator" class="navbar-brand">MiMo 🐱 Proyección Declaración Anual</a>
             <div class="navbar-nav">
                 {% if user %}
-                    <span class="nav-item">Welcome, {{ user.name }}!</span>
-                    <button id="generateRecommendationsBtn" class="btn-primary" disabled>
-                        Generate Recommendations
-                    </button>
+                    <span class="nav-item">Hola, {{ user.name }}!</span>
                     <a href="/logout" class="nav-item">Logout</a>
                 {% else %}
                     <a href="/auth/google" class="nav-item">Login with Google</a>
@@ -521,35 +772,38 @@
                             <h4>🏥 General</h4>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="general_deductions">Total General Deductions ($):</label>
+                                    <label for="general_deductions">Total Deducciones Generales ($):</label>
                                     <small class="input-subtitle">Médico/Dental • Funeral • Donaciones • Intereses Hipotecarios • Jubilación • Primas de Seguro de Gastos Médicos • Pediatra • Ginecólogo • Psicología • Nutriología</small>
                                     <input type="number" id="general_deductions" name="general_deductions" step="0.01" min="0" value="71000">
                                 </div>
                             </div>
+
                         </div>
 
                         <!-- Tuition Expenses -->
                         <div class="final-section">
-                            <h4>🎓 Tuition</h4>
+                            <h4>🎓 Colegiaturas</h4>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="total_tuition">Total Tuition Expenses ($):</label>
+                                    <label for="total_tuition">Total Colegiaturas ($):</label>
                                     <small class="input-subtitle">Preescolar • Primaria • Secundaria • Técnico • Preparatoria</small>
                                     <input type="number" id="total_tuition" name="total_tuition" step="0.01" min="0" value="0">
                                 </div>
                             </div>
+
                         </div>
 
                         <!-- PPR Contributions -->
                         <div class="final-section">
-                            <h4>💰 PPR</h4>
+                            <h4>💰 PPR & AFORE</h4>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="total_ppr">Total PPR Contributions ($):</label>
+                                    <label for="total_ppr">Total Contribuciones ($):</label>
                                     <small class="input-subtitle">Contribuciones PPR • Contribuciones Afore</small>
                                     <input type="number" id="total_ppr" name="total_ppr" step="0.01" min="0" value="0">
                                 </div>
                             </div>
+
                         </div>
                     </div>
                 </div>
@@ -576,7 +830,7 @@
             </div>
             <!-- COLUMN 2: RESULTS -->
             <div class="grid-column column-2">
-                <h3 class="column-header">📊 Resultados</h3>
+                <h3 class="column-header">📊 Resultados 🐾</h3>
 
                 <!-- Loading indicator -->
                 <div class="loading" id="loading">
@@ -606,8 +860,14 @@
             </div>
             <!-- COLUMN 3: RECOMMENDATIONS -->
             <div class="grid-column column-3 recommendations-section">
-                <h3 class="column-header">🎯 Recomendaciones Fiscales</h3>
+                <h3 class="column-header">😻 Miau-ximiza tus Impuestos</h3>
+                <div id="focus-indicator" class="focus-indicator" style="display: none;">
+                    💡 <em>Vista enfocada en recomendaciones - modifica cualquier campo para restaurar</em>
+                </div>
                 {% if user %}
+                    <button id="generateRecommendationsBtn" class="btn-primary" style="width: 100%; margin-bottom: 10px;">
+                        🐱 Obtener mi recomendación
+                    </button>
                     <div class="usage-counter" id="usage-counter">
                         Cargando uso de recomendaciones...
                     </div>
@@ -622,7 +882,68 @@
         </div>
     </div>
 
+    <!-- Floating cat easter egg -->
+    <div class="floating-cat" id="floatingCat" title="¡Miau! Soy tu asistente fiscal felino 🐱">
+        😺
+    </div>
+
+    <!-- Include marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
     <script>
+        // Configure marked.js options
+        marked.setOptions({
+            breaks: true,
+            gfm: true
+        });
+        
+        // Smart restoration system - tracks if user has modified inputs
+        let userHasModifiedInputs = false;
+        let initialFormState = {};
+        
+        // Function to capture initial form state
+        function captureInitialFormState() {
+            const form = document.getElementById('taxForm');
+            const inputs = form.querySelectorAll('input, select');
+            
+            inputs.forEach(input => {
+                if (input.type === 'hidden') return; // Skip hidden inputs
+                initialFormState[input.id] = input.value;
+            });
+        }
+        
+        // Function to check if form has been modified
+        function checkFormModified() {
+            const form = document.getElementById('taxForm');
+            const inputs = form.querySelectorAll('input, select');
+            
+            for (let input of inputs) {
+                if (input.type === 'hidden') continue; // Skip hidden inputs
+                if (initialFormState[input.id] !== input.value) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        // Function to mark that user has modified inputs
+        function markUserModification() {
+            userHasModifiedInputs = true;
+            
+            // Hide focus indicator and restore grid if currently focused
+            const calculatorGrid = document.querySelector('.calculator-grid');
+            const focusIndicator = document.getElementById('focus-indicator');
+            
+            if (calculatorGrid && calculatorGrid.classList.contains('generating-recommendations')) {
+                calculatorGrid.classList.remove('generating-recommendations');
+                if (focusIndicator) focusIndicator.style.display = 'none';
+                // Update initial state to current state
+                captureInitialFormState();
+                // Reset the flag
+                userHasModifiedInputs = false;
+            }
+        }
+        
         // Debounce function to limit API calls
         function debounce(func, wait) {
             let timeout;
@@ -696,6 +1017,8 @@
                 minimumFractionDigits: 2
             }).format(amount);
         }
+
+
 
         // Function to make API call and update results
         async function calculateTaxes() {
@@ -787,21 +1110,21 @@
             if (data.balance_in_favor > 0) {
                 balanceDiv.innerHTML = `
                     <div class="balance-favor">
-                        <h3>💰 Balance in Favor</h3>
+                        <h3>💰 Balance a Favor</h3>
                         <div style="font-size: 24px; font-weight: bold;">${formatCurrency(data.balance_in_favor)}</div>
                     </div>
                 `;
             } else if (data.balance_to_pay > 0) {
                 balanceDiv.innerHTML = `
                     <div class="balance-pay">
-                        <h3>⚠️ Balance to Pay</h3>
+                        <h3>⚠️ Balance a Pagar</h3>
                         <div style="font-size: 24px; font-weight: bold;">${formatCurrency(data.balance_to_pay)}</div>
                     </div>
                 `;
             } else {
                 balanceDiv.innerHTML = `
                     <div class="balance-favor">
-                        <h3>⚖️ No Balance</h3>
+                        <h3>⚖️ Sin Balance</h3>
                         <div style="font-size: 24px; font-weight: bold;">$0.00</div>
                     </div>
                 `;
@@ -812,72 +1135,212 @@
         async function getRecommendationUsage() {
             try {
                 const response = await fetch('/api/recommendations/usage');
+                console.log('Usage response status:', response.status);
+                
                 if (response.ok) {
                     const data = await response.json();
+                    console.log('Usage data:', data);
                     updateUsageCounter(data.used_today, data.daily_limit);
                     
                     const generateBtn = document.getElementById('generateRecommendationsBtn');
                     if (generateBtn) {
                         generateBtn.disabled = data.used_today >= data.daily_limit;
+                        console.log('Button disabled state:', data.used_today >= data.daily_limit);
                     }
+                } else {
+                    // If not authenticated, keep button disabled and show appropriate message
+                    console.log('Response not ok:', response.status, response.statusText);
+                    const generateBtn = document.getElementById('generateRecommendationsBtn');
+                    if (generateBtn) {
+                        generateBtn.disabled = true;
+                    }
+                    updateUsageCounter(0, 0, 'Login required');
                 }
             } catch (error) {
                 console.error('Error getting recommendation usage:', error);
+                const generateBtn = document.getElementById('generateRecommendationsBtn');
+                if (generateBtn) {
+                    generateBtn.disabled = true;
+                }
             }
         }
 
         // Function to update usage counter display
-        function updateUsageCounter(used, limit) {
+        function updateUsageCounter(used, limit, message = null) {
             const usageCounter = document.getElementById('usage-counter');
             if (usageCounter) {
-                usageCounter.innerHTML = `
-                    <strong>Recomendaciones hoy:</strong> ${used}/${limit} usadas
-                    ${used >= limit ? '<br><small>Límite diario alcanzado. ¡Intenta de nuevo mañana!</small>' : ''}
-                `;
+                if (message) {
+                    usageCounter.innerHTML = message;
+                } else {
+                    usageCounter.innerHTML = `Recomendaciones hoy: ${used}/${limit} usadas`;
+                }
             }
         }
 
-        // Function to generate recommendations
+        // Function to generate recommendations with streaming
         async function generateRecommendations() {
             const generateBtn = document.getElementById('generateRecommendationsBtn');
             const recommendationsContent = document.getElementById('recommendations-content');
+            const calculatorGrid = document.querySelector('.calculator-grid');
             
             if (!generateBtn || !recommendationsContent) return;
             
             try {
                 generateBtn.disabled = true;
-                generateBtn.textContent = 'Generating...';
+                generateBtn.textContent = '🐱 Miau-lizando...';
                 
-                const response = await fetch('/api/recommendations', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                });
+                // Add class to reorder grid and highlight recommendations
+                calculatorGrid.classList.add('generating-recommendations');
                 
-                if (response.ok) {
-                    const data = await response.json();
-                    
-                    recommendationsContent.innerHTML = `
-                        <h4>🎯 Personalized Recommendations</h4>
-                        <ul>
-                            ${data.recommendations.map(rec => rec).join('')}
-                        </ul>
-                    `;
-                    recommendationsContent.style.display = 'block';
-                    
-                    // Update usage counter
-                    await getRecommendationUsage();
-                } else {
-                    const error = await response.json();
-                    alert(`Error: ${error.detail || 'Failed to generate recommendations'}`);
+                // Show loading state
+                recommendationsContent.innerHTML = `
+                    <div class="streaming-indicator">
+                        <div class="streaming-dots">
+                            <span></span><span></span><span></span>
+                        </div>
+                        <p>Analizando tu situación fiscal...</p>
+                    </div>
+                    <div id="streaming-text" style="display: none;"></div>
+                `;
+                recommendationsContent.style.display = 'block';
+                
+                // Get current form data
+                const formData = getFormData();
+                
+                // Try streaming first
+                try {
+                    await generateWithStreaming(formData, recommendationsContent);
+                } catch (streamError) {
+                    console.log('Streaming failed, falling back to regular request:', streamError);
+                    await generateWithRegularRequest(formData, recommendationsContent);
                 }
+                
+                // Update usage counter
+                await getRecommendationUsage();
+                
             } catch (error) {
                 console.error('Error generating recommendations:', error);
-                alert('Error generating recommendations. Please try again.');
+                recommendationsContent.innerHTML = `
+                    <h4>⚠️ Error</h4>
+                    <p>Error generando recomendaciones. Por favor, intenta nuevamente.</p>
+                `;
             } finally {
-                generateBtn.textContent = 'Generate Recommendations';
-                // Button state will be updated by getRecommendationUsage()
+                generateBtn.textContent = '🐱 Obtener mi recomendación';
+                // Smart restoration: only remove grid reordering if user has modified inputs
+                setTimeout(() => {
+                    const focusIndicator = document.getElementById('focus-indicator');
+                    
+                    if (userHasModifiedInputs || checkFormModified()) {
+                        calculatorGrid.classList.remove('generating-recommendations');
+                        if (focusIndicator) focusIndicator.style.display = 'none';
+                        // Reset the flag after restoration
+                        userHasModifiedInputs = false;
+                        // Update initial state to current state
+                        captureInitialFormState();
+                    } else {
+                        // Show focus indicator when keeping grid focused
+                        if (focusIndicator) focusIndicator.style.display = 'block';
+                    }
+                }, 1200); // Wait 1.2 seconds to let user appreciate the slower transition
+            }
+        }
+
+        // Function to handle streaming recommendations
+        async function generateWithStreaming(formData, recommendationsContent) {
+            const response = await fetch('/api/recommendations/stream', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let streamingText = '';
+            
+            // Show streaming text area
+            const streamingTextEl = document.getElementById('streaming-text');
+            const streamingIndicator = document.querySelector('.streaming-indicator');
+            streamingTextEl.style.display = 'block';
+            streamingIndicator.style.display = 'none';
+
+            try {
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
+
+                    for (let line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                
+                                if (data.type === 'start') {
+                                    streamingTextEl.innerHTML = `
+                                        <div style="text-align: center; padding: 20px;">
+                                            <img src="https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif" alt="Generando recomendaciones" style="width: 120px; height: auto; border-radius: 8px; margin-bottom: 10px;">
+                                            <p style="color: #6c757d; font-style: italic; margin: 0;">Analizando tu situación fiscal...</p>
+                                        </div>
+                                    `;
+                                } else if (data.type === 'chunk') {
+                                    streamingText += data.content;
+                                    streamingTextEl.innerHTML = `<div style="white-space: pre-wrap; color: #495057;">${streamingText}</div>`;
+                                } else if (data.type === 'complete') {
+                                    // Show final formatted recommendations in Markdown
+                                    const markdownContent = data.markdown || '';
+                                    const htmlContent = marked.parse(markdownContent);
+                                    recommendationsContent.innerHTML = `
+                                        <div class="markdown-content">${htmlContent}</div>
+                                    `;
+                                    break;
+                                } else if (data.type === 'error') {
+                                    const errorMarkdown = data.markdown || '**Error:** Problema durante la generación';
+                                    const errorHtml = marked.parse(errorMarkdown);
+                                    recommendationsContent.innerHTML = `
+                                        <h4>⚠️ Error</h4>
+                                        <div class="markdown-content">${errorHtml}</div>
+                                    `;
+                                    break;
+                                }
+                            } catch (parseError) {
+                                console.log('Parse error (ignoring):', parseError);
+                            }
+                        }
+                    }
+                }
+            } finally {
+                reader.releaseLock();
+            }
+        }
+
+        // Fallback function for regular (non-streaming) requests
+        async function generateWithRegularRequest(formData, recommendationsContent) {
+            const response = await fetch('/api/recommendations', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const markdownContent = data.recommendations_markdown || '';
+                const htmlContent = marked.parse(markdownContent);
+                recommendationsContent.innerHTML = `
+                    <h4>🎯 Recomendaciones Fiscales Personalizadas</h4>
+                    <div class="markdown-content">${htmlContent}</div>
+                `;
+            } else {
+                const error = await response.json();
+                throw new Error(error.detail || 'Failed to generate recommendations');
             }
         }
 
@@ -887,10 +1350,20 @@
         // Add event listeners to all form inputs
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('taxForm');
-            const inputs = form.querySelectorAll('input');
+            const inputs = form.querySelectorAll('input, select');
+            
+            // Capture initial form state
+            captureInitialFormState();
             
             inputs.forEach(input => {
+                if (input.type === 'hidden') return; // Skip hidden inputs
+                
+                // Add calculation listener
                 input.addEventListener('input', debouncedCalculateTaxes);
+                
+                // Add modification detection listener
+                input.addEventListener('input', markUserModification);
+                input.addEventListener('change', markUserModification);
             });
             
             // Add event listener for recommendations button
@@ -902,6 +1375,38 @@
             // Load initial data
             calculateTaxes();
             getRecommendationUsage();
+            
+            // Add floating cat interaction
+            const floatingCat = document.getElementById('floatingCat');
+            const catExpressions = ['😺', '😸', '😹', '😻', '🙀', '😿', '😾', '🐱'];
+            let currentCatIndex = 0;
+            
+            if (floatingCat) {
+                floatingCat.addEventListener('click', function() {
+                    currentCatIndex = (currentCatIndex + 1) % catExpressions.length;
+                    floatingCat.textContent = catExpressions[currentCatIndex];
+                    
+                    // Random cat phrases
+                    const catPhrases = [
+                        '¡Miau! ¡Purr-fecto cálculo!',
+                        '¡Gat-rantizo buenos resultados!',
+                        '¡Es-paw-cialmente bueno!',
+                        '¡Feli-nanzas en orden!',
+                        '¡Ronroneo de aprobación!',
+                        '¡Miau-ravilloso trabajo!'
+                    ];
+                    const randomPhrase = catPhrases[Math.floor(Math.random() * catPhrases.length)];
+                    floatingCat.title = randomPhrase;
+                });
+                
+                // Occasionally change cat expression
+                setInterval(() => {
+                    if (Math.random() < 0.3) { // 30% chance every 5 seconds
+                        currentCatIndex = (currentCatIndex + 1) % catExpressions.length;
+                        floatingCat.textContent = catExpressions[currentCatIndex];
+                    }
+                }, 5000);
+            }
         });
     </script>
 </body>

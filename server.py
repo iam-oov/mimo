@@ -1,14 +1,14 @@
 import json
 import os
 import urllib.parse
-from datetime import datetime, timedelta
+
 from typing import Any, Dict, Optional
 
 import google.oauth2.id_token
 import google.auth.transport.requests as google_requests
 import requests
 from fastapi import FastAPI, Request, Depends, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 from starlette.middleware.sessions import SessionMiddleware
@@ -578,7 +578,7 @@ async def get_recommendation_usage(
 
     user_id = user.get("sub", user.get("email", "unknown"))
     used_today = get_user_recommendation_usage(user_id)
-    daily_limit = 2
+    daily_limit = 20
 
     return {
         "used_today": used_today,
@@ -597,7 +597,7 @@ async def generate_recommendations(
 
     user_id = user.get("sub", user.get("email", "unknown"))
     used_today = get_user_recommendation_usage(user_id)
-    daily_limit = 2
+    daily_limit = 20
 
     if used_today >= daily_limit:
         raise HTTPException(
@@ -605,60 +605,192 @@ async def generate_recommendations(
             detail=f"Daily recommendation limit reached ({daily_limit}/day). Try again tomorrow!",
         )
 
-    fallback_recommendations = [
-        "Consider maximizing your personal deductions to reduce taxable income.",
-        "Review your withholding tax to avoid large payments at year-end.",
-        "Keep detailed records of all deductible expenses throughout the year.",
-        "Consider contributing to a retirement plan for additional tax benefits.",
-    ]
+    try:
+        # Convert TaxInputData to the format expected by fiscal_recommendations
+        user_data_for_recommendations = {
+            "contribuyente": {
+                "nombre_o_referencia": tax_data.taxpayer_name or "Usuario",
+                "ejercicio_fiscal": tax_data.fiscal_year,
+            },
+            "ingresos": {
+                "ingreso_bruto_mensual_ordinario": tax_data.monthly_gross_income,
+                "dias_aguinaldo": tax_data.bonus_days,
+                "dias_vacaciones_anuales": tax_data.vacation_days,
+            },
+        }
 
-    new_count = increment_user_recommendation_usage(user_id)
+        # Calculate tax results to pass to recommendation system
+        user_data_for_calculation = {
+            "taxpayer_name": tax_data.taxpayer_name,
+            "fiscal_year": tax_data.fiscal_year,
+            "monthly_gross_income": tax_data.monthly_gross_income,
+            "monthly_net_income": tax_data.monthly_net_income,
+            "bonus_days": tax_data.bonus_days,
+            "vacation_days": tax_data.vacation_days,
+            "vacation_premium_percentage": tax_data.vacation_premium_percentage,
+            "general_deductions": tax_data.general_deductions,
+            "total_tuition": tax_data.total_tuition,
+            "total_ppr": tax_data.total_ppr,
+        }
 
-    return {
-        "recommendations": fallback_recommendations,
-        "usage_info": {
-            "used_today": new_count,
-            "daily_limit": daily_limit,
-            "remaining": max(0, daily_limit - new_count),
-        },
-    }
+        # Load ISR table and calculate taxes
+        data_reader = DataReader("")
+        isr_table = data_reader.get_isr_table(tax_data.fiscal_year)
+        tax_calculator = TaxCalculator(user_data_for_calculation, isr_table)
+        calculation_result = tax_calculator.calculate_tax_balance()
+
+        # Generate recommendations using streaming (collect all chunks)
+        recommendation_service = RecommendationFactory.create_service(use_ai=True)
+
+        accumulated_text = ""
+        for chunk in recommendation_service.get_recommendations_stream(
+            calculation_result, user_data_for_recommendations, tax_data.fiscal_year
+        ):
+            accumulated_text += chunk
+
+        # Process the response - now returning Markdown content
+        if hasattr(recommendation_service.primary_generator, "_process_response"):
+            recommendations_markdown = (
+                recommendation_service.primary_generator._process_response(
+                    accumulated_text
+                )
+            )
+        else:
+            # For fallback generator, return as is
+            recommendations_markdown = accumulated_text
+
+        new_count = increment_user_recommendation_usage(user_id)
+
+        return {
+            "recommendations_markdown": recommendations_markdown,
+            "usage_info": {
+                "used_today": new_count,
+                "daily_limit": daily_limit,
+                "remaining": max(0, daily_limit - new_count),
+            },
+        }
+
+    except Exception as e:
+        print(f"Error generating recommendations: {e}")
+        # Fallback to simple recommendations if there's an error
+        fallback_recommendations = [
+            "<li><strong>Maximizar deducciones personales:</strong> Conserva todos los comprobantes fiscales de gastos médicos, dentales, y otros gastos deducibles para optimizar tu declaración.</li>",
+            "<li><strong>Planificación fiscal:</strong> Considera abrir una cuenta PPR para obtener beneficios fiscales y ahorrar para tu retiro.</li>",
+            "<li><strong>Revisión de retenciones:</strong> Evalúa con tu empleador si las retenciones mensuales están optimizadas para tu situación fiscal.</li>",
+            "<li><strong>Documentación organizada:</strong> Mantén un archivo digital de todos tus comprobantes fiscales durante el año para facilitar tu declaración.</li>",
+        ]
+
+        new_count = increment_user_recommendation_usage(user_id)
+
+        return {
+            "recommendations": fallback_recommendations,
+            "usage_info": {
+                "used_today": new_count,
+                "daily_limit": daily_limit,
+                "remaining": max(0, daily_limit - new_count),
+            },
+        }
 
 
-@app.get("/api/recommendations")
-async def get_recommendations(
-    user: Dict[str, Any] = Depends(get_current_user),
+@app.post("/api/recommendations/stream")
+async def generate_recommendations_stream(
+    tax_data: TaxInputData, user: Optional[Dict[str, Any]] = Depends(get_current_user)
 ):
+    """Generate fiscal recommendations with streaming response"""
     if not user:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        raise HTTPException(status_code=401, detail="Authentication required")
 
-    # Rate limiting logic
-    now = datetime.now()
-    user_recommendations = user.get("recommendations", [])
-    recent_recommendations = [
-        r for r in user_recommendations if now - r["timestamp"] < timedelta(days=5)
-    ]
+    user_id = user.get("sub", user.get("email", "unknown"))
+    used_today = get_user_recommendation_usage(user_id)
+    daily_limit = 20
 
-    if len(recent_recommendations) >= 3:
-        raise HTTPException(status_code=429, detail="Rate limit exceeded")
+    if used_today >= daily_limit:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Daily recommendation limit reached ({daily_limit}/day). Try again tomorrow!",
+        )
 
-    data_reader = DataReader("data/sim1.json")
-    user_data = data_reader.get_user_data()
-    fiscal_year = user_data["contribuyente"]["ejercicio_fiscal"]
-    isr_table = data_reader.get_isr_table(fiscal_year)
+    async def generate_stream():
+        try:
+            # Convert TaxInputData to the format expected by fiscal_recommendations
+            user_data_for_recommendations = {
+                "contribuyente": {
+                    "nombre_o_referencia": tax_data.taxpayer_name or "Usuario",
+                    "ejercicio_fiscal": tax_data.fiscal_year,
+                },
+                "ingresos": {
+                    "ingreso_bruto_mensual_ordinario": tax_data.monthly_gross_income,
+                    "dias_aguinaldo": tax_data.bonus_days,
+                    "dias_vacaciones_anuales": tax_data.vacation_days,
+                },
+            }
 
-    tax_calculator = TaxCalculator(user_data, isr_table)
-    calculation_result = tax_calculator.calculate_tax_balance()
+            # Calculate tax results
+            user_data_for_calculation = {
+                "taxpayer_name": tax_data.taxpayer_name,
+                "fiscal_year": tax_data.fiscal_year,
+                "monthly_gross_income": tax_data.monthly_gross_income,
+                "monthly_net_income": tax_data.monthly_net_income,
+                "bonus_days": tax_data.bonus_days,
+                "vacation_days": tax_data.vacation_days,
+                "vacation_premium_percentage": tax_data.vacation_premium_percentage,
+                "general_deductions": tax_data.general_deductions,
+                "total_tuition": tax_data.total_tuition,
+                "total_ppr": tax_data.total_ppr,
+            }
 
-    recommendation_service = RecommendationFactory.create_service()
-    recommendations = await recommendation_service.get_recommendations(
-        calculation_result, user_data, fiscal_year
+            data_reader = DataReader("")
+            isr_table = data_reader.get_isr_table(tax_data.fiscal_year)
+            tax_calculator = TaxCalculator(user_data_for_calculation, isr_table)
+            calculation_result = tax_calculator.calculate_tax_balance()
+
+            # Use streaming recommendations
+            recommendation_service = RecommendationFactory.create_service(use_ai=True)
+
+            print("🚀 Starting streaming recommendations...")
+            yield 'data: {"type":"start"}\n\n'
+
+            accumulated_text = ""
+            for chunk in recommendation_service.get_recommendations_stream(
+                calculation_result, user_data_for_recommendations, tax_data.fiscal_year
+            ):
+                accumulated_text += chunk
+                yield f'data: {{"type":"chunk","content":"{chunk.replace('"', '\\"').replace("\n", "\\n")}"}}\n\n'
+
+            # Process the complete response - now handling Markdown
+            if hasattr(recommendation_service.primary_generator, "_process_response"):
+                processed_markdown = (
+                    recommendation_service.primary_generator._process_response(
+                        accumulated_text
+                    )
+                )
+                yield f'data: {{"type":"complete","markdown":"{processed_markdown.replace('"', '\\"').replace(chr(10), "\\n").replace(chr(13), "\\r")}"}}\n\n'
+            else:
+                # For fallback generator, return markdown as is
+                fallback_markdown = (
+                    accumulated_text
+                    if accumulated_text
+                    else "**Error:** No se pudieron generar recomendaciones."
+                )
+                yield f'data: {{"type":"complete","markdown":"{fallback_markdown.replace('"', '\\"').replace(chr(10), "\\n").replace(chr(13), "\\r")}"}}\n\n'
+
+            # Increment usage counter
+            increment_user_recommendation_usage(user_id)
+
+        except Exception as e:
+            print(f"Error in streaming: {e}")
+            error_markdown = "**Error temporal:** Ocurrió un problema generando las recomendaciones. Por favor, intenta nuevamente."
+            yield f'data: {{"type":"error","markdown":"{error_markdown}"}}\n\n'
+
+    return StreamingResponse(
+        generate_stream(),
+        media_type="text/plain",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Content-Type": "text/event-stream",
+        },
     )
-
-    # Store recommendation request
-    user_recommendations.append({"timestamp": now})
-    user["recommendations"] = user_recommendations
-
-    return {"recommendations": recommendations}
 
 
 @app.get("/auth/google")

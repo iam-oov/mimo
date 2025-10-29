@@ -6,7 +6,7 @@ Sigue los principios SOLID para mantener código limpio y extensible
 
 import os
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List
+from typing import Dict, Any, Generator
 import google.generativeai as genai
 
 
@@ -17,10 +17,10 @@ class RecommendationGenerator(ABC):
     """
 
     @abstractmethod
-    def generate_recommendations(
+    def generate_recommendations_stream(
         self, calculation_result: Any, user_data: Dict[str, Any], fiscal_year: int
-    ) -> List[str]:
-        """Genera recomendaciones fiscales personalizadas"""
+    ) -> Generator[str, None, None]:
+        """Genera recomendaciones fiscales personalizadas con streaming"""
         pass
 
 
@@ -30,18 +30,54 @@ class FallbackRecommendationGenerator(RecommendationGenerator):
     Principio: Single Responsibility Principle (SRP)
     """
 
-    def generate_recommendations(
+    def generate_recommendations_stream(
         self, calculation_result: Any, user_data: Dict[str, Any], fiscal_year: int
-    ) -> List[str]:
-        """Genera recomendaciones fiscales por defecto"""
-        return [
-            "<li><strong>Maximizar deducciones personales:</strong> Asegúrate de conservar todos los comprobantes fiscales de gastos médicos, dentales, gastos funerarios, donativos, intereses reales de créditos hipotecarios y primas de seguros de gastos médicos mayores para el próximo ejercicio fiscal.</li>",
-            "<li><strong>Planificación de inversiones:</strong> Considera abrir una cuenta de ahorro para el retiro (PPR) que te permita deducir hasta 5 UMAs anuales, reduciendo tu base gravable y generando rendimientos a largo plazo con beneficios fiscales.</li>",
-            "<li><strong>Estrategia de colegiaturas:</strong> Si tienes gastos educativos, verifica que las instituciones estén autorizadas por la SEP y que los montos no excedan los topes establecidos por nivel educativo para maximizar esta deducción.</li>",
-            "<li><strong>Optimización de retenciones:</strong> Revisa con tu empleador la posibilidad de ajustar las retenciones mensuales para evitar retenciones excesivas que generen saldos a favor importantes.</li>",
-            "<li><strong>Documentación y cumplimiento:</strong> Mantén un archivo digital organizado de todos tus comprobantes fiscales y considera usar herramientas de gestión fiscal para automatizar el seguimiento de deducciones durante el año.</li>",
-            "<li><strong>Consulta especializada:</strong> Dada la complejidad de tu situación fiscal, considera una consulta con un contador público certificado para identificar oportunidades específicas de optimización fiscal.</li>",
-        ]
+    ):
+        """Genera recomendaciones fiscales por defecto como stream simulado en formato Markdown"""
+        recommendations_markdown = """
+### 1. **Maximizar deducciones personales**
+
+Asegúrate de conservar todos los comprobantes fiscales de gastos médicos, dentales, gastos funerarios, donativos, intereses reales de créditos hipotecarios y primas de seguros de gastos médicos mayores para el próximo ejercicio fiscal.
+
+> 💡 **Ejemplo para tu situación:**
+> Con tus ingresos actuales, puedes deducir hasta el 15% en gastos médicos y generales, lo que te generaría un ahorro fiscal significativo.
+
+---
+
+### 2. **Planificación de inversiones (PPR)**
+
+Considera abrir una cuenta de ahorro para el retiro (PPR) que te permita deducir hasta 5 UMAs anuales, reduciendo tu base gravable y generando rendimientos a largo plazo con beneficios fiscales.
+
+> 💡 **Ejemplo para tu situación:**
+> Puedes deducir hasta 10% de tus ingresos en PPR, lo que reduciría tu base gravable considerablemente.
+
+---
+
+### 3. **Estrategia de colegiaturas**
+
+Si tienes gastos educativos, verifica que las instituciones estén autorizadas por la SEP y que los montos no excedan los topes establecidos por nivel educativo para maximizar esta deducción.
+
+---
+
+### 4. **Optimización de retenciones**
+
+Revisa con tu empleador la posibilidad de ajustar las retenciones mensuales para evitar retenciones excesivas que generen saldos a favor importantes.
+
+---
+
+### 5. **Documentación y cumplimiento**
+
+Mantén un archivo digital organizado de todos tus comprobantes fiscales y considera usar herramientas de gestión fiscal para automatizar el seguimiento de deducciones durante el año.
+
+---
+
+### 6. **Consulta especializada**
+
+Dada la complejidad de tu situación fiscal, considera una consulta con un contador público certificado para identificar oportunidades específicas de optimización fiscal.
+        """
+
+        # Simular streaming devolviendo todo el contenido de una vez
+        yield recommendations_markdown.strip()
 
 
 class GeminiRecommendationGenerator(RecommendationGenerator):
@@ -65,19 +101,19 @@ class GeminiRecommendationGenerator(RecommendationGenerator):
         else:
             self.model = None
 
-    def generate_recommendations(
+    def generate_recommendations_stream(
         self, calculation_result: Any, user_data: Dict[str, Any], fiscal_year: int
-    ) -> List[str]:
+    ):
         """
-        Genera recomendaciones fiscales usando Gemini AI
+        Genera recomendaciones fiscales usando Gemini AI con streaming
 
         Args:
             calculation_result: Resultado del cálculo fiscal
             user_data: Datos del contribuyente
             fiscal_year: Año fiscal
 
-        Returns:
-            Lista de recomendaciones en formato HTML
+        Yields:
+            Fragmentos de texto de las recomendaciones en tiempo real
         """
         if not self.model:
             raise ValueError("Gemini API key not configured")
@@ -85,12 +121,13 @@ class GeminiRecommendationGenerator(RecommendationGenerator):
         prompt = self._create_prompt(calculation_result, user_data, fiscal_year)
 
         try:
-            response = self.model.generate_content(prompt)
+            response = self.model.generate_content(prompt, stream=True)
 
-            if response.text:
-                return self._process_response(response.text)
-            else:
-                raise ValueError("Empty response from Gemini")
+            accumulated_text = ""
+            for chunk in response:
+                if chunk.text:
+                    accumulated_text += chunk.text
+                    yield chunk.text
 
         except Exception as e:
             raise RuntimeError(f"Error generating recommendations with Gemini: {e}")
@@ -106,82 +143,81 @@ class GeminiRecommendationGenerator(RecommendationGenerator):
         contribuyente = user_data["contribuyente"]
 
         return f"""
-        Eres un experto fiscal mexicano especializado en optimización fiscal para personas físicas. 
-        Analiza la siguiente situación fiscal y proporciona 5-6 recomendaciones específicas y profesionales para maximizar el retorno fiscal.
+        Eres "Gatito Fiscal" 🐱, un gato profesional asesor fiscal mexicano especializado en optimización fiscal para personas físicas. 
+        Te presentas como un asesor experto que ayuda a maximizar el saldo a favor de sus clientes.
+        Tienes un tono profesional pero con personalidad gatuna, usando expresiones como "miau", "purr-fecto", "gat-rantizo", "es-paw-cialmente" de manera elegante.
+        Tu misión es analizar la situación fiscal y dar exactamente 5 consejos estratégicos para AUMENTAR EL SALDO A FAVOR.
 
-        DATOS DEL CONTRIBUYENTE:
-        - Nombre: {contribuyente.get("nombre_o_referencia", "No especificado")}
-        - Ejercicio fiscal: {fiscal_year}
-        - Ingreso bruto anual: ${calculation_result.gross_annual_income:,.2f}
-        - Ingreso gravado total: ${calculation_result.total_taxable_income:,.2f}
-        - Deducciones actuales: ${calculation_result.authorized_deductions:,.2f}
-        - Base gravable: ${calculation_result.taxable_base:,.2f}
-        - Impuesto determinado: ${calculation_result.determined_tax:,.2f}
-        - Impuesto retenido: ${calculation_result.withheld_tax:,.2f}
-        - Saldo a favor: ${calculation_result.balance_in_favor:,.2f}
-        - Saldo a pagar: ${calculation_result.balance_to_pay:,.2f}
+        ## DATOS DEL CONTRIBUYENTE:
+        - **Nombre:** {contribuyente.get("nombre_o_referencia", "No especificado")}
+        - **Ejercicio fiscal:** {fiscal_year}
+        - **Ingreso bruto anual:** ${calculation_result.gross_annual_income:,.2f}
+        - **Ingreso gravado total:** ${calculation_result.total_taxable_income:,.2f}
+        - **Deducciones actuales:** ${calculation_result.authorized_deductions:,.2f}
+        - **Base gravable:** ${calculation_result.taxable_base:,.2f}
+        - **Impuesto determinado:** ${calculation_result.determined_tax:,.2f}
+        - **Impuesto retenido:** ${calculation_result.withheld_tax:,.2f}
+        - **Saldo a favor:** ${calculation_result.balance_in_favor:,.2f}
+        - **Saldo a pagar:** ${calculation_result.balance_to_pay:,.2f}
 
-        CONTEXTO ADICIONAL:
-        - Ingreso mensual ordinario: ${ingresos.get("ingreso_bruto_mensual_ordinario", 0):,.2f}
-        - Días de aguinaldo: {ingresos.get("dias_aguinaldo", 0)}
-        - Días de vacaciones: {ingresos.get("dias_vacaciones_anuales", 0)}
+        ## CONTEXTO ADICIONAL:
+        - **Ingreso mensual ordinario:** ${ingresos.get("ingreso_bruto_mensual_ordinario", 0):,.2f}
+        - **Días de aguinaldo:** {ingresos.get("dias_aguinaldo", 0)}
+        - **Días de vacaciones:** {ingresos.get("dias_vacaciones_anuales", 0)}
 
-        INSTRUCCIONES:
-        1. Analiza la situación fiscal específica de este contribuyente
-        2. Proporciona recomendaciones ESPECÍFICAS y PRÁCTICAS para el próximo ejercicio fiscal
-        3. Considera las leyes fiscales mexicanas vigentes para {fiscal_year + 1}
-        4. Enfócate en estrategias legales para maximizar deducciones y minimizar impuestos
-        5. Incluye números específicos cuando sea relevante
-        6. Cada recomendación debe tener un título en negrita y una explicación detallada
+        ## INSTRUCCIONES:
+        1. Preséntate brevemente como "Gatito Fiscal", tu asesor profesional
+        2. Analiza la situación fiscal específica de este contribuyente
+        3. Proporciona EXACTAMENTE 5 consejos estratégicos para AUMENTAR EL SALDO A FAVOR
+        4. Cada consejo debe ser ESPECÍFICO, PRÁCTICO y con números basados en su situación
+        5. Considera las leyes fiscales mexicanas vigentes para {fiscal_year + 1}
+        6. Enfócate en estrategias legales para maximizar deducciones y minimizar impuestos
         
-        FORMATO DE RESPUESTA:
-        Responde únicamente con 5-6 recomendaciones en formato HTML <li>, cada una con:
-        - Un título descriptivo en <strong>
-        - Una explicación detallada de 2-3 líneas
-        - Sin numeración manual (se manejará automáticamente)
+        ## FORMATO DE RESPUESTA:
+        IMPORTANTE: Estructura tu respuesta exactamente así:
         
-        Ejemplo de formato:
-        <li><strong>Título de la recomendación:</strong> Explicación detallada de la estrategia fiscal específica para este contribuyente...</li>
+        1. **Saludo gatuno breve según la hora:**
+        - Si es mañana (6:00-11:59): "¡Miau-nos días!" o "¡Buenos días! 🐱"
+        - Si es tarde (12:00-18:59): "¡Buenas tar-des!" o "¡Buenas tardes! 🐾"
+        - Si es noche (19:00-5:59): "¡Buenas no-ches!" o "¡Buenas noches! 😸"
+        
+        2. **Presentación breve (1 línea):**
+        "Soy Gatito Fiscal 🐱, tu asesor profesional, y te daré 5 consejos purr-fectos para aumentar tu saldo a favor:"
+        
+        3. **Exactamente 5 consejos numerados** usando toques gatunos sutiles como: "purr-fecto", "gat-rantizo", "es-paw-cialmente", "feli-nanzas", "miau-ravilloso"
+        
+        Para cada uno de los 5 consejos usa esta estructura:
+        ### [número]. **[Título del consejo para aumentar saldo a favor]**
+        
+        [Explicación de cómo este consejo específicamente AUMENTARÁ su saldo a favor]
+        
+        > **Cálculo purr-fecto para ti:**
+        > [Ejemplo con números exactos de cuánto AUMENTARÍA su saldo a favor con este consejo, basado en sus ${calculation_result.gross_annual_income:,.0f} de ingresos anuales]
+        
+        ---
+        
         """
 
-    def _process_response(self, response_text: str) -> List[str]:
+        # ## CONSEJOS ESPECÍFICOS PARA AUMENTAR SALDO A FAVOR:
+        # - **Deducciones generales:** Mostrar cuánto saldo adicional obtendría maximizando deducciones (límite 15% = ${calculation_result.gross_annual_income * 0.15:,.0f})
+        # - **PPR/Afore:** Calcular saldo extra con contribuciones adicionales (límite 10% ingresos o 5 UMAs)
+        # - **Colegiaturas:** Saldo adicional aprovechando topes educativos máximos
+        # - **Planeación fiscal:** Estrategias específicas para el próximo ejercicio
+        # - **Optimización de retenciones:** Cómo ajustar para mayor saldo a favor
+
+    def _process_response(self, response_text: str) -> str:
         """
-        Procesa la respuesta de Gemini y la convierte a formato de lista HTML
+        Procesa la respuesta de Gemini manteniéndola en formato Markdown
         Principio: Single Responsibility Principle (SRP)
         """
-        import re
-
         # Limpiar la respuesta
         response_text = response_text.strip()
 
-        # Si ya viene en formato HTML, extraer elementos <li>
-        recommendations = re.findall(r"<li>.*?</li>", response_text, re.DOTALL)
-        if recommendations:
-            return recommendations
+        # Si no hay contenido, devolver mensaje de error
+        if not response_text:
+            return "**Error procesando recomendaciones:** No se pudieron procesar las recomendaciones de IA correctamente."
 
-        # Si viene en formato markdown, convertir a HTML
-        lines = response_text.split("\n")
-        formatted_recommendations = []
-
-        for line in lines:
-            line = line.strip()
-            if line and ("**" in line or "*" in line):
-                # Convertir formato markdown a HTML
-                line = line.replace("**", "<strong>", 1).replace("**", "</strong>", 1)
-                line = line.replace("*", "<strong>", 1).replace("*", "</strong>", 1)
-
-                if not line.startswith("<li>"):
-                    line = f"<li>{line}</li>"
-
-                formatted_recommendations.append(line)
-
-        return (
-            formatted_recommendations
-            if formatted_recommendations
-            else [
-                "<li><strong>Error procesando recomendaciones:</strong> No se pudieron procesar las recomendaciones de IA correctamente.</li>"
-            ]
-        )
+        return response_text
 
 
 class RecommendationService:
@@ -205,36 +241,28 @@ class RecommendationService:
         self.primary_generator = primary_generator
         self.fallback_generator = fallback_generator
 
-    def get_recommendations(
+    def get_recommendations_stream(
         self, calculation_result: Any, user_data: Dict[str, Any], fiscal_year: int
-    ) -> List[str]:
+    ):
         """
-        Obtiene recomendaciones fiscales usando el generador primario,
-        con fallback automático en caso de error
+        Obtiene recomendaciones fiscales con streaming usando solo el generador primario
 
         Args:
             calculation_result: Resultado del cálculo fiscal
             user_data: Datos del contribuyente
             fiscal_year: Año fiscal
 
-        Returns:
-            Lista de recomendaciones en formato HTML
+        Yields:
+            Fragmentos de texto de las recomendaciones en tiempo real
         """
-        try:
-            print("🤖 Generando recomendaciones fiscales personalizadas con IA...")
-            recommendations = self.primary_generator.generate_recommendations(
-                calculation_result, user_data, fiscal_year
-            )
-            print("✅ Recomendaciones generadas exitosamente con IA")
-            return recommendations
+        print("🤖 Generando recomendaciones fiscales personalizadas con streaming...")
 
-        except Exception as e:
-            print(f"⚠️  Error con generador primario: {e}")
-            print("🔄 Usando recomendaciones por defecto...")
+        for chunk in self.primary_generator.generate_recommendations_stream(
+            calculation_result, user_data, fiscal_year
+        ):
+            yield chunk
 
-            return self.fallback_generator.generate_recommendations(
-                calculation_result, user_data, fiscal_year
-            )
+        print("✅ Recomendaciones generadas exitosamente")
 
 
 class RecommendationFactory:

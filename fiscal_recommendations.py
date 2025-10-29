@@ -8,6 +8,10 @@ import os
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Generator
 import google.generativeai as genai
+from tabla_isr_constants import get_tabla_isr
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class RecommendationGenerator(ABC):
@@ -82,24 +86,43 @@ Dada la complejidad de tu situación fiscal, considera una consulta con un conta
 
 class GeminiRecommendationGenerator(RecommendationGenerator):
     """
-    Generador de recomendaciones usando la API de Gemini
-    Principio: Single Responsibility Principle (SRP)
+    Generador de recomendaciones usando Gemini AI de Google
+    Principio: Single Responsibility Principle (SRP) y Dependency Inversion Principle (DIP)
     """
 
     def __init__(self, api_key: str | None = None):
         """
-        Inicializa el generador de Gemini
+        Inicializa el generador con la API key de Gemini
 
         Args:
-            api_key: Clave de API de Gemini. Si no se proporciona, se busca en variables de entorno
+            api_key: API key de Google Gemini. Si no se proporciona, se intenta obtener de variables de entorno
         """
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
-        if self.api_key:
+
+        if not self.api_key:
+            raise ValueError(
+                "API key de Google Gemini no encontrada. "
+                "Proporciona api_key o configura la variable de entorno GEMINI_API_KEY"
+            )
+
+        # Configurar Gemini
+        try:
             genai.configure(api_key=self.api_key)
-            # Usar gemini-2.5-pro que es más ampliamente disponible
             self.model = genai.GenerativeModel("gemini-2.5-pro")
-        else:
+        except Exception:
             self.model = None
+
+    def _get_isr_data(self, fiscal_year: int):
+        """
+        Obtiene los datos ISR para el año fiscal especificado
+
+        Args:
+            fiscal_year: Año fiscal
+
+        Returns:
+            TablaISR con la información fiscal del año
+        """
+        return get_tabla_isr(fiscal_year)
 
     def generate_recommendations_stream(
         self, calculation_result: Any, user_data: Dict[str, Any], fiscal_year: int
@@ -141,9 +164,14 @@ class GeminiRecommendationGenerator(RecommendationGenerator):
         """
         ingresos = user_data["ingresos"]
         contribuyente = user_data["contribuyente"]
+        tabla_isr = self._get_isr_data(fiscal_year)
+
+        # Extraer información relevante de la tabla ISR
+        constantes = tabla_isr.constantes
+        topes_colegiaturas = tabla_isr.topes_colegiaturas
 
         return f"""
-        Eres "Gatito Fiscal" 🐱, un gato profesional asesor fiscal mexicano especializado en optimización fiscal para personas físicas. 
+        Eres un "Gatito Fiscal" 🐱, un gato profesional asesor fiscal mexicano especializado en optimización fiscal para personas físicas. 
         Te presentas como un asesor experto que ayuda a maximizar el saldo a favor de sus clientes.
         Tienes un tono profesional pero con personalidad gatuna, usando expresiones como "miau", "purr-fecto", "gat-rantizo", "es-paw-cialmente" de manera elegante.
         Tu misión es analizar la situación fiscal y dar exactamente 5 consejos estratégicos para AUMENTAR EL SALDO A FAVOR.
@@ -165,13 +193,33 @@ class GeminiRecommendationGenerator(RecommendationGenerator):
         - **Días de aguinaldo:** {ingresos.get("dias_aguinaldo", 0)}
         - **Días de vacaciones:** {ingresos.get("dias_vacaciones_anuales", 0)}
 
+        ## LÍMITES Y TOPES FISCALES OFICIALES {fiscal_year}:
+        - **UMA diario:** ${constantes.valor_uma_diario:,.2f}
+        - **UMA anual:** ${constantes.valor_uma_anual:,.2f}
+        - **Tope deducciones generales:** {constantes.tope_general_deducciones_umas} UMAs = ${constantes.valor_uma_anual * constantes.tope_general_deducciones_umas:,.2f}
+        - **Tope PPR/Afore:** {constantes.tope_ppr_deducciones_umas} UMAs = ${constantes.valor_uma_anual * constantes.tope_ppr_deducciones_umas:,.2f}
+        - **Exención aguinaldo:** {constantes.exencion_aguinaldo_umas} UMAs = ${constantes.valor_uma_anual * constantes.exencion_aguinaldo_umas / 365:,.2f} diarios
+        - **Exención prima vacacional:** {constantes.exencion_prima_vacacional_umas} UMAs = ${constantes.valor_uma_anual * constantes.exencion_prima_vacacional_umas / 365:,.2f} diarios
+        
+        ### TOPES COLEGIATURAS {fiscal_year}:
+        - **Preescolar:** ${topes_colegiaturas.preescolar:,.2f}
+        - **Primaria:** ${topes_colegiaturas.primaria:,.2f}
+        - **Secundaria:** ${topes_colegiaturas.secundaria:,.2f}
+        - **Profesional técnico:** ${topes_colegiaturas.profesional_tecnico:,.2f}
+        - **Preparatoria:** ${topes_colegiaturas.preparatoria:,.2f}
+
         ## INSTRUCCIONES:
-        1. Preséntate brevemente como "Gatito Fiscal", tu asesor profesional
+        1. Preséntate brevemente como "Mimo el Gatito Fiscal", y tu asesor profesional
         2. Analiza la situación fiscal específica de este contribuyente
-        3. Proporciona EXACTAMENTE 5 consejos estratégicos para AUMENTAR EL SALDO A FAVOR
-        4. Cada consejo debe ser ESPECÍFICO, PRÁCTICO y con números basados en su situación
-        5. Considera las leyes fiscales mexicanas vigentes para {fiscal_year + 1}
-        6. Enfócate en estrategias legales para maximizar deducciones y minimizar impuestos
+        3. IMPORTANTE: Evalúa si ya están maximizadas ciertas deducciones usando los LÍMITES OFICIALES:
+           - Si deducciones generales ya son ≥${constantes.valor_uma_anual * constantes.tope_general_deducciones_umas:,.0f} ({constantes.tope_general_deducciones_umas} UMAs), NO recomiendes incrementarlas
+           - Si PPR/Afore ya está al máximo ${constantes.valor_uma_anual * constantes.tope_ppr_deducciones_umas:,.0f} ({constantes.tope_ppr_deducciones_umas} UMAs), NO recomiendes más contribuciones
+           - Si colegiaturas están en los topes oficiales mostrados arriba, NO recomiendes aumentarlas
+           - Usa los valores EXACTOS de UMA y topes oficiales en tus cálculos
+        4. Proporciona EXACTAMENTE 5 consejos estratégicos RELEVANTES para AUMENTAR EL SALDO A FAVOR
+        5. Cada consejo debe ser ESPECÍFICO, PRÁCTICO y con números basados en su situación
+        6. Considera las leyes fiscales mexicanas vigentes para {fiscal_year + 1}
+        7. Enfócate en estrategias legales para maximizar deducciones y minimizar impuestos
         
         ## FORMATO DE RESPUESTA:
         IMPORTANTE: Estructura tu respuesta exactamente así:
@@ -182,11 +230,11 @@ class GeminiRecommendationGenerator(RecommendationGenerator):
         - Si es noche (19:00-5:59): "¡Buenas no-ches!" o "¡Buenas noches! 😸"
         
         2. **Presentación breve (1 línea):**
-        "Soy Gatito Fiscal 🐱, tu asesor profesional, y te daré 5 consejos purr-fectos para aumentar tu saldo a favor:"
+        "Soy Mimo el Gatito Fiscal 🐱 y tu asesor profesional, y te daré consejos purr-fectos para aumentar tu saldo a favor:"
         
-        3. **Exactamente 5 consejos numerados** usando toques gatunos sutiles como: "purr-fecto", "gat-rantizo", "es-paw-cialmente", "feli-nanzas", "miau-ravilloso"
+        3. **Da 4 o 5 consejos numerados** usando toques gatunos sutiles como: "purr-fecto", "gat-rantizo", "es-paw-cialmente", "feli-nanzas", "miau-ravilloso"
         
-        Para cada uno de los 5 consejos usa esta estructura:
+        Para cada uno de los consejos usa esta estructura:
         ### [número]. **[Título del consejo para aumentar saldo a favor]**
         
         [Explicación de cómo este consejo específicamente AUMENTARÁ su saldo a favor]
@@ -196,24 +244,30 @@ class GeminiRecommendationGenerator(RecommendationGenerator):
         
         ---
         
-        """
+        ## CONSEJOS ESPECÍFICOS PARA AUMENTAR SALDO A FAVOR:
+        ANALIZA PRIMERO LA SITUACIÓN ACTUAL:
+        - Deducciones actuales: ${calculation_result.authorized_deductions:,.0f}
+        - Límite deducciones generales (15%): ${calculation_result.gross_annual_income * 0.15:,.0f}
+        - Límite PPR (10%): ${calculation_result.gross_annual_income * 0.10:,.0f}
+        - Límite colegiaturas según nivel educativo.
 
-        # ## CONSEJOS ESPECÍFICOS PARA AUMENTAR SALDO A FAVOR:
-        # - **Deducciones generales:** Mostrar cuánto saldo adicional obtendría maximizando deducciones (límite 15% = ${calculation_result.gross_annual_income * 0.15:,.0f})
-        # - **PPR/Afore:** Calcular saldo extra con contribuciones adicionales (límite 10% ingresos o 5 UMAs)
-        # - **Colegiaturas:** Saldo adicional aprovechando topes educativos máximos
-        # - **Planeación fiscal:** Estrategias específicas para el próximo ejercicio
-        # - **Optimización de retenciones:** Cómo ajustar para mayor saldo a favor
+        SOLO RECOMIENDA ESTRATEGIAS RELEVANTES Y VIABLES:
+        - NO recomiendes deducciones generales si ya superan el 15% del ingreso
+        - NO recomiendes PPR si ya está al máximo
+        - Enfócate en oportunidades reales de mejora
+        - Incluye estrategias de planeación fiscal para el próximo ejercicio
+        - Sugiere optimización de retenciones específica para su situación
+        - Considera inversiones deducibles alternativas
+        - Explora gastos médicos especializados no utilizados
+        """
 
     def _process_response(self, response_text: str) -> str:
         """
         Procesa la respuesta de Gemini manteniéndola en formato Markdown
         Principio: Single Responsibility Principle (SRP)
         """
-        # Limpiar la respuesta
         response_text = response_text.strip()
 
-        # Si no hay contenido, devolver mensaje de error
         if not response_text:
             return "**Error procesando recomendaciones:** No se pudieron procesar las recomendaciones de IA correctamente."
 

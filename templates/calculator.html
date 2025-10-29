@@ -420,6 +420,18 @@
             animation: gentle-pulse 3s ease-in-out infinite;
         }
         
+        .pin-status-indicator {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 1px solid #ffc107;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 12px;
+            color: #b8860b;
+            text-align: center;
+            margin-bottom: 15px;
+            animation: fadeIn 0.3s ease-in;
+        }
+        
         @keyframes gentle-pulse {
             0%, 100% {
                 opacity: 0.8;
@@ -690,6 +702,52 @@
                 transform: translateY(-5px) rotate(5deg);
             }
         }
+        
+        @keyframes fadeIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(-10px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+        
+        /* Pin toggle button */
+        .pin-toggle-btn {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 1px solid #dee2e6;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+        
+        .pin-toggle-btn:hover {
+            background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+            transform: scale(1.05);
+        }
+        
+        .pin-toggle-btn.pinned {
+            background: linear-gradient(135deg, #2c5530 0%, #1e3a21 100%);
+            color: white;
+            border-color: #2c5530;
+            box-shadow: 0 2px 8px rgba(44, 85, 48, 0.3);
+            font-weight: bold;
+        }
+        
+        .pin-toggle-btn.pinned:hover {
+            background: linear-gradient(135deg, #1e3a21 0%, #2c5530 100%);
+            transform: scale(1.05);
+            box-shadow: 0 3px 12px rgba(44, 85, 48, 0.4);
+        }
     </style>
 </head>
 <body>
@@ -860,7 +918,15 @@
             </div>
             <!-- COLUMN 3: RECOMMENDATIONS -->
             <div class="grid-column column-3 recommendations-section">
-                <h3 class="column-header">😻 Miau-ximiza tus Impuestos</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 class="column-header" style="margin-bottom: 0;">😻 Miau-ximiza tus Impuestos</h3>
+                    <button id="pin-toggle" class="pin-toggle-btn" title="Fijar vista enfocada">
+                        � Enfocar
+                    </button>
+                </div>
+                <div id="pin-status-indicator" class="pin-status-indicator" style="display: none;">
+                    🎯 <em>Vista enfocada fija - las recomendaciones siempre serán prominentes</em>
+                </div>
                 <div id="focus-indicator" class="focus-indicator" style="display: none;">
                     💡 <em>Vista enfocada en recomendaciones - modifica cualquier campo para restaurar</em>
                 </div>
@@ -896,6 +962,56 @@
             breaks: true,
             gfm: true
         });
+        
+        // Pin Toggle System
+        let isPinned = false;
+        
+        function initializePinToggle() {
+            const pinButton = document.getElementById('pin-toggle');
+            
+            if (pinButton) {
+                pinButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    isPinned = !isPinned;
+                    
+                    // Update button icon only
+                    this.textContent = isPinned ? '📌' : '📍';
+                    this.classList.toggle('pinned', isPinned);
+                    
+                    const pinStatusIndicator = document.getElementById('pin-status-indicator');
+                    const calculatorGrid = document.querySelector('.calculator-grid');
+                    
+                    if (isPinned) {
+                        if (pinStatusIndicator) {
+                            pinStatusIndicator.style.display = 'block';
+                        }
+                        
+                        if (calculatorGrid) {
+                            calculatorGrid.classList.add('generating-recommendations');
+                        }
+                        
+                        this.style.transform = 'scale(0.95)';
+                        setTimeout(() => {
+                            this.style.transform = '';
+                        }, 150);
+                        
+                    } else {
+                        if (pinStatusIndicator) {
+                            pinStatusIndicator.style.display = 'none';
+                        }
+                        
+                        if (calculatorGrid) {
+                            calculatorGrid.classList.remove('generating-recommendations');
+                        }
+                        
+                        this.style.transform = 'scale(1.1)';
+                        setTimeout(() => {
+                            this.style.transform = '';
+                        }, 150);
+                    }
+                });
+            }
+        }
         
         // Smart restoration system - tracks if user has modified inputs
         let userHasModifiedInputs = false;
@@ -1135,21 +1251,17 @@
         async function getRecommendationUsage() {
             try {
                 const response = await fetch('/api/recommendations/usage');
-                console.log('Usage response status:', response.status);
                 
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('Usage data:', data);
                     updateUsageCounter(data.used_today, data.daily_limit);
                     
                     const generateBtn = document.getElementById('generateRecommendationsBtn');
                     if (generateBtn) {
                         generateBtn.disabled = data.used_today >= data.daily_limit;
-                        console.log('Button disabled state:', data.used_today >= data.daily_limit);
                     }
                 } else {
                     // If not authenticated, keep button disabled and show appropriate message
-                    console.log('Response not ok:', response.status, response.statusText);
                     const generateBtn = document.getElementById('generateRecommendationsBtn');
                     if (generateBtn) {
                         generateBtn.disabled = true;
@@ -1190,7 +1302,11 @@
                 generateBtn.textContent = '🐱 Miau-lizando...';
                 
                 // Add class to reorder grid and highlight recommendations
-                calculatorGrid.classList.add('generating-recommendations');
+                // If pinned, the grid should already be in focus mode
+                // If not pinned, activate it now for the generation
+                if (!calculatorGrid.classList.contains('generating-recommendations')) {
+                    calculatorGrid.classList.add('generating-recommendations');
+                }
                 
                 // Show loading state
                 recommendationsContent.innerHTML = `
@@ -1211,7 +1327,7 @@
                 try {
                     await generateWithStreaming(formData, recommendationsContent);
                 } catch (streamError) {
-                    console.log('Streaming failed, falling back to regular request:', streamError);
+
                     await generateWithRegularRequest(formData, recommendationsContent);
                 }
                 
@@ -1226,11 +1342,11 @@
                 `;
             } finally {
                 generateBtn.textContent = '🐱 Obtener mi recomendación';
-                // Smart restoration: only remove grid reordering if user has modified inputs
+                // Smart restoration: only remove grid reordering if user has modified inputs AND pin is not active
                 setTimeout(() => {
                     const focusIndicator = document.getElementById('focus-indicator');
                     
-                    if (userHasModifiedInputs || checkFormModified()) {
+                    if (!isPinned && (userHasModifiedInputs || checkFormModified())) {
                         calculatorGrid.classList.remove('generating-recommendations');
                         if (focusIndicator) focusIndicator.style.display = 'none';
                         // Reset the flag after restoration
@@ -1238,8 +1354,8 @@
                         // Update initial state to current state
                         captureInitialFormState();
                     } else {
-                        // Show focus indicator when keeping grid focused
-                        if (focusIndicator) focusIndicator.style.display = 'block';
+                        // Show focus indicator when keeping grid focused (either pinned or smart restoration)
+                        if (focusIndicator && !isPinned) focusIndicator.style.display = 'block';
                     }
                 }, 1200); // Wait 1.2 seconds to let user appreciate the slower transition
             }
@@ -1268,6 +1384,49 @@
             const streamingIndicator = document.querySelector('.streaming-indicator');
             streamingTextEl.style.display = 'block';
             streamingIndicator.style.display = 'none';
+            
+            // Cat enhancement system for long waits
+            let catCounter = 0;
+            let streamingStartTime = Date.now();
+            const catMessages = [
+                "¡Hemos agregado otro gatito para acelerar tu recomendación! 🐱",
+                "¡Un gatito más se unió al equipo de análisis fiscal! 😸",
+                "¡Otro experto felino está revisando tus números! 🐾",
+                "¡Gatito adicional activado para mayor velocidad! 😻",
+                "¡El escuadrón gatuno sigue creciendo! 🙀",
+                "¡Más ronroneos = mejores recomendaciones! 😺"
+            ];
+            
+            const catGifs = [
+                "https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif",
+                "https://media.giphy.com/media/VbnUQpnihPSIgIXuZv/giphy.gif",
+                "https://media.giphy.com/media/3oriO0OEd9QIDdllqo/giphy.gif",
+                "https://media.giphy.com/media/BzyTuYCmvSORqs1ABM/giphy.gif",
+                "https://media.giphy.com/media/ICOgUNjpvO0PC/giphy.gif"
+            ];
+            
+            const catEnhancer = setInterval(() => {
+                const elapsed = Date.now() - streamingStartTime;
+                if (elapsed >= (catCounter + 1) * 10000) { // Every 10 seconds
+                    catCounter++;
+                    const currentCats = Math.min(catCounter + 1, catGifs.length);
+                    const message = catMessages[Math.min(catCounter - 1, catMessages.length - 1)];
+                    
+                    let catsHtml = '';
+                    for (let i = 0; i < currentCats; i++) {
+                        const gif = catGifs[i % catGifs.length];
+                        catsHtml += `<img src="${gif}" alt="Gatito ${i + 1}" style="width: ${120 - i * 10}px; height: auto; border-radius: 8px; margin: 5px;">`;
+                    }
+                    
+                    streamingTextEl.innerHTML = `
+                        <div style="text-align: center; padding: 20px;">
+                            <div style="margin-bottom: 15px;">${catsHtml}</div>
+                            <p style="color: #2c5530; font-weight: bold; margin: 10px 0;">${message}</p>
+                            <p style="color: #6c757d; font-style: italic; margin: 0;">Analizando tu situación fiscal con ${currentCats} gatito${currentCats > 1 ? 's' : ''}...</p>
+                        </div>
+                    `;
+                }
+            }, 1000); // Check every second
 
             try {
                 while (true) {
@@ -1299,6 +1458,7 @@
                                     recommendationsContent.innerHTML = `
                                         <div class="markdown-content">${htmlContent}</div>
                                     `;
+                                    clearInterval(catEnhancer);
                                     break;
                                 } else if (data.type === 'error') {
                                     const errorMarkdown = data.markdown || '**Error:** Problema durante la generación';
@@ -1307,16 +1467,18 @@
                                         <h4>⚠️ Error</h4>
                                         <div class="markdown-content">${errorHtml}</div>
                                     `;
+                                    clearInterval(catEnhancer);
                                     break;
                                 }
                             } catch (parseError) {
-                                console.log('Parse error (ignoring):', parseError);
+                                // Ignore parse errors for incomplete JSON chunks
                             }
                         }
                     }
                 }
             } finally {
                 reader.releaseLock();
+                clearInterval(catEnhancer);
             }
         }
 
@@ -1370,6 +1532,15 @@
             const generateBtn = document.getElementById('generateRecommendationsBtn');
             if (generateBtn) {
                 generateBtn.addEventListener('click', generateRecommendations);
+            }
+            
+            // Initialize pin toggle functionality
+            initializePinToggle();
+            
+            // Fix button content on load
+            const pinBtn = document.getElementById('pin-toggle');
+            if (pinBtn && pinBtn.textContent.trim() !== '📍') {
+                pinBtn.textContent = '📍';
             }
             
             // Load initial data

@@ -1,4 +1,3 @@
-import json
 import os
 import urllib.parse
 
@@ -14,6 +13,7 @@ from pydantic import BaseModel, Field
 from starlette.middleware.sessions import SessionMiddleware
 
 from fiscal_recommendations import RecommendationFactory
+from tabla_isr_constants import TablaISR
 from datetime import date
 import sqlite3
 from pathlib import Path
@@ -177,28 +177,19 @@ class DataReader:
     def __init__(self, user_data_path: str):
         self.user_data_path = user_data_path
 
-    def get_user_data(self) -> Dict[str, Any]:
-        try:
-            with open(self.user_data_path, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except FileNotFoundError:
-            raise FileNotFoundError(f"User data file not found: {self.user_data_path}")
-        except json.JSONDecodeError:
-            raise ValueError(f"Error decoding JSON file: {self.user_data_path}")
+    def get_isr_table(self, fiscal_year: int) -> TablaISR:
+        from tabla_isr_constants import get_tabla_isr
 
-    def get_isr_table(self, fiscal_year: int) -> Dict[str, Any]:
-        table_path = f"tabla_isr/isr_{fiscal_year}.json"
         try:
-            with open(table_path, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except FileNotFoundError:
+            return get_tabla_isr(fiscal_year)
+        except Exception as e:
             raise FileNotFoundError(
-                f"ISR table not found for fiscal year {fiscal_year}"
+                f"ISR table not found for fiscal year {fiscal_year}: {e}"
             )
 
 
 class TaxCalculator:
-    def __init__(self, user_data: Dict[str, Any], isr_table: Dict[str, Any]):
+    def __init__(self, user_data: Dict[str, Any], isr_table: TablaISR):
         self.user_data = user_data
         self.isr_table = isr_table
 
@@ -262,11 +253,11 @@ class TaxCalculator:
         monthly_base = taxable_base / 12
         monthly_tax = 0.0
 
-        for bracket in self.isr_table["tabla_isr_mensual"]:
-            if bracket["limite_inferior"] <= monthly_base <= bracket["limite_superior"]:
-                surplus = monthly_base - bracket["limite_inferior"] + 0.01
-                monthly_tax = bracket["cuota_fija"] + (
-                    surplus * bracket["porcentaje_excedente"]
+        for bracket in self.isr_table.tabla_isr_mensual:
+            if bracket.limite_inferior <= monthly_base <= bracket.limite_superior:
+                surplus = monthly_base - bracket.limite_inferior + 0.01
+                monthly_tax = bracket.cuota_fija + (
+                    surplus * bracket.porcentaje_excedente
                 )
                 break
 
@@ -279,8 +270,8 @@ class TaxCalculator:
 
         total_bonus = (monthly_income / 30) * bonus_days
 
-        uma_daily = self.isr_table["constantes"]["valor_uma_diario"]
-        exemption_umas = self.isr_table["constantes"]["exencion_aguinaldo_umas"]
+        uma_daily = self.isr_table.constantes.valor_uma_diario
+        exemption_umas = self.isr_table.constantes.exencion_aguinaldo_umas
         bonus_exemption = uma_daily * exemption_umas
 
         return max(0, total_bonus - bonus_exemption)
@@ -293,8 +284,8 @@ class TaxCalculator:
 
         total_premium = (monthly_income / 30) * vacation_days * premium_percentage
 
-        uma_daily = self.isr_table["constantes"]["valor_uma_diario"]
-        exemption_umas = self.isr_table["constantes"]["exencion_prima_vacacional_umas"]
+        uma_daily = self.isr_table.constantes.valor_uma_diario
+        exemption_umas = self.isr_table.constantes.exencion_prima_vacacional_umas
         premium_exemption = uma_daily * exemption_umas
 
         return max(0, total_premium - premium_exemption)
@@ -314,20 +305,26 @@ class TaxCalculator:
         total_ppr = self.user_data["total_ppr"]
         total_tuition = self.user_data["total_tuition"]
 
-        uma_annual = self.isr_table["constantes"]["valor_uma_anual"]
+        uma_annual = self.isr_table.constantes.valor_uma_anual
 
         # Apply caps to each deduction type
         general_cap = (
-            uma_annual * self.isr_table["constantes"]["tope_general_deducciones_umas"]
+            uma_annual * self.isr_table.constantes.tope_general_deducciones_umas
         )
         limited_general_deductions = min(total_general_deductions, general_cap)
 
-        ppr_cap = uma_annual * self.isr_table["constantes"]["tope_ppr_deducciones_umas"]
+        ppr_cap = uma_annual * self.isr_table.constantes.tope_ppr_deducciones_umas
         limited_ppr = min(total_ppr, ppr_cap)
 
         # For education deductions, apply the maximum cap across all levels
         # Get the highest cap from education levels as a simplified approach
-        education_caps = self.isr_table["topes_colegiaturas"]
+        education_caps = {
+            "preescolar": self.isr_table.topes_colegiaturas.preescolar,
+            "primaria": self.isr_table.topes_colegiaturas.primaria,
+            "secundaria": self.isr_table.topes_colegiaturas.secundaria,
+            "profesional_tecnico": self.isr_table.topes_colegiaturas.profesional_tecnico,
+            "preparatoria": self.isr_table.topes_colegiaturas.preparatoria,
+        }
         max_education_cap = max(education_caps.values()) if education_caps else 0
         limited_education_deductions = min(total_tuition, max_education_cap)
 
@@ -442,32 +439,6 @@ class TaxInputData(BaseModel):
             }
         }
     }
-
-    def get_total_deductions(self) -> float:
-        """Calculate total unified deductions"""
-        return self.general_deductions + self.total_tuition + self.total_ppr
-
-    def get_annual_gross_income(self) -> float:
-        """Calculate estimated annual gross income"""
-        return self.monthly_gross_income * 12
-
-    def is_valid_fiscal_year(self) -> bool:
-        """Validate fiscal year is supported"""
-        return self.fiscal_year in [2024, 2025]
-
-    def get_summary(self) -> Dict[str, Any]:
-        """Get a summary of the tax input data"""
-        return {
-            "taxpayer": self.taxpayer_name or "Anonymous",
-            "fiscal_year": self.fiscal_year,
-            "estimated_annual_income": self.get_annual_gross_income(),
-            "total_deductions": self.get_total_deductions(),
-            "deduction_breakdown": {
-                "general": self.general_deductions,
-                "tuition": self.total_tuition,
-                "ppr": self.total_ppr,
-            },
-        }
 
 
 @app.post("/api/calculate")
@@ -669,7 +640,6 @@ async def generate_recommendations(
                 "remaining": max(0, daily_limit - new_count),
             },
         }
-
     except Exception as e:
         print(f"Error generating recommendations: {e}")
         # Fallback to simple recommendations if there's an error
@@ -755,7 +725,8 @@ async def generate_recommendations_stream(
                 calculation_result, user_data_for_recommendations, tax_data.fiscal_year
             ):
                 accumulated_text += chunk
-                yield f'data: {{"type":"chunk","content":"{chunk.replace('"', '\\"').replace("\n", "\\n")}"}}\n\n'
+                escaped_chunk = chunk.replace('"', '\\"').replace("\n", "\\n")
+                yield f'data: {{"type":"chunk","content":"{escaped_chunk}"}}\n\n'
 
             # Process the complete response - now handling Markdown
             if hasattr(recommendation_service.primary_generator, "_process_response"):
@@ -764,7 +735,12 @@ async def generate_recommendations_stream(
                         accumulated_text
                     )
                 )
-                yield f'data: {{"type":"complete","markdown":"{processed_markdown.replace('"', '\\"').replace(chr(10), "\\n").replace(chr(13), "\\r")}"}}\n\n'
+                escaped_markdown = (
+                    processed_markdown.replace('"', '\\"')
+                    .replace(chr(10), "\\n")
+                    .replace(chr(13), "\\r")
+                )
+                yield f'data: {{"type":"complete","markdown":"{escaped_markdown}"}}\n\n'
             else:
                 # For fallback generator, return markdown as is
                 fallback_markdown = (
@@ -772,7 +748,12 @@ async def generate_recommendations_stream(
                     if accumulated_text
                     else "**Error:** No se pudieron generar recomendaciones."
                 )
-                yield f'data: {{"type":"complete","markdown":"{fallback_markdown.replace('"', '\\"').replace(chr(10), "\\n").replace(chr(13), "\\r")}"}}\n\n'
+                escaped_fallback = (
+                    fallback_markdown.replace('"', '\\"')
+                    .replace(chr(10), "\\n")
+                    .replace(chr(13), "\\r")
+                )
+                yield f'data: {{"type":"complete","markdown":"{escaped_fallback}"}}\n\n'
 
             # Increment usage counter
             increment_user_recommendation_usage(user_id)

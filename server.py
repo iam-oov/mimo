@@ -50,6 +50,19 @@ GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI")
 SECRET_KEY = os.getenv("SECRET_KEY")
 
+
+# Daily recommendations limit (configurable via env; defaults to 3)
+def _parse_int(value: Optional[str], default: int) -> int:
+    try:
+        return int(value) if value is not None else default
+    except ValueError:
+        return default
+
+
+DAILY_RECOMMENDATIONS_LIMIT: int = _parse_int(
+    os.getenv("DAILY_RECOMMENDATIONS_LIMIT"), 3
+)
+
 if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET or not GOOGLE_REDIRECT_URI:
     raise ValueError(
         "GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REDIRECT_URI must be set"
@@ -566,7 +579,7 @@ async def get_recommendation_usage(
 
     user_id = user.get("sub", user.get("email", "unknown"))
     used_today = get_user_recommendation_usage(user_id)
-    daily_limit = 3
+    daily_limit = DAILY_RECOMMENDATIONS_LIMIT
 
     return {
         "used_today": used_today,
@@ -585,7 +598,7 @@ async def generate_recommendations(
 
     user_id = user.get("sub", user.get("email", "unknown"))
     used_today = get_user_recommendation_usage(user_id)
-    daily_limit = 3
+    daily_limit = DAILY_RECOMMENDATIONS_LIMIT
 
     if used_today >= daily_limit:
         raise HTTPException(
@@ -683,7 +696,7 @@ async def generate_recommendations_stream(
 
     user_id = user.get("sub", user.get("email", "unknown"))
     used_today = get_user_recommendation_usage(user_id)
-    daily_limit = 3
+    daily_limit = DAILY_RECOMMENDATIONS_LIMIT
 
     if used_today >= daily_limit:
         raise HTTPException(

@@ -4,10 +4,14 @@
     <meta charset="UTF-8">
     <title>MiMo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
     <style>
         /* --- 🚀 TEMA OSCURO "ESPACIAL" --- */
@@ -20,7 +24,7 @@
             --color-border: #475569;         /* Borde sutil */
             
             --color-text-primary: #F1F5F9;   /* Blanco-gris claro (para texto) */
-            --color-text-secondary: #94A3B8; /* Gris (para subtítulos) */
+            --color-text-secondary: #697381; /* Gris (para subtítulos) */
             
             --color-accent-primary: #F59E0B; /* Naranja (principal) */
             --color-accent-primary-hover: #FBBF24; /* Naranja más claro */
@@ -38,6 +42,10 @@
             box-sizing: border-box;
         }
         
+        html {
+            height: 100%;
+        }
+        
         body { 
             font-family: 'Inter', Arial, sans-serif; 
             line-height: 1.6; 
@@ -45,7 +53,10 @@
             background-image: radial-gradient(circle at 100% 0%, rgba(167, 139, 250, 0.15) 0%, rgba(167, 139, 250, 0) 30%),
                               radial-gradient(circle at 0% 100%, rgba(45, 212, 191, 0.1) 0%, rgba(45, 212, 191, 0) 25%);
             background-attachment: fixed;
-            color: var(--color-text-primary); 
+            color: var(--color-text-primary);
+            min-height: 100%;
+            display: flex;
+            flex-direction: column;
         }
         
         /* Navbar */
@@ -68,7 +79,7 @@
             align-items: center;
         }
         .navbar-brand {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             font-weight: bold;
             text-decoration: none;
             color: var(--color-text-primary);
@@ -186,6 +197,7 @@
             margin: 0;
             padding: 20px;
             box-sizing: border-box;
+            flex: 1;
         }
         
         /* Layout */
@@ -322,7 +334,7 @@
             display: block;
             margin-bottom: 5px;
             font-weight: 600; 
-            color: var(--color-text-secondary); 
+            color: var(--color-text-primary); 
         }
         .input-subtitle {
             display: block;
@@ -415,19 +427,20 @@
             animation: sparkle 2s ease-in-out infinite;
         }
         
-        .recommendations-content { 
-            background-color: var(--color-bg-deep-space); 
-            border: 1px solid var(--color-border); 
-            padding: 15px; 
-            border-radius: 8px; 
-            margin-top: 15px; 
+        .recommendations-content {
+            background-color: var(--color-bg-deep-space);
+            border: 1px solid var(--color-border);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
         }
-        .recommendations-content h4 { 
-            color: var(--color-accent-primary); 
+        .recommendations-content h4 {
+            color: var(--color-accent-primary);
             margin-top: 0; 
             margin-bottom: 15px;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
         }
         .recommendations-content h4::before {
@@ -553,6 +566,35 @@
         @keyframes gentle-bounce { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
         @keyframes excited-bounce { 0%, 100% { transform: translateY(0px) rotate(0deg); } 25% { transform: translateY(-5px) rotate(-5deg); } 75% { transform: translateY(-5px) rotate(5deg); } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Footer */
+        .footer {
+            background: var(--color-bg-panel);
+            border-top: 1px solid var(--color-border);
+            padding: 20px;
+            text-align: center;
+            margin-top: auto;
+            color: var(--color-text-secondary);
+            font-size: 0.9rem;
+        }
+        .footer a {
+            color: var(--color-accent-primary);
+            text-decoration: none;
+            transition: color 0.3s ease;
+            font-weight: 600;
+        }
+        .footer a:hover {
+            color: var(--color-accent-secondary);
+        }
+        .footer .heart {
+            color: #ff6b9d;
+            animation: heartbeat 1.5s ease-in-out infinite;
+        }
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            10%, 30% { transform: scale(1.1); }
+            20%, 40% { transform: scale(0.9); }
+        }
 
         /* --- CSS de las KPI Cards (Tema Oscuro) --- */
         .kpi-grid {
@@ -830,7 +872,7 @@
                             <h4 style="margin-bottom: 10px; color: var(--color-accent-secondary);">Desbloquea el Poder de la IA</h4>
                             <p style="margin-bottom: 15px;">Obtén recomendaciones fiscales personalizadas generadas con <strong style="color: var(--color-accent-primary);">inteligencia artificial avanzada</strong> para maximizar tu saldo a favor.</p>
                             <a href="/auth/google" class="btn-primary" style="display: inline-block; text-decoration: none; padding: 12px 24px;">
-                                <strong>🚀 Iniciar Sesión con Google</strong>
+                                <strong>Iniciar Sesión con Google</strong>
                             </a>
                         </div>
                     </div>
@@ -843,7 +885,9 @@
         😺
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <footer class="footer">
+        <p>Hecho con <span class="heart">🩵</span> por <a href="https://github.com/iam-oov" target="_blank" rel="noopener noreferrer">iam-oov</a> con Copilot</p>
+    </footer>
     
     <script>
         // Configure marked.js options

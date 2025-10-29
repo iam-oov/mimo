@@ -827,8 +827,12 @@ async def google_callback(request: Request, code: str):
         token_json = token_response.json()
         id_token = token_json["id_token"]
 
+        # Verify token with clock skew tolerance to handle minor time differences
         user_info = google.oauth2.id_token.verify_oauth2_token(
-            id_token, google_requests.Request(), GOOGLE_CLIENT_ID
+            id_token,
+            google_requests.Request(),
+            GOOGLE_CLIENT_ID,
+            clock_skew_in_seconds=10,
         )
 
         request.session["user"] = {

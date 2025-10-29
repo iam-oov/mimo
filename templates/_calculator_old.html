@@ -10,28 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     
     <style>
-        /* --- 🚀 TEMA OSCURO "ESPACIAL" --- */
-        
-        :root {
-            /* Paleta de Colores "Espacial" */
-            --color-bg-deep-space: #0B1120; /* Azul-negro profundo */
-            --color-bg-panel: #1E293B;      /* Azul pizarra oscuro (para tarjetas) */
-            --color-bg-panel-hover: #334155; /* Un gris-azul más claro para hover */
-            --color-border: #475569;         /* Borde sutil */
-            
-            --color-text-primary: #F1F5F9;   /* Blanco-gris claro (para texto) */
-            --color-text-secondary: #94A3B8; /* Gris (para subtítulos) */
-            
-            --color-accent-primary: #A78BFA; /* Violeta Neón (principal) */
-            --color-accent-primary-hover: #C4B5FD; /* Violeta más claro */
-            --color-accent-secondary: #2DD4BF; /* Teal/Cian (para highlights) */
-            
-            --color-positive: #2DD4BF;       /* Teal */
-            --color-positive-bg: #0d2c2e;    /* Fondo Teal oscuro */
-            --color-negative: #F87171;       /* Rojo */
-            --color-negative-bg: #450a0a;    /* Fondo Rojo oscuro */
-        }
-
         * {
             margin: 0;
             padding: 0;
@@ -39,25 +17,22 @@
         }
         
         body { 
+            /* MEJORA: Fuente Moderna aplicada */
             font-family: 'Inter', Arial, sans-serif; 
             line-height: 1.6; 
-            background-color: var(--color-bg-deep-space);
-            background-image: radial-gradient(circle at 100% 0%, rgba(167, 139, 250, 0.15) 0%, rgba(167, 139, 250, 0) 30%),
-                              radial-gradient(circle at 0% 100%, rgba(45, 212, 191, 0.1) 0%, rgba(45, 212, 191, 0) 25%);
-            background-attachment: fixed;
-            color: var(--color-text-primary); 
+            color: #333; 
+            background-color: #f8f9fa; 
         }
         
-        /* Navbar */
+        /* ... (Todo tu CSS de Navbar y botones permanece igual) ... */
         .navbar {
-            background-color: var(--color-bg-panel);
-            color: var(--color-text-primary);
-            border-bottom: 1px solid var(--color-border);
+            background-color: #2c5530;
+            color: white;
             padding: 1rem 0;
             position: sticky;
             top: 0;
             z-index: 1000;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .navbar-container {
             max-width: 1400px;
@@ -71,10 +46,7 @@
             font-size: 1.5rem;
             font-weight: bold;
             text-decoration: none;
-            color: var(--color-text-primary);
-        }
-        .navbar-brand:hover {
-            color: var(--color-accent-primary);
+            color: white;
         }
         .navbar-nav {
             display: flex;
@@ -85,30 +57,26 @@
             padding: 8px 16px;
             border-radius: 5px;
             text-decoration: none;
-            color: var(--color-text-primary);
+            color: white;
             transition: background-color 0.3s;
         }
         .nav-item:hover {
-            background-color: var(--color-bg-panel-hover);
+            background-color: rgba(255,255,255,0.1);
         }
-        
-        /* Botones */
         .btn-primary {
-            background-color: var(--color-accent-primary);
+            background-color: #007bff;
             border: none;
             padding: 8px 16px;
             border-radius: 5px;
-            color: var(--color-bg-deep-space); 
-            font-weight: 600;
+            color: white;
             cursor: pointer;
             transition: background-color 0.3s;
         }
         .btn-primary:hover {
-            background-color: var(--color-accent-primary-hover);
+            background-color: #0056b3;
         }
         .btn-primary:disabled {
-            background-color: var(--color-border);
-            color: var(--color-text-secondary);
+            background-color: #6c757d;
             cursor: not-allowed;
         }
         
@@ -121,7 +89,7 @@
             box-sizing: border-box;
         }
         
-        /* Layout */
+        /* ... (Todo tu CSS de Grid Layout y Media Queries permanece igual) ... */
         .calculator-grid {
             display: grid !important;
             grid-template-columns: 2fr 1fr 1fr !important;
@@ -164,13 +132,11 @@
             .calculator-grid { grid-template-columns: 3fr 3fr 2fr; gap: 30px; }
         }
         
-        /* Paneles de Columna */
         .grid-column {
-            background: var(--color-bg-panel);
+            background: white;
             padding: 20px;
             border-radius: 10px;
-            border: 1px solid var(--color-border);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             height: fit-content;
             min-height: 300px;
             width: 100%;
@@ -179,6 +145,8 @@
             overflow: hidden;
             position: relative;
         }
+        
+        /* ... (Tu CSS de .final-sections-grid, .grid-column:nth-child, etc. sigue igual) ... */
         .final-sections-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -186,17 +154,17 @@
             margin-top: 20px;
         }
         .final-section {
-            background-color: var(--color-bg-deep-space); 
+            background-color: #f8f9fa;
             padding: 15px;
             border-radius: 8px;
-            border: 1px solid var(--color-border);
+            border: 1px solid #dee2e6;
         }
         .final-section h4 {
-            color: var(--color-accent-primary);
+            color: #2c5530;
             margin-top: 0;
             margin-bottom: 15px;
             font-size: 1rem;
-            border-bottom: 1px solid var(--color-border);
+            border-bottom: 1px solid #dee2e6;
             padding-bottom: 8px;
         }
         @media screen and (max-width: 768px) {
@@ -211,34 +179,33 @@
         }
         .calculator-grid.generating-recommendations .grid-column:nth-child(3) {
             transform: scale(1.02);
-            box-shadow: 0 0 20px rgba(167, 139, 250, 0.2); 
+            box-shadow: 0 4px 20px rgba(44, 85, 48, 0.15);
             z-index: 10;
             position: relative;
         }
         
         .column-header {
-            color: var(--color-accent-primary); 
+            color: #2c5530;
             font-size: 1.2rem;
             font-weight: bold;
             margin-bottom: 20px;
             padding-bottom: 10px;
-            border-bottom: 2px solid var(--color-border);
+            border-bottom: 2px solid #dee2e6;
         }
         
-        /* Formulario (SIN ACORDEÓN) */
+        /* ESTILOS DEL FORMULARIO ORIGINAL (Modificados por Acordeón y Compacto) */
         .form-section {
-            background-color: var(--color-bg-deep-space); /* Fondo más oscuro */
+            background-color: #f8f9fa;
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 15px;
-            border: 1px solid var(--color-border);
         }
         .form-section h4 {
-            color: var(--color-accent-primary);
+            color: #2c5530;
             margin-top: 0;
             margin-bottom: 15px;
             font-size: 1rem;
-            border-bottom: 1px solid var(--color-border);
+            border-bottom: 1px solid #dee2e6;
             padding-bottom: 8px;
         }
         .form-row {
@@ -254,13 +221,13 @@
         .form-group label {
             display: block;
             margin-bottom: 5px;
-            font-weight: 600; 
-            color: var(--color-text-secondary); 
+            font-weight: 600; /* Un poco más de peso con Inter */
+            color: #495057;
         }
         .input-subtitle {
             display: block;
             font-size: 0.75rem;
-            color: var(--color-text-secondary);
+            color: #6c757d;
             font-style: italic;
             margin-top: -3px;
             margin-bottom: 5px;
@@ -270,88 +237,80 @@
         .form-group select {
             width: 100%;
             padding: 8px;
-            border: 1px solid var(--color-border);
+            border: 1px solid #ced4da;
             border-radius: 4px;
             font-size: 13px;
-            transition: border-color 0.3s, box-shadow 0.3s;
-            background-color: var(--color-bg-deep-space); 
-            color: var(--color-text-primary); 
-            font-family: 'Inter', Arial, sans-serif; 
+            transition: border-color 0.3s;
+            background-color: white;
+            font-family: 'Inter', Arial, sans-serif; /* Asegurar que herede la fuente */
         }
         .form-group input:focus,
         .form-group select:focus {
             outline: none;
-            border-color: var(--color-accent-primary); 
-            box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.3); 
+            border-color: #2c5530;
+            box-shadow: 0 0 0 2px rgba(44, 85, 48, 0.2);
         }
         
-        /* Recomendaciones */
+        /* ... (Tu CSS de Recomendaciones, Markdown, Streaming, etc. sigue igual) ... */
         .recommendations-section { position: sticky; top: 100px; }
-        .recommendations-content { 
-            background-color: var(--color-bg-deep-space); 
-            border: 1px solid var(--color-border); 
-            padding: 15px; 
-            border-radius: 8px; 
-            margin-top: 15px; 
-        }
-        .recommendations-content h4 { color: var(--color-accent-primary); margin-top: 0; margin-bottom: 15px; }
+        .recommendations-content { background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px; margin-top: 15px; }
+        .recommendations-content h4 { color: #856404; margin-top: 0; margin-bottom: 15px; }
         .recommendations-content ul { margin: 0; padding: 0; list-style: none; }
-        .recommendations-content li { margin-bottom: 15px; padding-bottom: 15px; text-align: justify; font-size: 14px; border-bottom: 1px solid var(--color-border); }
+        .recommendations-content li { margin-bottom: 15px; padding-bottom: 15px; text-align: justify; font-size: 14px; border-bottom: 1px solid #dee2e6; }
         .recommendations-content li:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-        .usage-counter { font-size: 12px; color: var(--color-text-secondary); text-align: center; margin-bottom: 10px; font-style: italic; }
-        .focus-indicator { background: linear-gradient(135deg, #1e3a5f 0%, #305f9c 100%); border: 1px solid var(--color-accent-secondary); border-radius: 6px; padding: 8px 12px; font-size: 12px; color: var(--color-accent-secondary); text-align: center; margin-bottom: 15px; animation: gentle-pulse 3s ease-in-out infinite; }
-        .pin-status-indicator { background: linear-gradient(135deg, #3a2e0a 0%, #5c4a15 100%); border: 1px solid #ffc107; border-radius: 6px; padding: 8px 12px; font-size: 12px; color: #ffc107; text-align: center; margin-bottom: 15px; animation: fadeIn 0.3s ease-in; }
+        .usage-counter { font-size: 12px; color: #6c757d; text-align: center; margin-bottom: 10px; font-style: italic; }
+        .focus-indicator { background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border: 1px solid #2196f3; border-radius: 6px; padding: 8px 12px; font-size: 12px; color: #1565c0; text-align: center; margin-bottom: 15px; animation: gentle-pulse 3s ease-in-out infinite; }
+        .pin-status-indicator { background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 1px solid #ffc107; border-radius: 6px; padding: 8px 12px; font-size: 12px; color: #b8860b; text-align: center; margin-bottom: 15px; animation: fadeIn 0.3s ease-in; }
         @keyframes gentle-pulse { 0%, 100% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.02); } }
-        /* Markdown */
+        .recommendation-example { background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border: 1px solid #dee2e6; border-radius: 8px; padding: 12px 15px; margin-top: 10px; font-size: 13px; line-height: 1.5; color: #495057; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .recommendation-example strong { color: #2c5530; }
+        .recommendation-example::before { content: ""; display: inline-block; width: 3px; height: 100%; background: linear-gradient(to bottom, #28a745, #20c997); position: absolute; left: 0; top: 0; border-radius: 0 2px 2px 0; }
+        .recommendation-example { position: relative; padding-left: 18px; }
         .markdown-content { font-size: 14px; line-height: 1.6; }
-        .markdown-content h3 { color: var(--color-accent-primary); font-size: 1rem; font-weight: bold; margin: 20px 0 10px 0; padding-bottom: 5px; border-bottom: 1px solid var(--color-border); }
+        .markdown-content h3 { color: #2c5530; font-size: 1rem; font-weight: bold; margin: 20px 0 10px 0; padding-bottom: 5px; border-bottom: 1px solid #dee2e6; }
         .markdown-content h3:first-child { margin-top: 0; }
         .markdown-content p { margin: 10px 0; text-align: justify; }
-        .markdown-content blockquote { background: var(--color-bg-deep-space); border-left: 3px solid var(--color-accent-secondary); margin: 15px 0; padding: 12px 15px; border-radius: 0 8px 8px 0; font-size: 13px; color: var(--color-text-secondary); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .markdown-content blockquote { background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-left: 3px solid #28a745; margin: 15px 0; padding: 12px 15px; border-radius: 0 8px 8px 0; font-size: 13px; color: #495057; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .markdown-content blockquote p { margin: 0; }
-        .markdown-content blockquote strong { color: var(--color-accent-secondary); }
-        .markdown-content hr { border: none; height: 1px; background: linear-gradient(to right, transparent, var(--color-border), transparent); margin: 25px 0; }
-        .markdown-content strong { color: var(--color-accent-primary); font-weight: 600; }
-        /* Streaming */
+        .markdown-content blockquote strong { color: #2c5530; }
+        .markdown-content hr { border: none; height: 1px; background: linear-gradient(to right, transparent, #dee2e6, transparent); margin: 25px 0; }
+        .markdown-content strong { color: #2c5530; font-weight: 600; }
         .streaming-indicator { text-align: center; padding: 20px; }
-        .streaming-dots span { background-color: var(--color-accent-primary); }
         .streaming-dots { display: inline-block; margin-bottom: 10px; }
-        .streaming-dots span { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: var(--color-accent-primary); margin: 0 2px; animation: streaming-pulse 1.4s infinite ease-in-out both; }
+        .streaming-dots span { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #2c5530; margin: 0 2px; animation: streaming-pulse 1.4s infinite ease-in-out both; }
         .streaming-dots span:nth-child(1) { animation-delay: -0.32s; }
         .streaming-dots span:nth-child(2) { animation-delay: -0.16s; }
         .streaming-dots span:nth-child(3) { animation-delay: 0s; }
         @keyframes streaming-pulse { 0%, 80%, 100% { transform: scale(0); opacity: 0.5; } 40% { transform: scale(1); opacity: 1; } }
-        #streaming-text { background-color: var(--color-bg-deep-space); border: 1px solid var(--color-border); border-radius: 6px; padding: 15px; margin-top: 10px; min-height: 100px; line-height: 1.5; }
+        #streaming-text { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; padding: 15px; margin-top: 10px; min-height: 100px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.5; }
         
         /* Tabla de Cálculo */
         .calculation-table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
-            background: var(--color-bg-panel);
+            background: white;
             border-radius: 8px;
             overflow: hidden;
-            border: 1px solid var(--color-border);
         }
         .calculation-table th,
         .calculation-table td {
-            border: 1px solid var(--color-border);
+            border: 1px solid #dee2e6;
             padding: 12px;
             text-align: left;
         }
         .calculation-table th {
-            background-color: var(--color-bg-panel-hover); 
-            color: var(--color-text-primary);
-            font-weight: 600; 
+            background-color: #2c5530;
+            color: white;
+            font-weight: 600; /* Peso de fuente moderno */
         }
         .calculation-table .amount {
             text-align: right;
             font-family: 'Courier New', monospace;
             font-weight: bold;
-            color: var(--color-text-primary);
         }
         .highlight {
-            background-color: rgba(45, 212, 191, 0.1); 
+            background-color: #d4edda;
             font-weight: bold;
         }
         
@@ -364,61 +323,95 @@
             font-size: 18px;
         }
         .balance-favor {
-            background-color: var(--color-positive-bg);
-            border: 2px solid var(--color-positive);
-            color: var(--color-positive);
+            background-color: #d1ecf1;
+            border: 2px solid #bee5eb;
+            color: #0c5460;
         }
         .balance-pay {
-            background-color: var(--color-negative-bg);
-            border: 2px solid var(--color-negative);
-            color: var(--color-negative);
+            background-color: #f8d7da;
+            border: 2px solid #f5c6cb;
+            color: #721c24;
         }
         
-        /* Loading */
-        .loading { display: none; text-align: center; padding: 20px; color: var(--color-text-secondary); }
-        .spinner { border: 4px solid var(--color-border); border-top: 4px solid var(--color-accent-primary); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto 10px; }
+        /* ... (Tu CSS de Loading, Spinner, Error, Cat, Pin, etc. sigue igual) ... */
+        .loading { display: none; text-align: center; padding: 20px; color: #6c757d; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #2c5530; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto 10px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .error-message { background-color: var(--color-negative-bg); border: 1px solid var(--color-negative); color: var(--color-negative); padding: 15px; border-radius: 5px; margin: 20px 0; display: none; }
-        
-        /* Gato y Pin */
+        .error-message { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; border-radius: 5px; margin: 20px 0; display: none; }
         .floating-cat { position: fixed; bottom: 20px; right: 20px; font-size: 30px; cursor: pointer; z-index: 1000; animation: gentle-bounce 3s ease-in-out infinite; opacity: 0.7; transition: opacity 0.3s ease; }
         .floating-cat:hover { opacity: 1; animation: excited-bounce 0.5s ease-in-out infinite; }
-        .pin-toggle-btn { 
-            background: var(--color-bg-panel-hover); 
-            border: 1px solid var(--color-border); 
-            color: var(--color-text-secondary);
-            border-radius: 50%; width: 32px; height: 32px; font-size: 14px; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; padding: 0; 
-        }
-        .pin-toggle-btn:hover { 
-            background: var(--color-border);
-            color: var(--color-text-primary);
-            transform: scale(1.05); 
-        }
-        .pin-toggle-btn.pinned { 
-            background: var(--color-accent-primary); 
-            color: var(--color-bg-deep-space); 
-            border-color: var(--color-accent-primary); 
-            box-shadow: 0 0 12px rgba(167, 139, 250, 0.3);
-            font-weight: bold; 
-        }
-        .pin-toggle-btn.pinned:hover { 
-            background: var(--color-accent-primary-hover); 
-            transform: scale(1.05); 
-        }
-        
         @keyframes gentle-bounce { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
         @keyframes excited-bounce { 0%, 100% { transform: translateY(0px) rotate(0deg); } 25% { transform: translateY(-5px) rotate(-5deg); } 75% { transform: translateY(-5px) rotate(5deg); } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .pin-toggle-btn { background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border: 1px solid #dee2e6; border-radius: 50%; width: 32px; height: 32px; font-size: 14px; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; padding: 0; }
+        .pin-toggle-btn:hover { background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%); transform: scale(1.05); }
+        .pin-toggle-btn.pinned { background: linear-gradient(135deg, #2c5530 0%, #1e3a21 100%); color: white; border-color: #2c5530; box-shadow: 0 2px 8px rgba(44, 85, 48, 0.3); font-weight: bold; }
+        .pin-toggle-btn.pinned:hover { background: linear-gradient(135deg, #1e3a21 0%, #2c5530 100%); transform: scale(1.05); box-shadow: 0 3px 12px rgba(44, 85, 48, 0.4); }
 
-        /* --- CSS de las KPI Cards (Tema Oscuro) --- */
+        
+        /* --- MEJORA: CSS del Acordeón --- */
+        .accordion-toggle {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: white; /* Un fondo más limpio */
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            margin-bottom: 0;
+            transition: background-color 0.2s;
+        }
+        .accordion-toggle:not(.active) {
+            margin-bottom: 15px; /* Separación cuando está cerrado */
+        }
+        .accordion-toggle.active {
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+            border-bottom: 1px solid #dee2e6;
+            background-color: #f8f9fa; /* Ligeramente gris al abrir */
+        }
+        .accordion-toggle:not(.active):hover {
+            background-color: #f8f9fa; /* Un ligero hover */
+        }
+        .accordion-toggle h4 { /* Apuntamos al h4 dentro del toggle */
+            color: #2c5530;
+            margin: 0;
+            font-size: 1.1rem; /* Un poco más grande */
+            font-weight: 600;
+            border: none; /* Quitamos bordes del h4 original */
+            padding: 0;
+        }
+        .accordion-toggle .accordion-icon {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2c5530; /* Tu color verde primario */
+        }
+        /* El contenido se envuelve en .accordion-content */
+        .accordion-content {
+            margin-bottom: 15px; /* Mantenemos la separación */
+            border: 1px solid #dee2e6;
+            border-top: none; 
+            border-radius: 0 0 8px 8px;
+            /* El padding se lo da .form-section adentro */
+        }
+        /* Ocultar .form-section por defecto (el JS lo maneja) */
+        .accordion-content .form-section {
+            margin-bottom: 0; /* Quitar margen doble */
+            border-radius: 0;
+            border: none;
+        }
+
+        /* --- MEJORA: CSS de las KPI Cards --- */
         .kpi-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
             margin-bottom: 20px;
         }
+        /* Re-usamos .balance-result para las KPI cards */
         .kpi-grid .balance-result {
-            margin: 0; 
+            margin: 0; /* Quitar margen original */
             padding: 15px;
             font-size: 16px;
         }
@@ -429,62 +422,68 @@
             font-weight: 600;
         }
         .kpi-grid .balance-result div {
-            font-size: 1.75rem !important; 
+            font-size: 1.75rem !important; /* Forzar tamaño */
         }
+        /* Estilo para la KPI secundaria (neutral) */
         .kpi-secondary {
-            background-color: var(--color-bg-panel-hover); 
-            border: 1px solid var(--color-border);
-            color: var(--color-text-primary);
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            color: #333;
         }
 
-        /* --- MODO COMPACTO (Ya integrado con tema oscuro) --- */
+        /* --- MEJORA: MODO COMPACTO (Reducción de Padding) --- */
+        /* Pega esto al final de tu <style> */
         .calculator-grid {
-            gap: 15px !important; 
+            gap: 15px !important; /* Antes era 25px */
         }
         .main-container {
-            padding: 15px; 
+            padding: 15px; /* Antes era 20px */
         }
         .grid-column {
-            padding: 15px; 
+            padding: 15px; /* Antes era 20px */
         }
         .form-section {
-            padding: 12px; 
-            margin-bottom: 12px; 
+            padding: 12px; /* Antes era 15px */
+            margin-bottom: 12px; /* Antes era 15px */
         }
         .form-section h4 {
-            margin-bottom: 12px; 
+            margin-bottom: 12px; /* Antes era 15px */
+        }
+        /* Ajuste para el h4 dentro del acordeón compacto */
+        .accordion-toggle {
+            padding: 12px 15px;
         }
         .form-row {
-            gap: 15px; 
-            margin-bottom: 12px; 
+            gap: 15px; /* Antes era 20px */
+            margin-bottom: 12px; /* Antes era 15px */
         }
         .form-group input,
         .form-group select {
-            padding: 6px 8px; 
+            padding: 6px 8px; /* Antes era 8px */
             font-size: 14px;
         }
         .form-group label {
-            margin-bottom: 4px; 
+            margin-bottom: 4px; /* Antes era 5px */
         }
         .final-section {
-            padding: 12px; 
+            padding: 12px; /* Antes era 15px */
         }
         .final-sections-grid {
-            gap: 15px; 
-            margin-top: 15px; 
+            gap: 15px; /* Antes era 20px */
+            margin-top: 15px; /* Antes era 20px */
         }
         .column-header {
-            margin-bottom: 15px; 
-            padding-bottom: 8px; 
+            margin-bottom: 15px; /* Antes era 20px */
+            padding-bottom: 8px; /* Antes era 10px */
         }
         .calculation-table th,
         .calculation-table td {
-            padding: 8px 10px; 
+            padding: 8px 10px; /* Antes era 12px */
             font-size: 14px;
         }
         .balance-result {
-            padding: 15px; 
-            margin: 15px 0; 
+            padding: 15px; /* Antes era 20px */
+            margin: 15px 0; /* Antes era 20px */
         }
         .kpi-grid {
             gap: 10px;
@@ -517,83 +516,102 @@
             <div class="grid-column column-1">
                 <form id="taxForm">
                     
-                    <div class="form-section">
-                        <h4>👤 Información Personal</h4>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="taxpayer_name">Nombre(s):</label>
-                                <input type="text" id="taxpayer_name" name="taxpayer_name">
-                            </div>
-                            <div class="form-group">
-                                <label for="fiscal_year">Año Fiscal:</label>
-                                <select id="fiscal_year" name="fiscal_year">
-                                    <option value="2024">2024</option>
-                                    <option value="2025" selected>2025</option>
-                                </select>
+                    <div class="accordion-container">
+                        <div class="accordion-toggle active">
+                            <h4>👤 Información Personal</h4>
+                            <span class="accordion-icon">−</span>
+                        </div>
+                        <div class="accordion-content" style="display: block;">
+                            <div class="form-section">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="taxpayer_name">Nombre(s):</label>
+                                        <input type="text" id="taxpayer_name" name="taxpayer_name">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="fiscal_year">Año Fiscal:</label>
+                                        <select id="fiscal_year" name="fiscal_year">
+                                            <option value="2024">2024</option>
+                                            <option value="2025" selected>2025</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="form-section">
-                        <h4>💰 Información de Ingresos</h4>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="monthly_gross_income">Ingreso Bruto Mensual ($):</label>
-                                <input type="number" id="monthly_gross_income" name="monthly_gross_income" step="0.01" min="0" value="12600">
-                            </div>
-                            <div class="form-group">
-                                <label for="monthly_net_income">Ingreso Neto Mensual ($):</label>
-                                <input type="number" id="monthly_net_income" name="monthly_net_income" step="0.01" min="0" value="10500">
-                            </div>
+                    <div class="accordion-container">
+                        <div class="accordion-toggle">
+                            <h4>💰 Información de Ingresos</h4>
+                            <span class="accordion-icon">+</span>
                         </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="bonus_days">Días de Aguinaldo:</label>
-                                <input type="number" id="bonus_days" name="bonus_days" min="0" max="365" value="15">
-                            </div>
-                            <div class="form-group">
-                                <label for="vacation_days">Días de Vacaciones:</label>
-                                <input type="number" id="vacation_days" name="vacation_days" min="0" max="365" value="12">
-                            </div>
-                            <div class="form-group">
-                                <label for="vacation_premium_percentage">Prima Vacacional (%):</label>
-                                <input type="number" id="vacation_premium_percentage" name="vacation_premium_percentage" step="0.01" min="0" max="1" value="0.25">
+                        <div class="accordion-content" style="display: none;">
+                            <div class="form-section">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="monthly_gross_income">Ingreso Bruto Mensual ($):</label>
+                                        <input type="number" id="monthly_gross_income" name="monthly_gross_income" step="0.01" min="0" value="12600">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="monthly_net_income">Ingreso Neto Mensual ($):</label>
+                                        <input type="number" id="monthly_net_income" name="monthly_net_income" step="0.01" min="0" value="10500">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="bonus_days">Días de Aguinaldo:</label>
+                                        <input type="number" id="bonus_days" name="bonus_days" min="0" max="365" value="15">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="vacation_days">Días de Vacaciones:</label>
+                                        <input type="number" id="vacation_days" name="vacation_days" min="0" max="365" value="12">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="vacation_premium_percentage">Prima Vacacional (%):</label>
+                                        <input type="number" id="vacation_premium_percentage" name="vacation_premium_percentage" step="0.01" min="0" max="1" value="0.25">
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="form-section">
-                        <h3 style="color: var(--color-accent-primary); margin-bottom: 15px; font-size: 1.1rem; padding-bottom: 8px; border-bottom: 1px solid var(--color-border);">
-                            📋 Deducciones Personales
-                        </h3>
-                        <div class="final-sections-grid">
-                            <div class="final-section">
-                                <h4>🏥 General</h4>
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="general_deductions">Total Deducciones Generales ($):</label>
-                                        <small class="input-subtitle">Médico/Dental • Funeral • Donaciones • Intereses Hipotecarios • Jubilación • Primas de Seguro de Gastos Médicos • Pediatra • Ginecólogo • Psicología • Nutriología</small>
-                                        <input type="number" id="general_deductions" name="general_deductions" step="0.01" min="0" value="71000">
+                    <div class="accordion-container">
+                        <div class="accordion-toggle">
+                            <h4>📋 Deducciones Personales</h4>
+                            <span class="accordion-icon">+</span>
+                        </div>
+                        <div class="accordion-content" style="display: none;">
+                            <div class="form-section">
+                                <div class="final-sections-grid">
+                                    <div class="final-section">
+                                        <h4>🏥 General</h4>
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label for="general_deductions">Total Deducciones Generales ($):</label>
+                                                <small class="input-subtitle">Médico/Dental • Funeral • Donaciones • Intereses Hipotecarios • Jubilación • Primas de Seguro de Gastos Médicos • Pediatra • Ginecólogo • Psicología • Nutriología</small>
+                                                <input type="number" id="general_deductions" name="general_deductions" step="0.01" min="0" value="71000">
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                            <div class="final-section">
-                                <h4>🎓 Colegiaturas</h4>
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="total_tuition">Total Colegiaturas ($):</label>
-                                        <small class="input-subtitle">Preescolar • Primaria • Secundaria • Técnico • Preparatoria</small>
-                                        <input type="number" id="total_tuition" name="total_tuition" step="0.01" min="0" value="0">
+                                    <div class="final-section">
+                                        <h4>🎓 Colegiaturas</h4>
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label for="total_tuition">Total Colegiaturas ($):</label>
+                                                <small class="input-subtitle">Preescolar • Primaria • Secundaria • Técnico • Preparatoria</small>
+                                                <input type="number" id="total_tuition" name="total_tuition" step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                            <div class="final-section">
-                                <h4>💰 PPR & AFORE</h4>
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="total_ppr">Total Contribuciones ($):</label>
-                                        <small class="input-subtitle">Contribuciones PPR • Contribuciones Afore</small>
-                                        <input type="number" id="total_ppr" name="total_ppr" step="0.01" min="0" value="0">
+                                    <div class="final-section">
+                                        <h4>💰 PPR & AFORE</h4>
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label for="total_ppr">Total Contribuciones ($):</label>
+                                                <small class="input-subtitle">Contribuciones PPR • Contribuciones Afore</small>
+                                                <input type="number" id="total_ppr" name="total_ppr" step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -649,8 +667,8 @@
                         <tbody id="results-tbody">
                         </tbody>
                     </table>
-                    
-                </div>
+
+                    </div>
             </div>
             
             <div class="grid-column column-3 recommendations-section">
@@ -677,7 +695,7 @@
                     </div>
                 {% else %}
                     <div class="recommendations-content">
-                        <p>Por favor <a href="/auth/google" style="color: var(--color-accent-primary);">inicia sesión con Google</a> para obtener recomendaciones fiscales personalizadas.</p>
+                        <p>Por favor <a href="/auth/google">inicia sesión con Google</a> para obtener recomendaciones fiscales personalizadas.</p>
                     </div>
                 {% endif %}
             </div>
@@ -697,9 +715,7 @@
             gfm: true
         });
         
-        // --- TODO TU JAVASCRIPT ---
-        // (Se ha eliminado la función initializeAccordion)
-        
+        // ... (Tu JS de Pin Toggle, Smart Restoration, Debounce, etc. sigue igual) ...
         let isPinned = false;
         function initializePinToggle() {
             const pinButton = document.getElementById('pin-toggle');
@@ -769,6 +785,7 @@
             };
         }
 
+        // ... (Tu JS de distributeUnifiedValues, getFormData, formatCurrency sigue igual) ...
         function distributeUnifiedValues() {
             const generalTotal = parseFloat(document.getElementById('general_deductions').value) || 0;
             const generalProportion = generalTotal / 9;
@@ -813,6 +830,7 @@
             }).format(amount);
         }
 
+        // ... (Tu JS de calculateTaxes sigue igual) ...
         async function calculateTaxes() {
             const loadingElement = document.getElementById('loading');
             const resultsElement = document.getElementById('results');
@@ -829,7 +847,7 @@
                 });
                 if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
                 const result = await response.json();
-                updateResults(result); 
+                updateResults(result); // MODIFICADO para poblar KPIs
                 loadingElement.style.display = 'none';
                 resultsElement.style.display = 'block';
             } catch (error) {
@@ -840,13 +858,21 @@
             }
         }
 
+        /**
+         * MEJORA: Función updateResults actualizada
+         * Ahora poblará las KPI Cards y la tabla.
+         */
         function updateResults(data) {
             const tbody = document.getElementById('results-tbody');
+            
+            // NUEVO: Referencias a las KPI Cards
             const balanceKpi = document.getElementById('kpi-balance');
             const taxKpi = document.getElementById('kpi-tax');
             
+            // Clear previous results
             tbody.innerHTML = '';
             
+            // --- 1. Poblar Tabla de Resultados (como antes) ---
             const rows = [
                 ['Contribuyente', data.taxpayer_name],
                 ['Año Fiscal', data.fiscal_year],
@@ -875,33 +901,38 @@
                 }
             });
             
+            // --- 2. Poblar KPI Card 1 (Impuesto Determinado) ---
             taxKpi.innerHTML = `
                 <h3>Impuesto Determinado</h3>
                 <div style="font-size: 24px; font-weight: bold;">${formatCurrency(data.determined_tax)}</div>
             `;
+            // Aseguramos que tenga la clase neutral correcta
             taxKpi.className = 'balance-result kpi-secondary'; 
             
+            // --- 3. Poblar KPI Card 2 (Balance) ---
+            // Re-usamos tu lógica original, pero apuntando a 'balanceKpi'
             if (data.balance_in_favor > 0) {
                 balanceKpi.innerHTML = `
                     <h3>💰 Balance a Favor</h3>
                     <div style="font-size: 24px; font-weight: bold;">${formatCurrency(data.balance_in_favor)}</div>
                 `;
-                balanceKpi.className = 'balance-result balance-favor'; 
+                balanceKpi.className = 'balance-result balance-favor'; // Añadir clase de estilo
             } else if (data.balance_to_pay > 0) {
                 balanceKpi.innerHTML = `
                     <h3>⚠️ Balance a Pagar</h3>
                     <div style="font-size: 24px; font-weight: bold;">${formatCurrency(data.balance_to_pay)}</div>
                 `;
-                balanceKpi.className = 'balance-result balance-pay'; 
+                balanceKpi.className = 'balance-result balance-pay'; // Añadir clase de estilo
             } else {
                 balanceKpi.innerHTML = `
                     <h3>⚖️ Sin Balance</h3>
                     <div style="font-size: 24px; font-weight: bold;">$0.00</div>
                 `;
-                balanceKpi.className = 'balance-result balance-favor'; 
+                balanceKpi.className = 'balance-result balance-favor'; // Usar estilo 'favor' para neutral
             }
         }
 
+        // ... (Tu JS de getRecommendationUsage, updateUsageCounter, y generateRecommendations (streaming) sigue igual) ...
         async function getRecommendationUsage() {
             try {
                 const response = await fetch('/api/recommendations/usage');
@@ -995,7 +1026,7 @@
                         const gif = catGifs[i % catGifs.length];
                         catsHtml += `<img src="${gif}" alt="Gatito ${i + 1}" style="width: ${120 - i * 10}px; height: auto; border-radius: 8px; margin: 5px;">`;
                     }
-                    streamingTextEl.innerHTML = `<div style="text-align: center; padding: 20px;"><div style="margin-bottom: 15px;">${catsHtml}</div><p style="color: var(--color-accent-primary); font-weight: bold; margin: 10px 0;">${message}</p><p style="color: var(--color-text-secondary); font-style: italic; margin: 0;">Analizando tu situación fiscal con ${currentCats} gatito${currentCats > 1 ? 's' : ''}...</p></div>`;
+                    streamingTextEl.innerHTML = `<div style="text-align: center; padding: 20px;"><div style="margin-bottom: 15px;">${catsHtml}</div><p style="color: #2c5530; font-weight: bold; margin: 10px 0;">${message}</p><p style="color: #6c757d; font-style: italic; margin: 0;">Analizando tu situación fiscal con ${currentCats} gatito${currentCats > 1 ? 's' : ''}...</p></div>`;
                 }
             }, 1000);
             try {
@@ -1009,10 +1040,10 @@
                             try {
                                 const data = JSON.parse(line.slice(6));
                                 if (data.type === 'start') {
-                                    streamingTextEl.innerHTML = `<div style="text-align: center; padding: 20px;"><img src="https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif" alt="Generando recomendaciones" style="width: 120px; height: auto; border-radius: 8px; margin-bottom: 10px;"><p style="color: var(--color-text-secondary); font-style: italic; margin: 0;">Analizando tu situación fiscal...</p></div>`;
+                                    streamingTextEl.innerHTML = `<div style="text-align: center; padding: 20px;"><img src="https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif" alt="Generando recomendaciones" style="width: 120px; height: auto; border-radius: 8px; margin-bottom: 10px;"><p style="color: #6c757d; font-style: italic; margin: 0;">Analizando tu situación fiscal...</p></div>`;
                                 } else if (data.type === 'chunk') {
                                     streamingText += data.content;
-                                    streamingTextEl.innerHTML = `<div style="white-space: pre-wrap; color: var(--color-text-primary);">${streamingText}</div>`;
+                                    streamingTextEl.innerHTML = `<div style="white-space: pre-wrap; color: #495057;">${streamingText}</div>`;
                                 } else if (data.type === 'complete') {
                                     const markdownContent = data.markdown || '';
                                     const htmlContent = marked.parse(markdownContent);
@@ -1052,8 +1083,10 @@
             }
         }
 
+        // Create debounced version of calculateTaxes
         const debouncedCalculateTaxes = debounce(calculateTaxes, 500);
 
+        // Add event listeners to all form inputs
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('taxForm');
             const inputs = form.querySelectorAll('input, select');
@@ -1072,8 +1105,40 @@
                 generateBtn.addEventListener('click', generateRecommendations);
             }
             
-            // Se eliminó initializeAccordion()
+            // --- MEJORA: Inicializar el Acordeón ---
+            function initializeAccordion() {
+                const toggles = document.querySelectorAll('.accordion-toggle');
+                toggles.forEach(toggle => {
+                    toggle.addEventListener('click', function() {
+                        const content = this.nextElementSibling; // .accordion-content
+                        const icon = this.querySelector('.accordion-icon');
+                        const isActive = this.classList.contains('active');
+                        
+                        // Cerrar todos los demás
+                        toggles.forEach(t => {
+                            if (t !== this) {
+                                t.classList.remove('active');
+                                t.nextElementSibling.style.display = 'none';
+                                t.querySelector('.accordion-icon').textContent = '+';
+                            }
+                        });
+
+                        // Abrir/Cerrar el actual
+                        if (isActive) {
+                            content.style.display = 'none';
+                            this.classList.remove('active');
+                            icon.textContent = '+';
+                        } else {
+                            content.style.display = 'block';
+                            this.classList.add('active');
+                            icon.textContent = '−';
+                        }
+                    });
+                });
+            }
+            initializeAccordion(); // <-- Llamar la función
             
+            // ... (Tu JS de Pin Toggle y Cat sigue igual) ...
             initializePinToggle();
             const pinBtn = document.getElementById('pin-toggle');
             if (pinBtn && pinBtn.textContent.trim() !== '📍') {

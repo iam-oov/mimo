@@ -45,16 +45,51 @@ initialize_database()
 fastapi_app = FastAPI()
 app = fastapi_app  # Alias for uvicorn
 
-GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "your-google-client-id")
-GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "your-google-client-secret")
-GOOGLE_REDIRECT_URI = os.getenv(
-    "GOOGLE_REDIRECT_URI", "http://localhost:8000/auth/callback"
-)
-SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here")
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI")
+SECRET_KEY = os.getenv("SECRET_KEY")
+
+if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET or not GOOGLE_REDIRECT_URI:
+    raise ValueError(
+        "GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REDIRECT_URI must be set"
+    )
+
+if not SECRET_KEY:
+    raise ValueError("SECRET_KEY must be set")
+
 
 fastapi_app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 
 templates = Jinja2Templates(directory="templates")
+
+
+def _build_external_base_url(request: Request) -> str:
+    """Best-effort external base URL using forwarded headers behind proxies.
+
+    Returns scheme://host, preferring X-Forwarded-* when available (Railway/Cloud).
+    """
+    # Prefer forwarded headers set by Railway / reverse proxies
+    scheme = request.headers.get("x-forwarded-proto") or request.url.scheme or "https"
+    host = (
+        request.headers.get("x-forwarded-host")
+        or request.headers.get("host")
+        or request.url.netloc
+    )
+    return f"{scheme}://{host}"
+
+
+def get_effective_redirect_uri(request: Request) -> str:
+    """Gets the redirect URI for Google OAuth.
+
+    If GOOGLE_REDIRECT_URI is set (and not a local default), use it. Otherwise
+    derive from the incoming request + '/auth/callback'. This avoids hardcoding
+    env-specific domains and reduces 400 errors due to mismatches.
+    """
+    if GOOGLE_REDIRECT_URI and not GOOGLE_REDIRECT_URI.startswith("http://localhost"):
+        return GOOGLE_REDIRECT_URI
+    base = _build_external_base_url(request)
+    return f"{base}/auth/callback"
 
 
 class TaxCalculationResult(BaseModel):
@@ -745,11 +780,12 @@ async def generate_recommendations_stream(
 
 
 @fastapi_app.get("/auth/google")
-async def google_auth():
+async def google_auth(request: Request):
     """Redirects to Google OAuth for authentication."""
+    redirect_uri = get_effective_redirect_uri(request)
     params = {
         "client_id": GOOGLE_CLIENT_ID,
-        "redirect_uri": GOOGLE_REDIRECT_URI,
+        "redirect_uri": redirect_uri,
         "scope": "openid email profile",
         "response_type": "code",
         "access_type": "offline",
@@ -765,12 +801,13 @@ async def google_callback(request: Request, code: str):
     """Handles the Google OAuth callback."""
     try:
         token_url = "https://oauth2.googleapis.com/token"
+        redirect_uri = get_effective_redirect_uri(request)
         token_data = {
             "client_id": GOOGLE_CLIENT_ID,
             "client_secret": GOOGLE_CLIENT_SECRET,
             "code": code,
             "grant_type": "authorization_code",
-            "redirect_uri": GOOGLE_REDIRECT_URI,
+            "redirect_uri": redirect_uri,
         }
 
         token_response = requests.post(token_url, data=token_data)

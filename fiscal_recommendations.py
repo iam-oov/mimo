@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Módulo para generar recomendaciones fiscales usando IA
-Sigue los principios SOLID para mantener código limpio y extensible
+Module for generating fiscal recommendations using AI.
+Follows SOLID principles for clean and extensible code.
 """
 
 import os
@@ -16,28 +16,28 @@ load_dotenv()
 
 class RecommendationGenerator(ABC):
     """
-    Interfaz abstracta para generadores de recomendaciones fiscales
-    Principio: Interface Segregation Principle (ISP)
+    Abstract interface for fiscal recommendation generators.
+    Principle: Interface Segregation Principle (ISP).
     """
 
     @abstractmethod
     def generate_recommendations_stream(
         self, calculation_result: Any, user_data: Dict[str, Any], fiscal_year: int
     ) -> Generator[str, None, None]:
-        """Genera recomendaciones fiscales personalizadas con streaming"""
+        """Generates personalized fiscal recommendations with streaming capabilities."""
         pass
 
 
 class FallbackRecommendationGenerator(RecommendationGenerator):
     """
-    Generador de recomendaciones por defecto
-    Principio: Single Responsibility Principle (SRP)
+    Default recommendation generator.
+    Principle: Single Responsibility Principle (SRP).
     """
 
     def generate_recommendations_stream(
         self, calculation_result: Any, user_data: Dict[str, Any], fiscal_year: int
     ):
-        """Genera recomendaciones fiscales por defecto como stream simulado en formato Markdown"""
+        """Generates default fiscal recommendations as a simulated stream in Markdown format."""
         recommendations_markdown = """
 ### 1. **Maximizar deducciones personales**
 
@@ -80,32 +80,30 @@ Mantén un archivo digital organizado de todos tus comprobantes fiscales y consi
 Dada la complejidad de tu situación fiscal, considera una consulta con un contador público certificado para identificar oportunidades específicas de optimización fiscal.
         """
 
-        # Simular streaming devolviendo todo el contenido de una vez
         yield recommendations_markdown.strip()
 
 
 class GeminiRecommendationGenerator(RecommendationGenerator):
     """
-    Generador de recomendaciones usando Gemini AI de Google
-    Principio: Single Responsibility Principle (SRP) y Dependency Inversion Principle (DIP)
+    Recommendation generator using Google's Gemini AI.
+    Principles: Single Responsibility Principle (SRP) and Dependency Inversion Principle (DIP).
     """
 
     def __init__(self, api_key: str | None = None):
         """
-        Inicializa el generador con la API key de Gemini
+        Initializes the generator with the Gemini API key.
 
         Args:
-            api_key: API key de Google Gemini. Si no se proporciona, se intenta obtener de variables de entorno
+            api_key: Google Gemini API key. If not provided, it attempts to get it from environment variables.
         """
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
 
         if not self.api_key:
             raise ValueError(
-                "API key de Google Gemini no encontrada. "
-                "Proporciona api_key o configura la variable de entorno GEMINI_API_KEY"
+                "Google Gemini API key not found. "
+                "Provide api_key or configure the GEMINI_API_KEY environment variable."
             )
 
-        # Configurar Gemini
         try:
             genai.configure(api_key=self.api_key)
             self.model = genai.GenerativeModel("gemini-2.5-pro")
@@ -114,13 +112,13 @@ class GeminiRecommendationGenerator(RecommendationGenerator):
 
     def _get_isr_data(self, fiscal_year: int):
         """
-        Obtiene los datos ISR para el año fiscal especificado
+        Retrieves ISR data for the specified fiscal year.
 
         Args:
-            fiscal_year: Año fiscal
+            fiscal_year: The fiscal year.
 
         Returns:
-            TablaISR con la información fiscal del año
+            TablaISR with the fiscal information for the year.
         """
         return get_tabla_isr(fiscal_year)
 
@@ -128,15 +126,15 @@ class GeminiRecommendationGenerator(RecommendationGenerator):
         self, calculation_result: Any, user_data: Dict[str, Any], fiscal_year: int
     ):
         """
-        Genera recomendaciones fiscales usando Gemini AI con streaming
+        Generates fiscal recommendations using Gemini AI with streaming.
 
         Args:
-            calculation_result: Resultado del cálculo fiscal
-            user_data: Datos del contribuyente
-            fiscal_year: Año fiscal
+            calculation_result: The result of the tax calculation.
+            user_data: Taxpayer's data.
+            fiscal_year: The fiscal year.
 
         Yields:
-            Fragmentos de texto de las recomendaciones en tiempo real
+            Text chunks of the recommendations in real-time.
         """
         if not self.model:
             raise ValueError("Gemini API key not configured")
@@ -159,16 +157,15 @@ class GeminiRecommendationGenerator(RecommendationGenerator):
         self, calculation_result: Any, user_data: Dict[str, Any], fiscal_year: int
     ) -> str:
         """
-        Crea el prompt contextualizado para Gemini
-        Principio: Single Responsibility Principle (SRP)
+        Creates the contextualized prompt for Gemini.
+        Principle: Single Responsibility Principle (SRP).
         """
-        ingresos = user_data["ingresos"]
-        contribuyente = user_data["contribuyente"]
-        tabla_isr = self._get_isr_data(fiscal_year)
+        income_data = user_data["ingresos"]
+        taxpayer_data = user_data["contribuyente"]
+        isr_table = self._get_isr_data(fiscal_year)
 
-        # Extraer información relevante de la tabla ISR
-        constantes = tabla_isr.constantes
-        topes_colegiaturas = tabla_isr.topes_colegiaturas
+        constants = isr_table.constantes
+        tuition_caps = isr_table.topes_colegiaturas
 
         return f"""
         Eres un "Gatito Fiscal" 🐱, un gato profesional asesor fiscal mexicano especializado en optimización fiscal para personas físicas. 
@@ -177,7 +174,7 @@ class GeminiRecommendationGenerator(RecommendationGenerator):
         Tu misión es analizar la situación fiscal y dar exactamente 5 consejos estratégicos para AUMENTAR EL SALDO A FAVOR.
 
         ## DATOS DEL CONTRIBUYENTE:
-        - **Nombre:** {contribuyente.get("nombre_o_referencia", "No especificado")}
+        - **Nombre:** {taxpayer_data.get("nombre_o_referencia", "No especificado")}
         - **Ejercicio fiscal:** {fiscal_year}
         - **Ingreso bruto anual:** ${calculation_result.gross_annual_income:,.2f}
         - **Ingreso gravado total:** ${calculation_result.total_taxable_income:,.2f}
@@ -189,31 +186,31 @@ class GeminiRecommendationGenerator(RecommendationGenerator):
         - **Saldo a pagar:** ${calculation_result.balance_to_pay:,.2f}
 
         ## CONTEXTO ADICIONAL:
-        - **Ingreso mensual ordinario:** ${ingresos.get("ingreso_bruto_mensual_ordinario", 0):,.2f}
-        - **Días de aguinaldo:** {ingresos.get("dias_aguinaldo", 0)}
-        - **Días de vacaciones:** {ingresos.get("dias_vacaciones_anuales", 0)}
+        - **Ingreso mensual ordinario:** ${income_data.get("ingreso_bruto_mensual_ordinario", 0):,.2f}
+        - **Días de aguinaldo:** {income_data.get("dias_aguinaldo", 0)}
+        - **Días de vacaciones:** {income_data.get("dias_vacaciones_anuales", 0)}
 
         ## LÍMITES Y TOPES FISCALES OFICIALES {fiscal_year}:
-        - **UMA diario:** ${constantes.valor_uma_diario:,.2f}
-        - **UMA anual:** ${constantes.valor_uma_anual:,.2f}
-        - **Tope deducciones generales:** {constantes.tope_general_deducciones_umas} UMAs = ${constantes.valor_uma_anual * constantes.tope_general_deducciones_umas:,.2f}
-        - **Tope PPR/Afore:** {constantes.tope_ppr_deducciones_umas} UMAs = ${constantes.valor_uma_anual * constantes.tope_ppr_deducciones_umas:,.2f}
-        - **Exención aguinaldo:** {constantes.exencion_aguinaldo_umas} UMAs = ${constantes.valor_uma_anual * constantes.exencion_aguinaldo_umas / 365:,.2f} diarios
-        - **Exención prima vacacional:** {constantes.exencion_prima_vacacional_umas} UMAs = ${constantes.valor_uma_anual * constantes.exencion_prima_vacacional_umas / 365:,.2f} diarios
+        - **UMA diario:** ${constants.valor_uma_diario:,.2f}
+        - **UMA anual:** ${constants.valor_uma_anual:,.2f}
+        - **Tope deducciones generales:** {constants.tope_general_deducciones_umas} UMAs = ${constants.valor_uma_anual * constants.tope_general_deducciones_umas:,.2f}
+        - **Tope PPR/Afore:** {constants.tope_ppr_deducciones_umas} UMAs = ${constants.valor_uma_anual * constants.tope_ppr_deducciones_umas:,.2f}
+        - **Exención aguinaldo:** {constants.exencion_aguinaldo_umas} UMAs = ${constants.valor_uma_anual * constants.exencion_aguinaldo_umas / 365:,.2f} diarios
+        - **Exención prima vacacional:** {constants.exencion_prima_vacacional_umas} UMAs = ${constants.valor_uma_anual * constants.exencion_prima_vacacional_umas / 365:,.2f} diarios
         
         ### TOPES COLEGIATURAS {fiscal_year}:
-        - **Preescolar:** ${topes_colegiaturas.preescolar:,.2f}
-        - **Primaria:** ${topes_colegiaturas.primaria:,.2f}
-        - **Secundaria:** ${topes_colegiaturas.secundaria:,.2f}
-        - **Profesional técnico:** ${topes_colegiaturas.profesional_tecnico:,.2f}
-        - **Preparatoria:** ${topes_colegiaturas.preparatoria:,.2f}
+        - **Preescolar:** ${tuition_caps.preescolar:,.2f}
+        - **Primaria:** ${tuition_caps.primaria:,.2f}
+        - **Secundaria:** ${tuition_caps.secundaria:,.2f}
+        - **Profesional técnico:** ${tuition_caps.profesional_tecnico:,.2f}
+        - **Preparatoria:** ${tuition_caps.preparatoria:,.2f}
 
         ## INSTRUCCIONES:
         1. Preséntate brevemente como "Mimo el Gatito Fiscal", y tu asesor profesional
         2. Analiza la situación fiscal específica de este contribuyente
         3. IMPORTANTE: Evalúa si ya están maximizadas ciertas deducciones usando los LÍMITES OFICIALES:
-           - Si deducciones generales ya son ≥${constantes.valor_uma_anual * constantes.tope_general_deducciones_umas:,.0f} ({constantes.tope_general_deducciones_umas} UMAs), NO recomiendes incrementarlas
-           - Si PPR/Afore ya está al máximo ${constantes.valor_uma_anual * constantes.tope_ppr_deducciones_umas:,.0f} ({constantes.tope_ppr_deducciones_umas} UMAs), NO recomiendes más contribuciones
+           - Si deducciones generales ya son ≥${constants.valor_uma_anual * constants.tope_general_deducciones_umas:,.0f} ({constants.tope_general_deducciones_umas} UMAs), NO recomiendes incrementarlas
+           - Si PPR/Afore ya está al máximo ${constants.valor_uma_anual * constants.tope_ppr_deducciones_umas:,.0f} ({constants.tope_ppr_deducciones_umas} UMAs), NO recomiendes más contribuciones
            - Si colegiaturas están en los topes oficiales mostrados arriba, NO recomiendes aumentarlas
            - Usa los valores EXACTOS de UMA y topes oficiales en tus cálculos
         4. Proporciona EXACTAMENTE 5 consejos estratégicos RELEVANTES para AUMENTAR EL SALDO A FAVOR
@@ -263,21 +260,21 @@ class GeminiRecommendationGenerator(RecommendationGenerator):
 
     def _process_response(self, response_text: str) -> str:
         """
-        Procesa la respuesta de Gemini manteniéndola en formato Markdown
-        Principio: Single Responsibility Principle (SRP)
+        Processes the Gemini response, keeping it in Markdown format.
+        Principle: Single Responsibility Principle (SRP).
         """
         response_text = response_text.strip()
 
         if not response_text:
-            return "**Error procesando recomendaciones:** No se pudieron procesar las recomendaciones de IA correctamente."
+            return "**Error processing recommendations:** Could not process AI recommendations correctly."
 
         return response_text
 
 
 class RecommendationService:
     """
-    Servicio principal para generar recomendaciones fiscales
-    Principios: Dependency Inversion Principle (DIP) y Open/Closed Principle (OCP)
+    Main service for generating fiscal recommendations.
+    Principles: Dependency Inversion Principle (DIP) and Open/Closed Principle (OCP).
     """
 
     def __init__(
@@ -286,11 +283,11 @@ class RecommendationService:
         fallback_generator: RecommendationGenerator,
     ):
         """
-        Inicializa el servicio con generadores primario y de respaldo
+        Initializes the service with primary and fallback generators.
 
         Args:
-            primary_generator: Generador principal (ej: Gemini)
-            fallback_generator: Generador de respaldo (recomendaciones por defecto)
+            primary_generator: The primary generator (e.g., Gemini).
+            fallback_generator: The fallback generator (default recommendations).
         """
         self.primary_generator = primary_generator
         self.fallback_generator = fallback_generator
@@ -299,30 +296,30 @@ class RecommendationService:
         self, calculation_result: Any, user_data: Dict[str, Any], fiscal_year: int
     ):
         """
-        Obtiene recomendaciones fiscales con streaming usando solo el generador primario
+        Retrieves fiscal recommendations with streaming using only the primary generator.
 
         Args:
-            calculation_result: Resultado del cálculo fiscal
-            user_data: Datos del contribuyente
-            fiscal_year: Año fiscal
+            calculation_result: The result of the tax calculation.
+            user_data: Taxpayer's data.
+            fiscal_year: The fiscal year.
 
         Yields:
-            Fragmentos de texto de las recomendaciones en tiempo real
+            Text chunks of the recommendations in real-time.
         """
-        print("🤖 Generando recomendaciones fiscales personalizadas con streaming...")
+        print("🤖 Generating personalized fiscal recommendations with streaming...")
 
         for chunk in self.primary_generator.generate_recommendations_stream(
             calculation_result, user_data, fiscal_year
         ):
             yield chunk
 
-        print("✅ Recomendaciones generadas exitosamente")
+        print("✅ Recommendations generated successfully")
 
 
 class RecommendationFactory:
     """
-    Factory para crear servicios de recomendaciones
-    Principio: Factory Pattern y Single Responsibility Principle (SRP)
+    Factory for creating recommendation services.
+    Principles: Factory Pattern and Single Responsibility Principle (SRP).
     """
 
     @staticmethod
@@ -330,14 +327,14 @@ class RecommendationFactory:
         use_ai: bool = True, api_key: str | None = None
     ) -> RecommendationService:
         """
-        Crea un servicio de recomendaciones configurado
+        Creates a configured recommendation service.
 
         Args:
-            use_ai: Si usar IA (Gemini) como generador primario
-            api_key: Clave de API de Gemini
+            use_ai: Whether to use AI (Gemini) as the primary generator.
+            api_key: Gemini API key.
 
         Returns:
-            Servicio de recomendaciones configurado
+            A configured recommendation service.
         """
         fallback_generator = FallbackRecommendationGenerator()
 
@@ -346,8 +343,7 @@ class RecommendationFactory:
                 primary_generator = GeminiRecommendationGenerator(api_key)
                 return RecommendationService(primary_generator, fallback_generator)
             except Exception as e:
-                print(f"⚠️  No se pudo configurar Gemini: {e}")
-                print("🔄 Usando solo recomendaciones por defecto...")
+                print(f"⚠️  Could not configure Gemini: {e}")
+                print("🔄 Using only default recommendations...")
 
-        # Si no se puede usar IA, usar fallback como primario
         return RecommendationService(fallback_generator, fallback_generator)

@@ -1,7 +1,9 @@
 import os
 import urllib.parse
-
 from typing import Any, Dict, Optional
+import sqlite3
+from pathlib import Path
+from datetime import date
 
 import google.oauth2.id_token
 import google.auth.transport.requests as google_requests
@@ -11,19 +13,16 @@ from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 from starlette.middleware.sessions import SessionMiddleware
+from dotenv import load_dotenv
 
 from fiscal_recommendations import RecommendationFactory
 from tabla_isr_constants import TablaISR
-from datetime import date
-import sqlite3
-from pathlib import Path
-
-from dotenv import load_dotenv
 
 load_dotenv()
 
 
-def init_db():
+def initialize_database():
+    """Initializes the database and creates the recommendation_usage table if it doesn't exist."""
     db_path = Path("recommendations.db")
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -41,9 +40,10 @@ def init_db():
     conn.close()
 
 
-init_db()
+initialize_database()
 
-app = FastAPI()
+fastapi_app = FastAPI()
+app = fastapi_app  # Alias for uvicorn
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "your-google-client-id")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "your-google-client-secret")
@@ -52,20 +52,17 @@ GOOGLE_REDIRECT_URI = os.getenv(
 )
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here")
 
-app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
+fastapi_app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 
 templates = Jinja2Templates(directory="templates")
 
 
 class TaxCalculationResult(BaseModel):
     """
-    Tax Calculation Result Model
-
-    This model represents the complete results of tax calculations,
-    including income, deductions, tax determinations, and final balance.
+    Represents the complete results of tax calculations, including income,
+    deductions, tax determinations, and the final balance.
     """
 
-    # === INCOME CALCULATIONS ===
     gross_annual_income: float = Field(
         description="Total gross annual income including bonuses and premiums", ge=0.0
     )
@@ -79,7 +76,6 @@ class TaxCalculationResult(BaseModel):
         description="Total income subject to taxation", ge=0.0
     )
 
-    # === DEDUCTION CALCULATIONS ===
     authorized_deductions: float = Field(
         description="Total authorized deductions after caps and limits", ge=0.0
     )
@@ -91,7 +87,6 @@ class TaxCalculationResult(BaseModel):
         description="Education/tuition deductions", ge=0.0
     )
 
-    # === TAX CALCULATIONS ===
     taxable_base: float = Field(
         description="Final tax base after all deductions", ge=0.0
     )
@@ -100,7 +95,6 @@ class TaxCalculationResult(BaseModel):
     )
     withheld_tax: float = Field(description="Tax withheld during the year", ge=0.0)
 
-    # === FINAL BALANCE ===
     balance_in_favor: float = Field(
         description="Amount in favor of taxpayer (refund)", ge=0.0
     )
@@ -127,27 +121,27 @@ class TaxCalculationResult(BaseModel):
     }
 
     def get_effective_tax_rate(self) -> float:
-        """Calculate effective tax rate as percentage"""
+        """Calculates the effective tax rate as a percentage."""
         if self.total_taxable_income > 0:
             return (self.determined_tax / self.total_taxable_income) * 100
         return 0.0
 
     def get_deduction_efficiency(self) -> float:
-        """Calculate deduction efficiency as percentage of gross income"""
+        """Calculates deduction efficiency as a percentage of gross income."""
         if self.gross_annual_income > 0:
             return (self.authorized_deductions / self.gross_annual_income) * 100
         return 0.0
 
     def is_refund_due(self) -> bool:
-        """Check if taxpayer is due a refund"""
+        """Checks if the taxpayer is due a refund."""
         return self.balance_in_favor > 0
 
     def get_net_tax_impact(self) -> float:
-        """Get net tax impact (positive = owe, negative = refund)"""
+        """Gets the net tax impact (positive = owe, negative = refund)."""
         return self.balance_to_pay - self.balance_in_favor
 
     def get_summary(self) -> Dict[str, Any]:
-        """Get a comprehensive summary of tax calculation results"""
+        """Returns a comprehensive summary of the tax calculation results."""
         return {
             "income_summary": {
                 "gross_annual": self.gross_annual_income,
@@ -264,7 +258,6 @@ class TaxCalculator:
         return monthly_tax * 12
 
     def _calculate_taxable_bonus(self) -> float:
-        # Use new TaxInputData structure
         monthly_income = self.user_data["monthly_gross_income"]
         bonus_days = self.user_data["bonus_days"]
 
@@ -277,7 +270,6 @@ class TaxCalculator:
         return max(0, total_bonus - bonus_exemption)
 
     def _calculate_taxable_vacation_premium(self) -> float:
-        # Use new TaxInputData structure
         monthly_income = self.user_data["monthly_gross_income"]
         vacation_days = self.user_data["vacation_days"]
         premium_percentage = self.user_data["vacation_premium_percentage"]
@@ -300,14 +292,12 @@ class TaxCalculator:
         self,
         total_gross_income: float,
     ) -> tuple[float, float, float, float]:
-        # Use new TaxInputData structure with unified deduction fields
         total_general_deductions = self.user_data["general_deductions"]
         total_ppr = self.user_data["total_ppr"]
         total_tuition = self.user_data["total_tuition"]
 
         uma_annual = self.isr_table.constantes.valor_uma_anual
 
-        # Apply caps to each deduction type
         general_cap = (
             uma_annual * self.isr_table.constantes.tope_general_deducciones_umas
         )
@@ -316,8 +306,8 @@ class TaxCalculator:
         ppr_cap = uma_annual * self.isr_table.constantes.tope_ppr_deducciones_umas
         limited_ppr = min(total_ppr, ppr_cap)
 
-        # For education deductions, apply the maximum cap across all levels
-        # Get the highest cap from education levels as a simplified approach
+        # For education deductions, we apply the maximum cap across all levels
+        # as a simplified approach.
         education_caps = {
             "preescolar": self.isr_table.topes_colegiaturas.preescolar,
             "primaria": self.isr_table.topes_colegiaturas.primaria,
@@ -360,14 +350,14 @@ async def get_current_user(request: Request) -> Optional[Dict[str, Any]]:
     return None
 
 
-@app.get("/")
+@fastapi_app.get("/")
 async def read_root():
-    """Redirect root path to calculator"""
+    """Redirects the root path to the calculator page."""
     return RedirectResponse(url="/calculator", status_code=302)
 
 
-@app.get("/calculator", response_class=HTMLResponse)
-async def calculator(
+@fastapi_app.get("/calculator", response_class=HTMLResponse)
+async def calculator_page(
     request: Request, user: Optional[Dict[str, Any]] = Depends(get_current_user)
 ):
     return templates.TemplateResponse(
@@ -375,7 +365,7 @@ async def calculator(
     )
 
 
-@app.get("/login", response_class=HTMLResponse)
+@fastapi_app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
 
@@ -389,10 +379,10 @@ class TaxInputData(BaseModel):
     )
 
     monthly_gross_income: float = Field(
-        default=0.0, description="Monthly gross income in USD", ge=0.0, le=1000000.0
+        default=0.0, description="Monthly gross income", ge=0.0, le=1000000.0
     )
     monthly_net_income: float = Field(
-        default=0.0, description="Monthly net income in USD", ge=0.0
+        default=0.0, description="Monthly net income", ge=0.0
     )
     bonus_days: int = Field(
         default=15, description="Number of bonus days (aguinaldo)", ge=0, le=365
@@ -402,7 +392,7 @@ class TaxInputData(BaseModel):
     )
     vacation_premium_percentage: float = Field(
         default=0.25,
-        description="Vacation premium percentage (0.25 = 25%)",
+        description="Vacation premium percentage (e.g., 0.25 for 25%)",
         ge=0.0,
         le=1.0,
     )
@@ -441,9 +431,8 @@ class TaxInputData(BaseModel):
     }
 
 
-@app.post("/api/calculate")
-def calculate_tax_dynamic(tax_data: TaxInputData) -> Dict[str, Any]:
-    # Convert input data to match TaxInputData interface structure
+@fastapi_app.post("/api/calculate")
+def calculate_tax_dynamically(tax_data: TaxInputData) -> Dict[str, Any]:
     user_data = {
         "taxpayer_name": tax_data.taxpayer_name,
         "fiscal_year": tax_data.fiscal_year,
@@ -457,15 +446,12 @@ def calculate_tax_dynamic(tax_data: TaxInputData) -> Dict[str, Any]:
         "total_ppr": tax_data.total_ppr,
     }
 
-    # Load ISR table for the fiscal year
-    data_reader = DataReader("")  # Empty path since we're only using get_isr_table
+    data_reader = DataReader("")
     isr_table = data_reader.get_isr_table(tax_data.fiscal_year)
 
-    # Calculate taxes
     tax_calculator = TaxCalculator(user_data, isr_table)
     calculation_result = tax_calculator.calculate_tax_balance()
 
-    # Return the results
     return {
         "taxpayer_name": tax_data.taxpayer_name,
         "fiscal_year": tax_data.fiscal_year,
@@ -485,9 +471,8 @@ def calculate_tax_dynamic(tax_data: TaxInputData) -> Dict[str, Any]:
     }
 
 
-# Helper functions for recommendation limits
 def get_user_recommendation_usage(user_id: str) -> int:
-    """Get today's recommendation usage count for a user"""
+    """Gets the recommendation usage count for a user for the current day."""
     today = date.today().isoformat()
 
     conn = sqlite3.connect("recommendations.db")
@@ -505,26 +490,23 @@ def get_user_recommendation_usage(user_id: str) -> int:
 
 
 def increment_user_recommendation_usage(user_id: str) -> int:
-    """Increment today's recommendation usage count for a user"""
+    """Increments the recommendation usage count for a user for the current day."""
     today = date.today().isoformat()
 
     conn = sqlite3.connect("recommendations.db")
     cursor = conn.cursor()
 
-    # Try to update existing record
     cursor.execute(
         "UPDATE recommendation_usage SET count = count + 1 WHERE user_id = ? AND date = ?",
         (user_id, today),
     )
 
-    # If no existing record, insert new one
     if cursor.rowcount == 0:
         cursor.execute(
             "INSERT INTO recommendation_usage (user_id, date, count) VALUES (?, ?, 1)",
             (user_id, today),
         )
 
-    # Get the updated count
     cursor.execute(
         "SELECT count FROM recommendation_usage WHERE user_id = ? AND date = ?",
         (user_id, today),
@@ -539,11 +521,11 @@ def increment_user_recommendation_usage(user_id: str) -> int:
     return count
 
 
-@app.get("/api/recommendations/usage")
+@fastapi_app.get("/api/recommendations/usage")
 async def get_recommendation_usage(
     user: Optional[Dict[str, Any]] = Depends(get_current_user),
 ):
-    """Get current user's recommendation usage for today"""
+    """Gets the current user's recommendation usage for today."""
     if not user:
         raise HTTPException(status_code=401, detail="Authentication required")
 
@@ -558,11 +540,11 @@ async def get_recommendation_usage(
     }
 
 
-@app.post("/api/recommendations")
+@fastapi_app.post("/api/recommendations")
 async def generate_recommendations(
     tax_data: TaxInputData, user: Optional[Dict[str, Any]] = Depends(get_current_user)
 ) -> Dict[str, Any]:
-    """Generate fiscal recommendations with daily limit"""
+    """Generates fiscal recommendations with a daily limit."""
     if not user:
         raise HTTPException(status_code=401, detail="Authentication required")
 
@@ -577,7 +559,6 @@ async def generate_recommendations(
         )
 
     try:
-        # Convert TaxInputData to the format expected by fiscal_recommendations
         user_data_for_recommendations = {
             "contribuyente": {
                 "nombre_o_referencia": tax_data.taxpayer_name or "Usuario",
@@ -590,7 +571,6 @@ async def generate_recommendations(
             },
         }
 
-        # Calculate tax results to pass to recommendation system
         user_data_for_calculation = {
             "taxpayer_name": tax_data.taxpayer_name,
             "fiscal_year": tax_data.fiscal_year,
@@ -604,13 +584,11 @@ async def generate_recommendations(
             "total_ppr": tax_data.total_ppr,
         }
 
-        # Load ISR table and calculate taxes
         data_reader = DataReader("")
         isr_table = data_reader.get_isr_table(tax_data.fiscal_year)
         tax_calculator = TaxCalculator(user_data_for_calculation, isr_table)
         calculation_result = tax_calculator.calculate_tax_balance()
 
-        # Generate recommendations using streaming (collect all chunks)
         recommendation_service = RecommendationFactory.create_service(use_ai=True)
 
         accumulated_text = ""
@@ -619,7 +597,6 @@ async def generate_recommendations(
         ):
             accumulated_text += chunk
 
-        # Process the response - now returning Markdown content
         if hasattr(recommendation_service.primary_generator, "_process_response"):
             recommendations_markdown = (
                 recommendation_service.primary_generator._process_response(
@@ -627,7 +604,6 @@ async def generate_recommendations(
                 )
             )
         else:
-            # For fallback generator, return as is
             recommendations_markdown = accumulated_text
 
         new_count = increment_user_recommendation_usage(user_id)
@@ -662,11 +638,11 @@ async def generate_recommendations(
         }
 
 
-@app.post("/api/recommendations/stream")
+@fastapi_app.post("/api/recommendations/stream")
 async def generate_recommendations_stream(
     tax_data: TaxInputData, user: Optional[Dict[str, Any]] = Depends(get_current_user)
 ):
-    """Generate fiscal recommendations with streaming response"""
+    """Generates fiscal recommendations with a streaming response."""
     if not user:
         raise HTTPException(status_code=401, detail="Authentication required")
 
@@ -682,7 +658,6 @@ async def generate_recommendations_stream(
 
     async def generate_stream():
         try:
-            # Convert TaxInputData to the format expected by fiscal_recommendations
             user_data_for_recommendations = {
                 "contribuyente": {
                     "nombre_o_referencia": tax_data.taxpayer_name or "Usuario",
@@ -695,7 +670,6 @@ async def generate_recommendations_stream(
                 },
             }
 
-            # Calculate tax results
             user_data_for_calculation = {
                 "taxpayer_name": tax_data.taxpayer_name,
                 "fiscal_year": tax_data.fiscal_year,
@@ -714,7 +688,6 @@ async def generate_recommendations_stream(
             tax_calculator = TaxCalculator(user_data_for_calculation, isr_table)
             calculation_result = tax_calculator.calculate_tax_balance()
 
-            # Use streaming recommendations
             recommendation_service = RecommendationFactory.create_service(use_ai=True)
 
             print("🚀 Starting streaming recommendations...")
@@ -728,7 +701,6 @@ async def generate_recommendations_stream(
                 escaped_chunk = chunk.replace('"', '\\"').replace("\n", "\\n")
                 yield f'data: {{"type":"chunk","content":"{escaped_chunk}"}}\n\n'
 
-            # Process the complete response - now handling Markdown
             if hasattr(recommendation_service.primary_generator, "_process_response"):
                 processed_markdown = (
                     recommendation_service.primary_generator._process_response(
@@ -742,7 +714,6 @@ async def generate_recommendations_stream(
                 )
                 yield f'data: {{"type":"complete","markdown":"{escaped_markdown}"}}\n\n'
             else:
-                # For fallback generator, return markdown as is
                 fallback_markdown = (
                     accumulated_text
                     if accumulated_text
@@ -755,7 +726,6 @@ async def generate_recommendations_stream(
                 )
                 yield f'data: {{"type":"complete","markdown":"{escaped_fallback}"}}\n\n'
 
-            # Increment usage counter
             increment_user_recommendation_usage(user_id)
 
         except Exception as e:
@@ -774,9 +744,9 @@ async def generate_recommendations_stream(
     )
 
 
-@app.get("/auth/google")
+@fastapi_app.get("/auth/google")
 async def google_auth():
-    """Redirect to Google OAuth"""
+    """Redirects to Google OAuth for authentication."""
     google_auth_url = (
         f"https://accounts.google.com/o/oauth2/auth?"
         f"client_id={GOOGLE_CLIENT_ID}&"
@@ -788,9 +758,9 @@ async def google_auth():
     return RedirectResponse(url=google_auth_url)
 
 
-@app.get("/auth/callback")
+@fastapi_app.get("/auth/callback")
 async def google_callback(request: Request, code: str):
-    """Google OAuth callback"""
+    """Handles the Google OAuth callback."""
     try:
         token_url = "https://oauth2.googleapis.com/token"
         token_data = {
@@ -809,7 +779,6 @@ async def google_callback(request: Request, code: str):
             id_token, google_requests.Request(), GOOGLE_CLIENT_ID
         )
 
-        # Store user info in session
         request.session["user"] = {
             "sub": user_info["sub"],
             "email": user_info["email"],
@@ -822,8 +791,9 @@ async def google_callback(request: Request, code: str):
         raise HTTPException(status_code=400, detail=f"Authentication failed: {str(e)}")
 
 
-@app.get("/logout")
+@fastapi_app.get("/logout")
 async def logout(request: Request):
+    """Logs the user out by clearing the session."""
     request.session.pop("user", None)
     return RedirectResponse(url="/calculator")
 
@@ -831,4 +801,4 @@ async def logout(request: Request):
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(fastapi_app, host="0.0.0.0", port=8000)

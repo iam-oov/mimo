@@ -41,6 +41,9 @@ def build_prompt(
         - **Ingreso bruto anual:** ${calculation_result.gross_annual_income:,.2f}
         - **Ingreso gravado total:** ${calculation_result.total_taxable_income:,.2f}
         - **Deducciones actuales:** ${calculation_result.authorized_deductions:,.2f}
+        - **Deducciones generales:** ${calculation_result.personal_deductions:,.2f}
+        - **Deducciones PPR/Afore:** ${calculation_result.ppr_deductions:,.2f}
+        - **Deducciones colegiaturas:** ${calculation_result.education_deductions:,.2f}
         - **Base gravable:** ${calculation_result.taxable_base:,.2f}
         - **Impuesto determinado:** ${calculation_result.determined_tax:,.2f}
         - **Impuesto retenido:** ${calculation_result.withheld_tax:,.2f}
@@ -118,6 +121,32 @@ def build_prompt(
         - Sugiere optimización de retenciones específica para su situación
         - Considera inversiones deducibles alternativas
         - Explora gastos médicos especializados no utilizados
+        
+        ## CIERRE IMPACTANTE (OBLIGATORIO):
+        Después de los 5 consejos, DEBES incluir una sección final con el título:
+        
+        ### 🎯 **Resumen del Impacto Fiscal**
+        
+        Y luego presenta un cálculo consolidado así:
+        
+        "Si implementas estas recomendaciones antes de que termine el año fiscal:
+        
+        - **[Consejo 1]:** Incrementar de $[valor actual] a $[valor recomendado] = **+$[ahorro fiscal estimado]**
+        - **[Consejo 2]:** Incrementar de $[valor actual] a $[valor recomendado] = **+$[ahorro fiscal estimado]**
+        - **[Consejo 3]:** [acción específica] = **+$[ahorro fiscal estimado]**
+        - **[Consejo 4]:** [acción específica] = **+$[ahorro fiscal estimado]**
+        - **[Consejo 5]:** [acción específica] = **+$[ahorro fiscal estimado]**
+        
+        ### 💰 **Impacto Total Estimado: +$[SUMA TOTAL] en saldo a favor**
+        
+        > **Mimo dice:** ¡Miau-ravilloso! Con estas estrategias purr-fectas podrías transformar tu situación fiscal y recibir un saldo a favor MUCHO mayor. ¡Es paw-sible optimizar tus finanzas! 🐾✨"
+        
+        IMPORTANTE: 
+        - Usa números REALES basados en la situación del contribuyente
+        - Los ahorros fiscales deben ser realistas (considera la tasa marginal del contribuyente, típicamente entre 25-35% para este nivel de ingresos)
+        - La SUMA TOTAL debe ser la suma de todos los ahorros estimados
+        - Si el contribuyente ya tiene ${calculation_result.balance_in_favor:,.0f} a favor, menciona cómo podría incrementarlo a $[nuevo total]
+        - Calcula el ahorro fiscal como: (incremento en deducciones) × (tasa marginal estimada)
         """
 
 

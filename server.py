@@ -689,7 +689,7 @@ async def generate_recommendations(
 @fastapi_app.post("/api/recommendations/stream")
 async def generate_recommendations_stream(
     tax_data: TaxInputData, user: Optional[Dict[str, Any]] = Depends(get_current_user)
-):
+) -> StreamingResponse:
     """Generates fiscal recommendations with a streaming response."""
     if not user:
         raise HTTPException(status_code=401, detail="Authentication required")

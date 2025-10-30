@@ -16,7 +16,8 @@ from starlette.middleware.sessions import SessionMiddleware
 from dotenv import load_dotenv
 
 from fiscal_recommendations import RecommendationFactory
-from tabla_isr_constants import TablaISR
+from tabla_isr_constants import TablaISR, get_tabla_isr
+from multi_agent_analysis import MultiAgentAnalysisService
 
 load_dotenv()
 
@@ -845,6 +846,70 @@ async def google_callback(request: Request, code: str):
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Authentication failed: {str(e)}")
+
+
+@fastapi_app.post("/api/multi-agent-analysis")
+async def multi_agent_analysis_stream(
+    tax_data: TaxInputData, user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Generate fiscal recommendations using multi-agent debate system with streaming."""
+    try:
+        user_id = user.get("sub", user.get("email", "unknown"))
+
+        # Check daily recommendation limit
+        usage = get_user_recommendation_usage(user_id)
+        if usage >= DAILY_RECOMMENDATIONS_LIMIT:
+
+            async def error_stream():
+                yield f'data: {{"type": "error", "message": "Daily recommendation limit reached ({DAILY_RECOMMENDATIONS_LIMIT}). Try again tomorrow."}}\n\n'
+
+            return StreamingResponse(error_stream(), media_type="text/event-stream")
+
+        # Calculate taxes first
+        isr_table = get_tabla_isr(tax_data.fiscal_year)
+        user_data_for_calculation = tax_data.model_dump()
+        tax_calculator = TaxCalculator(user_data_for_calculation, isr_table)
+        calculation_result = tax_calculator.calculate_tax_balance()
+
+        # Format user_data for multi-agent analysis (needs 'contribuyente' key)
+        user_data_formatted = {
+            "contribuyente": {
+                "nombre_o_referencia": tax_data.taxpayer_name or "Usuario",
+                "ejercicio_fiscal": tax_data.fiscal_year,
+            },
+            "ingresos": {
+                "ingreso_bruto_mensual_ordinario": tax_data.monthly_gross_income,
+                "dias_aguinaldo": tax_data.bonus_days,
+                "dias_vacaciones_anuales": tax_data.vacation_days,
+            },
+        }
+
+        # Create streaming generator
+        async def event_generator():
+            try:
+                for event in MultiAgentAnalysisService.run_analysis_stream(
+                    calculation_result, user_data_formatted, tax_data.fiscal_year
+                ):
+                    import json
+
+                    yield f"data: {json.dumps(event)}\n\n"
+
+                # Increment usage counter after successful generation
+                increment_user_recommendation_usage(user_id)
+
+            except Exception as e:
+                import json
+
+                yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+
+        return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error generating analysis: {str(e)}"
+        )
 
 
 @fastapi_app.get("/logout")

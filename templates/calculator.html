@@ -790,6 +790,218 @@
         .kpi-grid .balance-result {
             padding: 12px;
         }
+
+        /* --- DEBATE FISCAL MULTI-AGENTE --- */
+        .expert-cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            width: 100%;
+        }
+        
+        .expert-card {
+            background: var(--color-bg-deep-space);
+            border: 1px solid var(--color-border);
+            border-left: 4px solid var(--color-accent-primary);
+            padding: 16px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            min-height: 140px;
+        }
+        
+        .expert-card:hover {
+            transform: translateY(-4px);
+            border-left-color: var(--color-accent-secondary);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.15);
+        }
+        
+        .expert-card strong {
+            color: var(--color-accent-primary);
+            font-size: 0.95rem;
+        }
+        
+        .expert-card small {
+            color: var(--color-text-secondary);
+            font-size: 0.8rem;
+        }
+        
+        /* Responsive breakpoints */
+        @media (max-width: 768px) {
+            .expert-cards-container {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 12px;
+            }
+            
+            .expert-card {
+                padding: 12px;
+                min-height: 120px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .expert-cards-container {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .expert-card {
+                min-height: auto;
+            }
+        }
+        
+        .phase-indicator {
+            display: inline-block;
+            padding: 6px 14px;
+            background: linear-gradient(135deg, var(--color-accent-primary) 0%, #FF8C42 100%);
+            color: var(--color-bg-deep-space);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin: 10px 0;
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+            display: flex;
+            justify-content: center;
+        }
+        
+        .intervention {
+            margin: 12px 0;
+            padding: 14px;
+            background: var(--color-bg-deep-space);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            transition: box-shadow 0.3s ease;
+        }
+        .intervention:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .intervention-header {
+            font-weight: 700;
+            color: var(--color-accent-primary);
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .intervention-header::before {
+            content: "💬";
+            font-size: 1rem;
+        }
+        .intervention-content {
+            color: var(--color-text-primary);
+            line-height: 1.6;
+            font-size: 0.9rem;
+            text-align: justify;
+        }
+        
+        .moderator-intervention {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(251, 191, 36, 0.05) 100%);
+            border-left: 4px solid var(--color-accent-primary);
+        }
+        .moderator-intervention .intervention-header {
+            color: var(--color-accent-primary);
+        }
+        .moderator-intervention .intervention-header::before {
+            content: "🎙️";
+        }
+        
+        .voting-results {
+            background: linear-gradient(135deg, rgba(45, 212, 191, 0.15) 0%, rgba(45, 212, 191, 0.05) 100%);
+            border: 2px solid var(--color-accent-secondary);
+            padding: 16px;
+            border-radius: 10px;
+            margin: 16px 0;
+            box-shadow: 0 0 20px rgba(45, 212, 191, 0.2);
+        }
+        .voting-results h4 {
+            color: var(--color-accent-secondary);
+            margin-top: 0;
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .voting-results h4::before {
+            content: "🏆";
+            font-size: 1.3rem;
+        }
+        .voting-results ul {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0;
+        }
+        .voting-results li {
+            padding: 6px 0;
+            color: var(--color-text-primary);
+            font-size: 0.9rem;
+        }
+        .voting-results li::before {
+            content: "🗳️ ";
+            margin-right: 6px;
+        }
+        
+        .conclusion {
+            background: linear-gradient(135deg, rgba(167, 139, 250, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border: 2px solid #a78bfa;
+            border-left: 6px solid #a78bfa;
+            padding: 18px;
+            border-radius: 10px;
+            margin-top: 16px;
+            box-shadow: 0 0 25px rgba(167, 139, 250, 0.3);
+        }
+        .conclusion h4 {
+            color: #a78bfa;
+            margin-top: 0;
+            margin-bottom: 12px;
+            font-size: 1.15rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .conclusion h4::before {
+            content: "🎯";
+            font-size: 1.3rem;
+        }
+        .conclusion p {
+            color: var(--color-text-primary);
+            line-height: 1.7;
+            font-size: 0.95rem;
+            text-align: justify;
+            margin: 0;
+        }
+        
+        .debate-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+            vertical-align: middle;
+            margin-left: 8px;
+        }
+        
+        @keyframes blink {
+            0%, 80%, 100% { opacity: 0; }
+            40% { opacity: 1; }
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @media screen and (max-width: 768px) {
+            .ai-powered-btn .btn-text small {
+                display: none;
+            }
+        }
         
     </style>
 </head>
@@ -797,7 +1009,7 @@
     <nav class="navbar">
         <div class="navbar-container">
             <a href="/calculator" class="navbar-brand">MiMo 🐱 Proyección Declaración Anual <span class="ai-text">+ Ai</span></a>
-            <small>v1.2.2</small>
+            <small>v1.3.0</small>
             <div class="navbar-nav">
                 {% if user %}
                     <span class="nav-item">Hola, {{ user.name }}!</span>
@@ -966,15 +1178,30 @@
                     💡 <em>Vista enfocada en recomendaciones - modifica cualquier campo para restaurar</em>
                 </div>
                 {% if user %}
-                    <button id="generateRecommendationsBtn" class="btn-primary ai-powered-btn" style="width: 100%; margin-bottom: 10px;">
-                        <span class="btn-text">
-                            <strong>Generar recomendación</strong>
-                        </span>
-                    </button>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                        <button id="generateRecommendationsBtn" class="btn-primary ai-powered-btn" style="width: 100%;">
+                            <span class="btn-icon">✨</span>
+                            <span class="btn-text">
+                                <strong>Recomendaciones AI</strong>
+                                <small style="font-size: 0.75rem; font-weight: normal;">Consejos personalizados</small>
+                            </span>
+                        </button>
+                        <button id="startDebateBtn" class="btn-primary ai-powered-btn" style="width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; border-color: #9f7aea !important;">
+                            <span class="btn-icon">🎭</span>
+                            <span class="btn-text">
+                                <strong>Debate Fiscal</strong>
+                                <small style="font-size: 0.75rem; font-weight: normal;">3 expertos analizan</small>
+                            </span>
+                        </button>
+                    </div>
                     <div class="usage-counter" id="usage-counter">
                         Cargando uso de recomendaciones...
                     </div>
                     <div class="recommendations-content" id="recommendations-content" style="display: none;">
+                    </div>
+                    <div class="recommendations-content" id="debate-content" style="display: none;">
+                        <div id="debate-profiles" style="margin-bottom: 15px;"></div>
+                        <div id="debate-analysis" style="max-height: 500px; overflow-y: auto;"></div>
                     </div>
                 {% else %}
                     <div class="recommendations-content">
@@ -1157,49 +1384,26 @@
                     isPinned = !isPinned;
                     this.textContent = isPinned ? '📌' : '📍';
                     this.classList.toggle('pinned', isPinned);
+                    
                     const pinStatusIndicator = document.getElementById('pin-status-indicator');
                     const focusIndicator = document.getElementById('focus-indicator');
-                    const calculatorGrid = document.querySelector('.calculator-grid');
-                    const column3 = document.querySelector('.column-3');
                     
                     if (isPinned) {
-                        // Activar modo pinned: Recomendaciones sube a la primera fila
-                        if (pinStatusIndicator) { pinStatusIndicator.style.display = 'block'; }
-                        if (focusIndicator) { focusIndicator.style.display = 'none'; }
+                        // Enter pinned mode
+                        if (pinStatusIndicator) pinStatusIndicator.style.display = 'block';
+                        if (focusIndicator) focusIndicator.style.display = 'none';
                         
-                        // Fade out primero
-                        if (column3) { column3.style.opacity = '0.3'; }
-                        
-                        setTimeout(() => {
-                            if (calculatorGrid) { 
-                                calculatorGrid.classList.add('pinned');
-                                calculatorGrid.classList.remove('generating-recommendations');
-                            }
-                            // Fade in después
-                            setTimeout(() => {
-                                if (column3) { column3.style.opacity = '1'; }
-                            }, 100);
-                        }, 50);
+                        applyLayoutTransition('add', 'pinned');
+                        applyLayoutTransition('remove', 'generating-recommendations');
                         
                         this.style.transform = 'scale(0.95)';
                         setTimeout(() => { this.style.transform = ''; }, 150);
                     } else {
-                        // Desactivar modo pinned: Recomendaciones vuelve a la segunda fila
-                        if (pinStatusIndicator) { pinStatusIndicator.style.display = 'none'; }
+                        // Exit pinned mode
+                        if (pinStatusIndicator) pinStatusIndicator.style.display = 'none';
                         
-                        // Fade out primero
-                        if (column3) { column3.style.opacity = '0.3'; }
-                        
-                        setTimeout(() => {
-                            if (calculatorGrid) { 
-                                calculatorGrid.classList.remove('pinned');
-                                calculatorGrid.classList.remove('generating-recommendations');
-                            }
-                            // Fade in después
-                            setTimeout(() => {
-                                if (column3) { column3.style.opacity = '1'; }
-                            }, 100);
-                        }, 50);
+                        applyLayoutTransition('remove', 'pinned');
+                        applyLayoutTransition('remove', 'generating-recommendations');
                         
                         this.style.transform = 'scale(1.1)';
                         setTimeout(() => { this.style.transform = ''; }, 150);
@@ -1250,6 +1454,87 @@
                 clearTimeout(timeout);
                 timeout = setTimeout(later, wait);
             };
+        }
+
+        // ============================================
+        // VISUAL TRANSITIONS - Centralized Functions
+        // ============================================
+        
+        /**
+         * Applies smooth fade-in/out transition to column-3 with layout change
+         * @param {string} action - 'add' or 'remove' class
+         * @param {string} className - Class name to add/remove (e.g., 'generating-recommendations', 'pinned')
+         */
+        function applyLayoutTransition(action, className) {
+            if (isPinned && className === 'generating-recommendations') {
+                // Don't apply generating-recommendations transition if pinned
+                return;
+            }
+
+            const calculatorGrid = document.querySelector('.calculator-grid');
+            const column3 = document.querySelector('.column-3');
+            
+            if (!calculatorGrid) return;
+
+            // Fade out
+            if (column3) {
+                column3.style.opacity = '0.3';
+            }
+            
+            setTimeout(() => {
+                // Apply layout change
+                if (action === 'add') {
+                    calculatorGrid.classList.add(className);
+                } else if (action === 'remove') {
+                    calculatorGrid.classList.remove(className);
+                }
+                
+                // Fade in
+                setTimeout(() => {
+                    if (column3) {
+                        column3.style.opacity = '1';
+                    }
+                }, 100);
+            }, 50);
+        }
+
+        /**
+         * Enters focus mode (generating recommendations/debate)
+         * Shows column-3 in full width if not pinned
+         */
+        function enterFocusMode() {
+            if (!isPinned) {
+                applyLayoutTransition('add', 'generating-recommendations');
+            }
+        }
+
+        /**
+         * Exits focus mode (back to normal layout)
+         * Returns to regular 3-column layout if not pinned
+         */
+        function exitFocusMode() {
+            if (!isPinned) {
+                applyLayoutTransition('remove', 'generating-recommendations');
+                
+                const focusIndicator = document.getElementById('focus-indicator');
+                if (focusIndicator) {
+                    focusIndicator.style.display = 'none';
+                }
+                
+                userHasModifiedInputs = false;
+                captureInitialFormState();
+            }
+        }
+
+        /**
+         * Shows focus indicator if appropriate
+         * Only shows if not pinned and form hasn't been modified
+         */
+        function updateFocusIndicator() {
+            const focusIndicator = document.getElementById('focus-indicator');
+            if (focusIndicator && !isPinned && !userHasModifiedInputs && !checkFormModified()) {
+                focusIndicator.style.display = 'block';
+            }
         }
 
         function distributeUnifiedValues() {
@@ -1414,61 +1699,41 @@
         async function generateRecommendations() {
             const generateBtn = document.getElementById('generateRecommendationsBtn');
             const recommendationsContent = document.getElementById('recommendations-content');
-            const calculatorGrid = document.querySelector('.calculator-grid');
+            
             if (!generateBtn || !recommendationsContent) return;
+            
             try {
                 generateBtn.disabled = true;
                 generateBtn.textContent = '🐱 Miau-lizando...';
-                // Solo agregar generating-recommendations si NO está pinned
-                if (!isPinned && !calculatorGrid.classList.contains('generating-recommendations')) {
-                    const column3 = document.querySelector('.column-3');
-                    if (column3) {
-                        column3.style.opacity = '0.3';
-                        setTimeout(() => {
-                            calculatorGrid.classList.add('generating-recommendations');
-                            setTimeout(() => {
-                                column3.style.opacity = '1';
-                            }, 100);
-                        }, 50);
-                    } else {
-                        calculatorGrid.classList.add('generating-recommendations');
-                    }
-                }
+                
+                // Enter focus mode
+                enterFocusMode();
+                
                 recommendationsContent.innerHTML = `<div class="streaming-indicator"><div class="streaming-dots"><span></span><span></span><span></span></div><p>Analizando tu situación fiscal...</p></div><div id="streaming-text" style="display: none;"></div>`;
                 recommendationsContent.style.display = 'block';
+                
                 const formData = getFormData();
+                
                 try {
                     await generateWithStreaming(formData, recommendationsContent);
                 } catch (streamError) {
                     await generateWithRegularRequest(formData, recommendationsContent);
                 }
+                
                 await getRecommendationUsage();
+                
             } catch (error) {
                 console.error('Error generating recommendations:', error);
                 recommendationsContent.innerHTML = `<h4>⚠️ Error</h4><p>Error generando recomendaciones. Por favor, intenta nuevamente.</p>`;
             } finally {
                 generateBtn.textContent = '🐱 Obtener mi recomendación';
+                
                 setTimeout(() => {
-                    const focusIndicator = document.getElementById('focus-indicator');
-                    // Solo limpiar layout si NO está pinned
-                    if (!isPinned && (userHasModifiedInputs || checkFormModified())) {
-                        const column3 = document.querySelector('.column-3');
-                        if (column3) {
-                            column3.style.opacity = '0.3';
-                            setTimeout(() => {
-                                calculatorGrid.classList.remove('generating-recommendations');
-                                setTimeout(() => {
-                                    column3.style.opacity = '1';
-                                }, 100);
-                            }, 50);
-                        } else {
-                            calculatorGrid.classList.remove('generating-recommendations');
-                        }
-                        if (focusIndicator) focusIndicator.style.display = 'none';
-                        userHasModifiedInputs = false;
-                        captureInitialFormState();
+                    // Exit focus mode if form was modified
+                    if (userHasModifiedInputs || checkFormModified()) {
+                        exitFocusMode();
                     } else {
-                        if (focusIndicator && !isPinned) focusIndicator.style.display = 'block';
+                        updateFocusIndicator();
                     }
                 }, 1200);
             }
@@ -1559,6 +1824,298 @@
             }
         }
 
+        // Multi-Agent Debate Functions
+        async function startFiscalDebate() {
+            const startDebateBtn = document.getElementById('startDebateBtn');
+            const debateContent = document.getElementById('debate-content');
+            const recommendationsContent = document.getElementById('recommendations-content');
+            const debateProfiles = document.getElementById('debate-profiles');
+            const debateAnalysis = document.getElementById('debate-analysis');
+            
+            if (!startDebateBtn || !debateContent || !debateProfiles || !debateAnalysis) return;
+
+            try {
+                startDebateBtn.disabled = true;
+                startDebateBtn.textContent = '🎙️ Iniciando debate...';
+                
+                // Enter focus mode
+                enterFocusMode();
+                
+                // Hide recommendations, show debate
+                recommendationsContent.style.display = 'none';
+                debateContent.style.display = 'block';
+                
+                // Clear previous content
+                debateProfiles.innerHTML = '';
+                debateAnalysis.innerHTML = '<div class="debate-spinner"><div></div><div></div><div></div></div><p style="text-align:center; color: var(--color-text-secondary);">Iniciando debate fiscal...</p>';
+                
+                const formData = getFormData();
+                
+                try {
+                    await generateDebateWithStreaming(formData, debateProfiles, debateAnalysis);
+                    await getRecommendationUsage();
+                } catch (error) {
+                    console.error('Debate error:', error);
+                    
+                    // Check for specific error types
+                    if (error.message.includes('401')) {
+                        debateAnalysis.innerHTML = `<div class="conclusion">
+                            <h4>🔐 Autenticación Requerida</h4>
+                            <p>Por favor, <a href="/auth/google" style="color: var(--color-accent-primary); text-decoration: underline;">inicia sesión con Google</a> para usar el debate fiscal.</p>
+                        </div>`;
+                    } else if (error.message.includes('429')) {
+                        debateAnalysis.innerHTML = `<div class="conclusion">
+                            <h4>⏱️ Límite Alcanzado</h4>
+                            <p>Has alcanzado el límite diario de análisis. ¡Vuelve mañana para más debates fiscales! 🐱</p>
+                        </div>`;
+                    } else {
+                        debateAnalysis.innerHTML = `<div class="conclusion">
+                            <h4>⚠️ Error</h4>
+                            <p>No se pudo iniciar el debate. Por favor, intenta nuevamente.</p>
+                        </div>`;
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Error starting debate:', error);
+                debateAnalysis.innerHTML = `<div class="conclusion"><h4>⚠️ Error</h4><p>Error al iniciar el debate fiscal.</p></div>`;
+            } finally {
+                startDebateBtn.disabled = false;
+                startDebateBtn.textContent = '🎙️ Debate Fiscal';
+                
+                setTimeout(() => {
+                    // Exit focus mode if form was modified
+                    if (userHasModifiedInputs || checkFormModified()) {
+                        exitFocusMode();
+                    } else {
+                        updateFocusIndicator();
+                    }
+                }, 1200);
+            }
+        }
+
+        async function generateDebateWithStreaming(formData, debateProfiles, debateAnalysis) {
+            const response = await fetch('/api/multi-agent-analysis', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+
+            if (!response.ok) {
+                // Throw specific error with status code for proper handling
+                throw new Error(`${response.status}: ${response.statusText}`);
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            
+            let currentPhase = '';
+            let currentAgent = '';
+            let currentIntervention = '';
+            let interventionElement = null;
+
+            try {
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
+
+                    for (let line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+
+                                if (data.type === 'initialization') {
+                                    displayExpertProfiles(data.experts, debateProfiles);
+                                    debateAnalysis.innerHTML = '';
+                                    
+                                } else if (data.type === 'phase') {
+                                    // Only show phase indicator if no agent (means it's a round start)
+                                    if (!data.agent) {
+                                        displayPhase(data.phase, debateAnalysis);
+                                    } else {
+                                        // New intervention from agent
+                                        currentAgent = data.agent;
+                                        currentIntervention = '';
+                                        interventionElement = createInterventionElement(data.agent, data.phase);
+                                        debateAnalysis.appendChild(interventionElement);
+                                        // Scroll to new intervention
+                                        interventionElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                    }
+                                    currentPhase = data.phase;
+                                    
+                                } else if (data.type === 'chunk') {
+                                    currentIntervention += data.content;
+                                    if (interventionElement) {
+                                        updateInterventionContent(interventionElement, currentIntervention);
+                                        // Keep the intervention visible as content grows
+                                        debateAnalysis.scrollTop = debateAnalysis.scrollHeight;
+                                    }
+                                    
+                                } else if (data.type === 'intervention_complete') {
+                                    if (interventionElement) {
+                                        finalizeIntervention(interventionElement);
+                                        // Scroll to the completed intervention
+                                        interventionElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                    }
+                                    interventionElement = null;
+                                    currentIntervention = '';
+                                    
+                                } else if (data.type === 'voting_results') {
+                                    displayVotingResults(data.votes, data.winner, debateAnalysis);
+                                    // Scroll to voting results
+                                    debateAnalysis.scrollTop = debateAnalysis.scrollHeight;
+                                    
+                                } else if (data.type === 'complete') {
+                                    displayConclusion(data.conclusion, debateAnalysis);
+                                    // Scroll to conclusion
+                                    debateAnalysis.scrollTop = debateAnalysis.scrollHeight;
+                                    
+                                } else if (data.type === 'error') {
+                                    debateAnalysis.innerHTML += `<div class="conclusion"><h4>⚠️ Error</h4><p>${data.message || 'Error durante el debate'}</p></div>`;
+                                }
+                                
+                            } catch (parseError) {
+                                console.error('Parse error:', parseError);
+                            }
+                        }
+                    }
+                }
+            } finally {
+                reader.releaseLock();
+            }
+        }
+
+        function displayExpertProfiles(experts, container) {
+            const cardsContainer = document.createElement('div');
+            cardsContainer.className = 'expert-cards-container';
+            
+            experts.forEach(expert => {
+                const card = document.createElement('div');
+                card.className = 'expert-card';
+                card.innerHTML = `
+                    <div style="font-size: 32px; margin-bottom: 12px;">${getExpertIcon(expert.profession)}</div>
+                    <div style="font-weight: bold; font-size: 1.1rem; margin-bottom: 6px; color: var(--color-text-primary);">${expert.name}</div>
+                    <div style="font-size: 13px; color: var(--color-accent-secondary); margin-bottom: 4px;">${expert.profession}</div>
+                    <div style="font-size: 11px; color: var(--color-text-secondary); opacity: 0.8;">${expert.personality}</div>
+                `;
+                cardsContainer.appendChild(card);
+            });
+            
+            container.appendChild(cardsContainer);
+        }
+
+        function getExpertIcon(profession) {
+            const icons = {
+                'Auditor Fiscal': '🔍',
+                'Planificador Fiscal': '📊',
+                'Contador Público': '💼',
+                'Asesor Financiero': '💰',
+                'Abogado Fiscal': '⚖️',
+                'Consultor Empresarial': '🎯'
+            };
+            return icons[profession] || '👤';
+        }
+
+        function displayPhase(phase, container) {
+            const phaseIndicator = document.createElement('div');
+            phaseIndicator.className = 'phase-indicator';
+            
+            const phaseNames = {
+                'introduction': '🎬 Introducción',
+                'round_1': '🎤 Ronda 1',
+                'round_2': '🎤 Ronda 2',
+                'round_3': '🎤 Ronda 3',
+                'round_1_summary': '',  // No mostrar indicador para resúmenes
+                'round_2_summary': '',
+                'round_3_summary': '',
+                'voting': '🗳️ Votación',
+                'conclusion': '🎯 Conclusión Final'
+            };
+            
+            const phaseName = phaseNames[phase];
+            if (phaseName) {  // Solo mostrar si tiene nombre
+                phaseIndicator.textContent = phaseName;
+                container.appendChild(phaseIndicator);
+            }
+        }
+
+        function createInterventionElement(agent, phase) {
+            const intervention = document.createElement('div');
+            
+            if (agent === 'Moderador') {
+                intervention.className = 'moderator-intervention';
+                intervention.innerHTML = `
+                    <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                        <span style="font-size: 20px; margin-right: 8px;">🎙️</span>
+                        <strong style="color: var(--color-accent-primary);">${agent}</strong>
+                    </div>
+                    <div class="intervention-content" style="font-style: italic;"></div>
+                `;
+            } else {
+                intervention.className = 'intervention';
+                intervention.innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                        <strong style="color: var(--color-accent-secondary);">${agent}</strong>
+                        <span class="streaming-dots" style="display: inline-flex; gap: 4px;"><span style="width:4px;height:4px;background:var(--color-accent-primary);border-radius:50%;display:inline-block;animation:blink 1.4s infinite both;"></span><span style="width:4px;height:4px;background:var(--color-accent-primary);border-radius:50%;display:inline-block;animation:blink 1.4s 0.2s infinite both;"></span><span style="width:4px;height:4px;background:var(--color-accent-primary);border-radius:50%;display:inline-block;animation:blink 1.4s 0.4s infinite both;"></span></span>
+                    </div>
+                    <div class="intervention-content"></div>
+                `;
+            }
+            
+            return intervention;
+        }
+
+        function updateInterventionContent(element, content) {
+            const contentDiv = element.querySelector('.intervention-content');
+            if (contentDiv) {
+                contentDiv.textContent = content;
+            }
+        }
+
+        function finalizeIntervention(element) {
+            const dots = element.querySelector('.streaming-dots');
+            if (dots) {
+                dots.remove();
+            }
+        }
+
+        function displayVotingResults(votes, winner, container) {
+            const votingDiv = document.createElement('div');
+            votingDiv.className = 'voting-results';
+            
+            let votesHtml = '<h4 style="margin-bottom: 15px;">🗳️ Resultados de Votación</h4>';
+            
+            for (const [strategy, count] of Object.entries(votes)) {
+                const isWinner = strategy === winner;
+                votesHtml += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: ${isWinner ? 'var(--color-accent-primary-20)' : 'transparent'}; border-radius: 4px; margin-bottom: 8px;">
+                        <span style="font-weight: ${isWinner ? 'bold' : 'normal'}; color: ${isWinner ? 'var(--color-accent-primary)' : 'var(--color-text-primary)'};">
+                            ${isWinner ? '🏆 ' : ''}${strategy}
+                        </span>
+                        <span style="background: var(--color-accent-secondary); color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold;">
+                            ${count} voto${count !== 1 ? 's' : ''}
+                        </span>
+                    </div>
+                `;
+            }
+            
+            votingDiv.innerHTML = votesHtml;
+            container.appendChild(votingDiv);
+        }
+
+        function displayConclusion(conclusion, container) {
+            const conclusionDiv = document.createElement('div');
+            conclusionDiv.className = 'conclusion';
+            
+            const htmlContent = marked.parse(conclusion);
+            conclusionDiv.innerHTML = `<h4 style="color: var(--color-accent-primary); margin-bottom: 15px;">🎯 Conclusión Final</h4><div class="markdown-content">${htmlContent}</div>`;
+            
+            container.appendChild(conclusionDiv);
+        }
+
         const debouncedCalculateTaxes = debounce(calculateTaxes, 500);
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -1577,6 +2134,11 @@
             const generateBtn = document.getElementById('generateRecommendationsBtn');
             if (generateBtn) {
                 generateBtn.addEventListener('click', generateRecommendations);
+            }
+            
+            const startDebateBtn = document.getElementById('startDebateBtn');
+            if (startDebateBtn) {
+                startDebateBtn.addEventListener('click', startFiscalDebate);
             }
             
             // Se eliminó initializeAccordion()

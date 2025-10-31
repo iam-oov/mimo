@@ -149,7 +149,7 @@
             border: none;
             padding: 8px 16px;
             border-radius: 5px;
-            color: var(--color-bg-deep-space); 
+            color: var(--color-bg-deep-space);
             font-weight: 600;
             cursor: pointer;
             transition: background-color 0.3s;
@@ -161,6 +161,51 @@
             background-color: var(--color-border);
             color: var(--color-text-secondary);
             cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 16px 20px !important;
+            border: 2px solid #ef4444 !important;
+            border-radius: 5px;
+            color: white !important;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5);
+            transform: translateY(-2px);
+        }
+        .btn-secondary:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 10px rgba(239, 68, 68, 0.3);
+        }
+        .btn-secondary:disabled {
+            background: var(--color-border) !important;
+            border-color: var(--color-border) !important;
+            color: var(--color-text-secondary) !important;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        .btn-secondary .btn-icon {
+            font-size: 1.5rem;
+            filter: drop-shadow(0 0 5px rgba(255,255,255,0.5));
+        }
+        .btn-secondary .btn-text {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            line-height: 1.3;
+        }
+        .btn-secondary .btn-text strong {
+            font-size: 0.95rem;
         }
         
         .ai-powered-btn {
@@ -213,12 +258,13 @@
         
         /* Main Container */
         .main-container {
-            width: 100%;
+            width: 80%;
             max-width: none;
-            margin: 0;
+            margin: 0 auto;
             padding: 20px;
             box-sizing: border-box;
             flex: 1;
+            padding: 15px;
         }
         
         /* Layout */
@@ -383,9 +429,9 @@
         }
         /* Pantallas medianas: 2 columnas en la primera fila, 1 columna en la segunda fila */
         @media screen and (max-width: 1024px) {
-            .final-sections-grid { 
-                grid-template-columns: 1fr 1fr; 
-                gap: 15px; 
+            .final-sections-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 15px;
             }
             .final-section:nth-child(3) {
                 grid-column: 1 / -1; /* Ocupa todo el ancho */
@@ -402,20 +448,16 @@
         .grid-column:nth-child(2) { align-self: stretch; }
         .grid-column:nth-child(3) {
             align-self: start;
-            height: fit-content;
             transition: opacity 4s ease-in-out, box-shadow 4s ease-in-out;
         }
-        
         .column-header {
-            color: var(--color-accent-primary); 
+            color: var(--color-accent-primary);
             font-size: 1.2rem;
             font-weight: bold;
             margin-bottom: 20px;
             padding-bottom: 10px;
             border-bottom: 2px solid var(--color-border);
         }
-        
-        /* Formulario (SIN ACORDEÓN) */
         .form-section {
             background-color: var(--color-bg-deep-space); /* Fondo más oscuro */
             padding: 15px;
@@ -497,6 +539,7 @@
         }
         .ai-header-badge {
             display: flex;
+            justify-content: center;
             align-items: center;
             gap: 12px;
             flex: 1;
@@ -521,12 +564,12 @@
             font-weight: 700;
             margin: 0;
             line-height: 1.2;
+            text-align: center;
         }
         .ai-header-subtitle {
             color: var(--color-accent-secondary);
             font-size: 0.8rem;
             font-weight: 600;
-            text-transform: uppercase;
             letter-spacing: 0.5px;
             display: flex;
             align-items: center;
@@ -738,9 +781,6 @@
         .calculator-grid {
             gap: 15px !important; 
         }
-        .main-container {
-            padding: 15px; 
-        }
         .grid-column {
             padding: 15px; 
         }
@@ -794,7 +834,7 @@
         /* --- DEBATE FISCAL MULTI-AGENTE --- */
         .expert-cards-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 16px;
             width: 100%;
         }
@@ -802,54 +842,78 @@
         .expert-card {
             background: var(--color-bg-deep-space);
             border: 1px solid var(--color-border);
-            border-left: 4px solid var(--color-accent-primary);
-            padding: 16px;
+            border-left: 3px solid var(--color-accent-primary);
+            padding: 10px 12px;
             border-radius: 8px;
             transition: all 0.2s ease;
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             align-items: center;
-            text-align: center;
-            min-height: 140px;
+            gap: 10px;
+            text-align: left;
         }
         
         .expert-card:hover {
-            transform: translateY(-4px);
+            transform: translateY(-2px);
             border-left-color: var(--color-accent-secondary);
             box-shadow: 0 4px 12px rgba(255, 107, 107, 0.15);
         }
         
+        .expert-card-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        
+        .expert-card-content {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 1;
+            min-width: 0;
+        }
+        
         .expert-card strong {
             color: var(--color-accent-primary);
-            font-size: 0.95rem;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
         .expert-card small {
             color: var(--color-text-secondary);
-            font-size: 0.8rem;
+            font-size: 0.75rem;
+            line-height: 1.3;
         }
         
         /* Responsive breakpoints */
         @media (max-width: 768px) {
             .expert-cards-container {
                 grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 12px;
+                gap: 10px;
             }
             
             .expert-card {
-                padding: 12px;
-                min-height: 120px;
+                padding: 8px 10px;
+            }
+            
+            .expert-card-icon {
+                font-size: 20px;
             }
         }
         
         @media (max-width: 480px) {
             .expert-cards-container {
                 grid-template-columns: 1fr;
-                gap: 10px;
+                gap: 8px;
             }
             
-            .expert-card {
-                min-height: auto;
+            .expert-card strong {
+                font-size: 0.85rem;
+            }
+            
+            .expert-card small {
+                font-size: 0.7rem;
             }
         }
         
@@ -954,6 +1018,9 @@
             border-radius: 10px;
             margin-top: 16px;
             box-shadow: 0 0 25px rgba(167, 139, 250, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         .conclusion h4 {
             color: #a78bfa;
@@ -963,10 +1030,6 @@
             display: flex;
             align-items: center;
             gap: 8px;
-        }
-        .conclusion h4::before {
-            content: "🎯";
-            font-size: 1.3rem;
         }
         .conclusion p {
             color: var(--color-text-primary);
@@ -1009,7 +1072,7 @@
     <nav class="navbar">
         <div class="navbar-container">
             <a href="/calculator" class="navbar-brand">MiMo 🐱 Proyección Declaración Anual <span class="ai-text">+ Ai</span></a>
-            <small>v1.3.0</small>
+            <small>v1.3.1</small>
             <div class="navbar-nav">
                 {% if user %}
                     <span class="nav-item">Hola, {{ user.name }}!</span>
@@ -1129,7 +1192,7 @@
             </div>
             
             <div class="grid-column column-2">
-                <h3 class="column-header">🐾 Resultados</h3>
+                <h3 class="column-header">🏆 Resultados</h3>
 
                 <div class="loading" id="loading">
                     <div class="spinner"></div>
@@ -1146,7 +1209,6 @@
                         <div id="kpi-tax" class="balance-result kpi-secondary">
                             </div>
                     </div>
-                
                     <table class="calculation-table">
                         <thead>
                             <tr>
@@ -1157,17 +1219,15 @@
                         <tbody id="results-tbody">
                         </tbody>
                     </table>
-                    
                 </div>
             </div>
-            
             <div class="grid-column column-3 recommendations-section">
                 <div class="ai-header-container">
                     <div class="ai-header-badge">
                         <span class="ai-header-icon">🤖</span>
                         <div class="ai-header-text">
-                            <h3 class="ai-header-title">Maximiza tus Impuestos</h3>
-                            <span class="ai-header-subtitle">Potenciado con IA • Análisis fiscal personalizado</span>
+                            <h3 class="ai-header-title">¡Descubre cuánto dinero puedes recuperar!                            </h3>
+                            <span class="ai-header-subtitle">Motores de IA • Análisis a tus Resultados • Debate de 3 Expertos</span>
                         </div>
                     </div>
                     <button id="pin-toggle" class="pin-toggle-btn" title="Fijar vista enfocada">
@@ -1186,11 +1246,23 @@
                                 <small style="font-size: 0.75rem; font-weight: normal;">Consejos personalizados</small>
                             </span>
                         </button>
-                        <button id="startDebateBtn" class="btn-primary ai-powered-btn" style="width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; border-color: #9f7aea !important;">
+                        <button id="stopRecommendationsBtn" class="btn-secondary" style="width: 100%; display: none; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important; border-color: #ef4444 !important;">
+                            <span class="btn-icon">⏹️</span>
+                            <span class="btn-text">
+                                <strong>Detener Recomendación</strong>
+                            </span>
+                        </button>
+                        <button id="startDebateBtn" class="btn-primary ai-powered-btn" style="width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; border-color: #9f7aea !important; color: white !important;">
                             <span class="btn-icon">🎭</span>
                             <span class="btn-text">
-                                <strong>Debate Fiscal</strong>
-                                <small style="font-size: 0.75rem; font-weight: normal;">3 expertos analizan</small>
+                                <strong style="color: white;">Debate Fiscal</strong>
+                                <small style="font-size: 0.75rem; font-weight: normal; color: rgba(255, 255, 255, 0.9);">3 expertos analizan</small>
+                            </span>
+                        </button>
+                        <button id="stopDebateBtn" class="btn-secondary" style="width: 100%; display: none; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important; border-color: #ef4444 !important;">
+                            <span class="btn-icon">⏹️</span>
+                            <span class="btn-text">
+                                <strong>Detener Debate</strong>
                             </span>
                         </button>
                     </div>
@@ -1201,13 +1273,12 @@
                     </div>
                     <div class="recommendations-content" id="debate-content" style="display: none;">
                         <div id="debate-profiles" style="margin-bottom: 15px;"></div>
-                        <div id="debate-analysis" style="max-height: 500px; overflow-y: auto;"></div>
+                        <div id="debate-analysis" style="max-height: 550px; overflow-y: auto;"></div>
                     </div>
                 {% else %}
                     <div class="recommendations-content">
                         <div style="text-align: center; padding: 20px;">
                             <div style="font-size: 3rem; margin-bottom: 15px;">🔐</div>
-                            <!-- <h4 style="margin-bottom: 10px; color: var(--color-accent-secondary);">Desbloquea el Poder de la IA</h4> -->
                             <p style="margin-bottom: 15px;">Obtén recomendaciones fiscales personalizadas generadas con <strong style="color: var(--color-accent-primary);">inteligencia artificial avanzada</strong> para maximizar tu saldo a favor.</p>
                             <a href="/auth/google" class="btn-primary" style="display: inline-block; text-decoration: none; padding: 12px 24px;">
                                 <strong>Iniciar Sesión con Google</strong>
@@ -1224,7 +1295,7 @@
     </div>
 
     <footer class="footer">
-        <p>Hecho con <span class="heart">🩵</span> por <a href="https://github.com/iam-oov" target="_blank" rel="noopener noreferrer">iam-oov</a> con Copilot</p>
+        <p>Hecho con <span class="heart">🩵</span> por <a href="https://github.com/iam-oov" target="_blank" rel="noopener noreferrer">iam-oov</a> y Copilot</p>
     </footer>
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -1376,6 +1447,13 @@
         });
         
         let isPinned = false;
+        let debateReader = null;
+        let isDebateActive = false;
+        let debateAbortController = null;
+        let recommendationsReader = null;
+        let isRecommendationsActive = false;
+        let recommendationsAbortController = null;
+        
         function initializePinToggle() {
             const pinButton = document.getElementById('pin-toggle');
             if (pinButton) {
@@ -1698,36 +1776,54 @@
         }
         async function generateRecommendations() {
             const generateBtn = document.getElementById('generateRecommendationsBtn');
+            const stopBtn = document.getElementById('stopRecommendationsBtn');
             const recommendationsContent = document.getElementById('recommendations-content');
-            
-            if (!generateBtn || !recommendationsContent) return;
-            
+            const debateContent = document.getElementById('debate-content');
+
+            if (!generateBtn || !stopBtn || !recommendationsContent) return;
+
             try {
-                generateBtn.disabled = true;
-                generateBtn.textContent = '🐱 Miau-lizando...';
-                
-                // Enter focus mode
+                generateBtn.style.display = 'none';
+                stopBtn.style.display = 'block';
+                stopBtn.disabled = false;
+                isRecommendationsActive = true;
+
                 enterFocusMode();
-                
-                recommendationsContent.innerHTML = `<div class="streaming-indicator"><div class="streaming-dots"><span></span><span></span><span></span></div><p>Analizando tu situación fiscal...</p></div><div id="streaming-text" style="display: none;"></div>`;
+
+                if (debateContent) debateContent.style.display = 'none';
                 recommendationsContent.style.display = 'block';
-                
+
+                recommendationsContent.innerHTML = `<div class="streaming-indicator"><div class="streaming-dots"><span></span><span></span><span></span></div><p>Analizando tu situación fiscal...</p></div><div id="streaming-text" style="display: none;"></div>`;
+
                 const formData = getFormData();
-                
+
                 try {
                     await generateWithStreaming(formData, recommendationsContent);
                 } catch (streamError) {
-                    await generateWithRegularRequest(formData, recommendationsContent);
+                    console.error('Stream error:', streamError);
+                    if (streamError.message !== 'RECOMMENDATIONS_STOPPED') {
+                        await generateWithRegularRequest(formData, recommendationsContent);
+                    }
                 }
-                
+
                 await getRecommendationUsage();
-                
             } catch (error) {
                 console.error('Error generating recommendations:', error);
-                recommendationsContent.innerHTML = `<h4>⚠️ Error</h4><p>Error generando recomendaciones. Por favor, intenta nuevamente.</p>`;
+                if (error.message === 'RECOMMENDATIONS_STOPPED') {
+                    recommendationsContent.innerHTML += `<div style="padding: 15px; background: var(--color-bg-panel); border-radius: 8px; margin-top: 10px;">
+                        <h4>⏹️ Análisis Detenido</h4>
+                        <p>La generación de recomendaciones fue detenida.</p>
+                    </div>`;
+                } else {
+                    recommendationsContent.innerHTML = `<h4>⚠️ Error</h4><p>Error generando recomendaciones. Por favor, intenta nuevamente.</p>`;
+                }
             } finally {
-                generateBtn.textContent = '🐱 Obtener mi recomendación';
-                
+                isRecommendationsActive = false;
+                recommendationsReader = null;
+                recommendationsAbortController = null;
+                generateBtn.style.display = 'block';
+                stopBtn.style.display = 'none';
+
                 setTimeout(() => {
                     // Exit focus mode if form was modified
                     if (userHasModifiedInputs || checkFormModified()) {
@@ -1738,14 +1834,50 @@
                 }, 1200);
             }
         }
+
+        function stopRecommendations() {
+            const generateBtn = document.getElementById('generateRecommendationsBtn');
+            const stopBtn = document.getElementById('stopRecommendationsBtn');
+            
+            if (isRecommendationsActive) {
+                // Abort the fetch request
+                if (recommendationsAbortController) {
+                    recommendationsAbortController.abort();
+                    recommendationsAbortController = null;
+                }
+                
+                // Cancel the reader
+                if (recommendationsReader) {
+                    try {
+                        recommendationsReader.cancel();
+                    } catch (error) {
+                        console.log('Reader already cancelled or closed');
+                    }
+                    recommendationsReader = null;
+                }
+                
+                isRecommendationsActive = false;
+                
+                // Update button visibility immediately
+                if (generateBtn && stopBtn) {
+                    generateBtn.style.display = 'block';
+                    stopBtn.style.display = 'none';
+                }
+            }
+        }
+
         async function generateWithStreaming(formData, recommendationsContent) {
+            recommendationsAbortController = new AbortController();
+            
             const response = await fetch('/api/recommendations/stream', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(formData),
+                signal: recommendationsAbortController.signal
             });
             if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
             const reader = response.body.getReader();
+            recommendationsReader = reader;
             const decoder = new TextDecoder();
             let streamingText = '';
             const streamingTextEl = document.getElementById('streaming-text');
@@ -1771,12 +1903,16 @@
                 }
             }, 1000);
             try {
-                while (true) {
+                while (isRecommendationsActive) {
                     const { done, value } = await reader.read();
                     if (done) break;
                     const chunk = decoder.decode(value);
                     const lines = chunk.split('\n');
                     for (let line of lines) {
+                        if (!isRecommendationsActive) {
+                            throw new Error('RECOMMENDATIONS_STOPPED');
+                        }
+                        
                         if (line.startsWith('data: ')) {
                             try {
                                 const data = JSON.parse(line.slice(6));
@@ -1802,8 +1938,27 @@
                         }
                     }
                 }
+            } catch (error) {
+                clearInterval(catEnhancer);
+                if (error.name === 'AbortError' || error.message === 'RECOMMENDATIONS_STOPPED') {
+                    console.log('Recommendations stopped by user');
+                    throw new Error('RECOMMENDATIONS_STOPPED');
+                }
+                if (error.name === 'TypeError' && !isRecommendationsActive) {
+                    console.log('Recommendations cancelled, reader closed');
+                    throw new Error('RECOMMENDATIONS_STOPPED');
+                }
+                throw error;
             } finally {
-                reader.releaseLock();
+                try {
+                    if (reader && reader.locked) {
+                        reader.releaseLock();
+                    }
+                } catch (e) {
+                    console.log('Reader cleanup: ', e.message);
+                }
+                recommendationsReader = null;
+                recommendationsAbortController = null;
                 clearInterval(catEnhancer);
             }
         }
@@ -1827,16 +1982,19 @@
         // Multi-Agent Debate Functions
         async function startFiscalDebate() {
             const startDebateBtn = document.getElementById('startDebateBtn');
+            const stopDebateBtn = document.getElementById('stopDebateBtn');
             const debateContent = document.getElementById('debate-content');
             const recommendationsContent = document.getElementById('recommendations-content');
             const debateProfiles = document.getElementById('debate-profiles');
             const debateAnalysis = document.getElementById('debate-analysis');
             
-            if (!startDebateBtn || !debateContent || !debateProfiles || !debateAnalysis) return;
+            if (!startDebateBtn || !stopDebateBtn || !debateContent || !debateProfiles || !debateAnalysis) return;
 
             try {
-                startDebateBtn.disabled = true;
-                startDebateBtn.textContent = '🎙️ Iniciando debate...';
+                startDebateBtn.style.display = 'none';
+                stopDebateBtn.style.display = 'block';
+                stopDebateBtn.disabled = false;
+                isDebateActive = true;
                 
                 // Enter focus mode
                 enterFocusMode();
@@ -1857,8 +2015,13 @@
                 } catch (error) {
                     console.error('Debate error:', error);
                     
-                    // Check for specific error types
-                    if (error.message.includes('401')) {
+                    // Check if it was manually stopped
+                    if (error.message === 'DEBATE_STOPPED') {
+                        debateAnalysis.innerHTML += `<div class="conclusion">
+                            <h4>Debate Detenido</h4>
+                            <p>El debate fue detenido manualmente.</p>
+                        </div>`;
+                    } else if (error.message.includes('401')) {
                         debateAnalysis.innerHTML = `<div class="conclusion">
                             <h4>🔐 Autenticación Requerida</h4>
                             <p>Por favor, <a href="/auth/google" style="color: var(--color-accent-primary); text-decoration: underline;">inicia sesión con Google</a> para usar el debate fiscal.</p>
@@ -1880,8 +2043,10 @@
                 console.error('Error starting debate:', error);
                 debateAnalysis.innerHTML = `<div class="conclusion"><h4>⚠️ Error</h4><p>Error al iniciar el debate fiscal.</p></div>`;
             } finally {
-                startDebateBtn.disabled = false;
-                startDebateBtn.textContent = '🎙️ Debate Fiscal';
+                isDebateActive = false;
+                debateReader = null;
+                startDebateBtn.style.display = 'block';
+                stopDebateBtn.style.display = 'none';
                 
                 setTimeout(() => {
                     // Exit focus mode if form was modified
@@ -1894,19 +2059,53 @@
             }
         }
 
+        function stopFiscalDebate() {
+            const startDebateBtn = document.getElementById('startDebateBtn');
+            const stopDebateBtn = document.getElementById('stopDebateBtn');
+            
+            if (isDebateActive) {
+                // Abort the fetch request
+                if (debateAbortController) {
+                    debateAbortController.abort();
+                    debateAbortController = null;
+                }
+                
+                // Cancel the reader
+                if (debateReader) {
+                    try {
+                        debateReader.cancel();
+                    } catch (error) {
+                        console.log('Reader already cancelled or closed');
+                    }
+                    debateReader = null;
+                }
+                
+                isDebateActive = false;
+                
+                // Update button visibility immediately
+                if (startDebateBtn && stopDebateBtn) {
+                    startDebateBtn.style.display = 'block';
+                    stopDebateBtn.style.display = 'none';
+                }
+            }
+        }
+
         async function generateDebateWithStreaming(formData, debateProfiles, debateAnalysis) {
+            debateAbortController = new AbortController();
+            
             const response = await fetch('/api/multi-agent-analysis', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(formData),
+                signal: debateAbortController.signal
             });
 
             if (!response.ok) {
-                // Throw specific error with status code for proper handling
                 throw new Error(`${response.status}: ${response.statusText}`);
             }
 
             const reader = response.body.getReader();
+            debateReader = reader;
             const decoder = new TextDecoder();
             
             let currentPhase = '';
@@ -1915,7 +2114,7 @@
             let interventionElement = null;
 
             try {
-                while (true) {
+                while (isDebateActive) {
                     const { done, value } = await reader.read();
                     if (done) break;
 
@@ -1923,6 +2122,10 @@
                     const lines = chunk.split('\n');
 
                     for (let line of lines) {
+                        if (!isDebateActive) {
+                            throw new Error('DEBATE_STOPPED');
+                        }
+                        
                         if (line.startsWith('data: ')) {
                             try {
                                 const data = JSON.parse(line.slice(6));
@@ -1932,16 +2135,13 @@
                                     debateAnalysis.innerHTML = '';
                                     
                                 } else if (data.type === 'phase') {
-                                    // Only show phase indicator if no agent (means it's a round start)
                                     if (!data.agent) {
                                         displayPhase(data.phase, debateAnalysis);
                                     } else {
-                                        // New intervention from agent
                                         currentAgent = data.agent;
                                         currentIntervention = '';
                                         interventionElement = createInterventionElement(data.agent, data.phase);
                                         debateAnalysis.appendChild(interventionElement);
-                                        // Scroll to new intervention
                                         interventionElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                                     }
                                     currentPhase = data.phase;
@@ -1950,14 +2150,12 @@
                                     currentIntervention += data.content;
                                     if (interventionElement) {
                                         updateInterventionContent(interventionElement, currentIntervention);
-                                        // Keep the intervention visible as content grows
                                         debateAnalysis.scrollTop = debateAnalysis.scrollHeight;
                                     }
                                     
                                 } else if (data.type === 'intervention_complete') {
                                     if (interventionElement) {
                                         finalizeIntervention(interventionElement);
-                                        // Scroll to the completed intervention
                                         interventionElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                                     }
                                     interventionElement = null;
@@ -1965,12 +2163,9 @@
                                     
                                 } else if (data.type === 'voting_results') {
                                     displayVotingResults(data.votes, data.winner, debateAnalysis);
-                                    // Scroll to voting results
                                     debateAnalysis.scrollTop = debateAnalysis.scrollHeight;
                                     
                                 } else if (data.type === 'complete') {
-                                    displayConclusion(data.conclusion, debateAnalysis);
-                                    // Scroll to conclusion
                                     debateAnalysis.scrollTop = debateAnalysis.scrollHeight;
                                     
                                 } else if (data.type === 'error') {
@@ -1983,8 +2178,29 @@
                         }
                     }
                 }
+            } catch (error) {
+                // Check if error is due to abort/manual stop
+                if (error.name === 'AbortError' || error.message === 'DEBATE_STOPPED') {
+                    console.log('Debate stopped by user');
+                    throw new Error('DEBATE_STOPPED');
+                }
+                // Check if error is due to reader cancellation
+                if (error.name === 'TypeError' && !isDebateActive) {
+                    console.log('Debate cancelled, reader closed');
+                    throw new Error('DEBATE_STOPPED');
+                }
+                // Re-throw other errors
+                throw error;
             } finally {
-                reader.releaseLock();
+                try {
+                    if (reader && reader.locked) {
+                        reader.releaseLock();
+                    }
+                } catch (e) {
+                    console.log('Reader cleanup: ', e.message);
+                }
+                debateReader = null;
+                debateAbortController = null;
             }
         }
 
@@ -1996,10 +2212,12 @@
                 const card = document.createElement('div');
                 card.className = 'expert-card';
                 card.innerHTML = `
-                    <div style="font-size: 32px; margin-bottom: 12px;">${getExpertIcon(expert.profession)}</div>
-                    <div style="font-weight: bold; font-size: 1.1rem; margin-bottom: 6px; color: var(--color-text-primary);">${expert.name}</div>
-                    <div style="font-size: 13px; color: var(--color-accent-secondary); margin-bottom: 4px;">${expert.profession}</div>
-                    <div style="font-size: 11px; color: var(--color-text-secondary); opacity: 0.8;">${expert.personality}</div>
+                    <div class="expert-card-icon">${getExpertIcon(expert.profession)}</div>
+                    <div class="expert-card-content">
+                        <strong>${expert.name}</strong>
+                        <small style="color: var(--color-accent-secondary);">${expert.profession}</small>
+                        <small style="opacity: 0.8;">${expert.personality}</small>
+                    </div>
                 `;
                 cardsContainer.appendChild(card);
             });
@@ -2023,11 +2241,12 @@
             const phaseIndicator = document.createElement('div');
             phaseIndicator.className = 'phase-indicator';
             
+            const totalRounds = 3;
             const phaseNames = {
                 'introduction': '🎬 Introducción',
-                'round_1': '🎤 Ronda 1',
-                'round_2': '🎤 Ronda 2',
-                'round_3': '🎤 Ronda 3',
+                'round_1': `🎤 Ronda 1 de ${totalRounds}`,
+                'round_2': `🎤 Ronda 2 de ${totalRounds}`,
+                'round_3': `🎤 Ronda 3 de ${totalRounds}`,
                 'round_1_summary': '',  // No mostrar indicador para resúmenes
                 'round_2_summary': '',
                 'round_3_summary': '',
@@ -2044,7 +2263,6 @@
 
         function createInterventionElement(agent, phase) {
             const intervention = document.createElement('div');
-            
             if (agent === 'Moderador') {
                 intervention.className = 'moderator-intervention';
                 intervention.innerHTML = `
@@ -2059,12 +2277,10 @@
                 intervention.innerHTML = `
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
                         <strong style="color: var(--color-accent-secondary);">${agent}</strong>
-                        <span class="streaming-dots" style="display: inline-flex; gap: 4px;"><span style="width:4px;height:4px;background:var(--color-accent-primary);border-radius:50%;display:inline-block;animation:blink 1.4s infinite both;"></span><span style="width:4px;height:4px;background:var(--color-accent-primary);border-radius:50%;display:inline-block;animation:blink 1.4s 0.2s infinite both;"></span><span style="width:4px;height:4px;background:var(--color-accent-primary);border-radius:50%;display:inline-block;animation:blink 1.4s 0.4s infinite both;"></span></span>
                     </div>
                     <div class="intervention-content"></div>
                 `;
             }
-            
             return intervention;
         }
 
@@ -2136,9 +2352,19 @@
                 generateBtn.addEventListener('click', generateRecommendations);
             }
             
+            const stopRecommendationsBtn = document.getElementById('stopRecommendationsBtn');
+            if (stopRecommendationsBtn) {
+                stopRecommendationsBtn.addEventListener('click', stopRecommendations);
+            }
+            
             const startDebateBtn = document.getElementById('startDebateBtn');
             if (startDebateBtn) {
                 startDebateBtn.addEventListener('click', startFiscalDebate);
+            }
+            
+            const stopDebateBtn = document.getElementById('stopDebateBtn');
+            if (stopDebateBtn) {
+                stopDebateBtn.addEventListener('click', stopFiscalDebate);
             }
             
             // Se eliminó initializeAccordion()

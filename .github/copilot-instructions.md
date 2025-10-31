@@ -6,6 +6,10 @@ Mimo is a **Mexican tax calculator** for individuals (personas físicas) that co
 
 **Tech Stack:** FastAPI + Jinja2 templates + Google OAuth + SQLite + AI providers (Gemini/DeepSeek)
 
+## Critical Instructions
+
+**⚠️ NEVER CREATE SUMMARY MARKDOWN FILES**: Do not create `.md` files documenting changes, summaries, or work completed unless explicitly requested by the user. This wastes tokens and clutters the workspace.
+
 ## Architecture & Key Components
 
 ### 1. Tax Calculation Engine (`server.py`)

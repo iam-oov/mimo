@@ -689,7 +689,9 @@ async def generate_recommendations(
 
 @fastapi_app.post("/api/recommendations/stream")
 async def generate_recommendations_stream(
-    tax_data: TaxInputData, user: Optional[Dict[str, Any]] = Depends(get_current_user)
+    request: Request,
+    tax_data: TaxInputData,
+    user: Optional[Dict[str, Any]] = Depends(get_current_user),
 ) -> StreamingResponse:
     """Generates fiscal recommendations with a streaming response."""
     if not user:
@@ -746,6 +748,12 @@ async def generate_recommendations_stream(
             for chunk in recommendation_service.get_recommendations_stream(
                 calculation_result, user_data_for_recommendations, tax_data.fiscal_year
             ):
+                if await request.is_disconnected():
+                    print(
+                        "⚠️ Client disconnected during recommendations, stopping stream..."
+                    )
+                    break
+
                 accumulated_text += chunk
                 escaped_chunk = chunk.replace('"', '\\"').replace("\n", "\\n")
                 yield f'data: {{"type":"chunk","content":"{escaped_chunk}"}}\n\n'
@@ -777,6 +785,13 @@ async def generate_recommendations_stream(
 
             increment_user_recommendation_usage(user_id)
 
+        except GeneratorExit:
+            print("⚠️ Recommendations stream generator closed by client")
+        except (ConnectionError, BrokenPipeError, RuntimeError) as e:
+            if "disconnected" in str(e).lower() or "broken pipe" in str(e).lower():
+                print(f"⚠️ Client disconnected during recommendations: {e}")
+            else:
+                raise
         except Exception as e:
             print(f"Error in streaming: {e}")
             error_markdown = "**Error temporal:** Ocurrió un problema generando las recomendaciones. Por favor, intenta nuevamente."
@@ -850,7 +865,9 @@ async def google_callback(request: Request, code: str):
 
 @fastapi_app.post("/api/multi-agent-analysis")
 async def multi_agent_analysis_stream(
-    tax_data: TaxInputData, user: Dict[str, Any] = Depends(get_current_user)
+    request: Request,
+    tax_data: TaxInputData,
+    user: Dict[str, Any] = Depends(get_current_user),
 ):
     """Generate fiscal recommendations using multi-agent debate system with streaming."""
     try:
@@ -886,10 +903,23 @@ async def multi_agent_analysis_stream(
 
         # Create streaming generator
         async def event_generator():
+            generator = None
             try:
-                for event in MultiAgentAnalysisService.run_analysis_stream(
+                generator = MultiAgentAnalysisService.run_analysis_stream(
                     calculation_result, user_data_formatted, tax_data.fiscal_year
-                ):
+                )
+
+                for event in generator:
+                    # Check if client is still connected
+                    if await request.is_disconnected():
+                        print("Client disconnected, stopping stream")
+                        if generator:
+                            try:
+                                generator.close()
+                            except Exception:
+                                pass
+                        return
+
                     import json
 
                     yield f"data: {json.dumps(event)}\n\n"
@@ -897,10 +927,40 @@ async def multi_agent_analysis_stream(
                 # Increment usage counter after successful generation
                 increment_user_recommendation_usage(user_id)
 
+            except GeneratorExit:
+                # Client disconnected (most common case)
+                print("Client disconnected - GeneratorExit")
+                if generator:
+                    try:
+                        generator.close()
+                    except Exception:
+                        pass
+                return
+            except (ConnectionError, BrokenPipeError, RuntimeError) as conn_error:
+                # Client disconnected during streaming
+                print(
+                    f"Stream interrupted by client disconnect: {type(conn_error).__name__}"
+                )
+                if generator:
+                    try:
+                        generator.close()
+                    except Exception:
+                        pass
+                return
             except Exception as e:
                 import json
 
-                yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+                if generator:
+                    try:
+                        generator.close()
+                    except Exception:
+                        pass
+
+                try:
+                    yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+                except (GeneratorExit, ConnectionError, BrokenPipeError, RuntimeError):
+                    print("Could not send error message, client disconnected")
+                    return
 
         return StreamingResponse(event_generator(), media_type="text/event-stream")
 

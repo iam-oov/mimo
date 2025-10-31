@@ -32,7 +32,6 @@ class Personality(Enum):
 
     CONSERVATIVE = "conservative"
     AGGRESSIVE = "aggressive"
-    BALANCED = "balanced"
     ANALYTICAL = "analytical"
     PRAGMATIC = "pragmatic"
     INNOVATIVE = "innovative"
@@ -77,11 +76,6 @@ PERSONALITY_CONFIGS: Dict[Personality, PersonalityTraits] = {
         name="Agresivo",
         description="Audaz y optimizador, busca maximizar beneficios legales",
         approach="Explora todas las deducciones permitidas. Maximiza cada peso legalmente posible.",
-    ),
-    Personality.BALANCED: PersonalityTraits(
-        name="Balanceado",
-        description="Equilibrado entre riesgo y beneficio",
-        approach="Balancea optimización fiscal con seguridad jurídica. Busca el punto medio óptimo.",
     ),
     Personality.ANALYTICAL: PersonalityTraits(
         name="Analítico",

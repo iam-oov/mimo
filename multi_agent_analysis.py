@@ -13,6 +13,7 @@ from typing import Dict, Any, List, Generator
 from dataclasses import dataclass
 from enum import Enum
 from collections import Counter
+from datetime import datetime
 
 import google.generativeai as genai
 import requests
@@ -272,11 +273,19 @@ ENFOQUE PROFESIONAL:
 ESTRATEGIA:
 {self.profile.personality_traits.approach}
 
+ESTILO DE COMUNICACIÓN (MUY IMPORTANTE):
+- Explica todo con PALABRAS SIMPLES y COTIDIANAS, como si hablaras con un familiar
+- EVITA términos técnicos como: "base gravable", "tasa marginal", "deducción autorizada", "PPR", "UMA"
+- En lugar de tecnicismos, usa: "lo que pagas de impuestos", "gastos que te regresan dinero", "ahorro para el retiro", "límite permitido"
+- Usa EJEMPLOS PRÁCTICOS con números reales del contribuyente
+- Habla en segunda persona: "TÚ puedes ahorrar $X si haces Y"
+- Sé DIRECTO y CONCRETO: "Esto te puede regresar $5,000 extra"
+
 RESTRICCIONES CRÍTICAS:
 - Tu respuesta debe tener EXACTAMENTE entre {DEBATE_MIN_CHARACTER}-{DEBATE_MAX_CHARACTER} caracteres
-- Sé específico y proporciona números concretos
-- Enfócate en una estrategia clara desde tu perspectiva profesional
-- Mantén tono profesional pero accesible
+- Sé específico y proporciona números concretos en pesos mexicanos
+- Enfócate en una estrategia clara y fácil de entender
+- Mantén tono cercano, amigable y accesible (sin ser informal)
 - Usa tu personalidad {self.profile.personality_traits.name} en tus argumentos"""
 
     def generate_analysis(
@@ -293,20 +302,20 @@ RESTRICCIONES CRÍTICAS:
 DEBATE ACTIVO: Los otros expertos ({others_names}) ya han dado sus opiniones.
 
 TU RESPONSABILIDAD:
-1. Proporciona tu análisis profesional desde tu perspectiva como {self.profile.profession_traits.title}
-2. DEBATE: Identifica y desafía los puntos con los que NO estés de acuerdo de los otros expertos
-3. ARGUMENTA: Explica por qué tu enfoque es más apropiado para este caso específico
-4. Sé directo y profesional en tus críticas constructivas
+1. Da tu opinión con PALABRAS SIMPLES que cualquier persona pueda entender
+2. DEBATE: Si NO estás de acuerdo con algo, explica por qué de forma clara y directa
+3. ARGUMENTA: Muestra con números reales ($$$) por qué tu idea es mejor para este caso
+4. Sé directo y amigable, como si le explicaras a un amigo
 
-Si hay algo que consideres crítico aclarar o corregir de lo dicho anteriormente, hazlo con datos concretos."""
+Si hay algo importante que corregir o aclarar, hazlo con ejemplos concretos y números."""
         else:
-            debate_instruction = f"""
+            debate_instruction = """
 PRIMERA INTERVENCIÓN: Eres el primero en analizar este caso.
 
 TU RESPONSABILIDAD:
-1. Proporciona tu análisis profesional desde tu perspectiva como {self.profile.profession_traits.title}
-2. Presenta tu estrategia recomendada con datos concretos
-3. Identifica los puntos más críticos que los siguientes expertos deberían considerar"""
+1. Da tu análisis con LENGUAJE SENCILLO, sin palabras técnicas complicadas
+2. Presenta tu estrategia con números en pesos ($) que sean fáciles de entender
+3. Menciona lo más importante que los siguientes expertos deberían considerar"""
 
         messages = [
             {"role": "system", "content": self._build_system_prompt()},
@@ -323,7 +332,11 @@ CONVERSACIÓN PREVIA:
 
 {debate_instruction}
 
-IMPORTANTE: Tu respuesta debe tener entre {DEBATE_MIN_CHARACTER}-{DEBATE_MAX_CHARACTER} caracteres. Sé específico con números y estrategias concretas.""",
+IMPORTANTE:
+- Tu respuesta debe tener entre {DEBATE_MIN_CHARACTER}-{DEBATE_MAX_CHARACTER} caracteres
+- Usa LENGUAJE SIMPLE Y CLARO (sin términos técnicos complicados)
+- Menciona cantidades específicas en pesos mexicanos ($)
+- Explica como si le hablaras a alguien que NO es experto en impuestos""",
             },
         ]
 
@@ -379,19 +392,25 @@ class ModeratorAgent:
 
     def _build_system_prompt(self) -> str:
         """Builds moderator's system prompt."""
-        return f"""Eres un Moderador Fiscal neutral y eficiente.
+        return f"""Eres un Moderador Fiscal neutral, amigable y claro.
 
 RESPONSABILIDADES:
-- Presentar el caso brevemente
-- Resumir puntos clave de cada ronda
-- Anunciar fases de votación
-- Sintetizar conclusión final
+- Presentar el caso de forma simple y directa
+- Resumir puntos clave usando lenguaje fácil de entender
+- Anunciar votaciones de manera clara
+- Dar conclusión final accesible para cualquier persona
+
+ESTILO DE COMUNICACIÓN:
+- Usa LENGUAJE SENCILLO, evita términos técnicos complicados
+- Explica con palabras que cualquier persona pueda entender
+- Menciona cantidades en pesos mexicanos ($) para que sea concreto
+- Sé amigable y cercano, como un presentador de TV
 
 RESTRICCIONES:
 - Tus intervenciones deben tener entre {DEBATE_MIN_CHARACTER}-{DEBATE_MAX_CHARACTER} caracteres
 - Sé conciso y objetivo
 - No tomes partido por ningún experto
-- Mantén el enfoque en optimización fiscal"""
+- Mantén el enfoque en ayudar al contribuyente a ahorrar dinero"""
 
     def introduce_case(
         self, taxpayer_context: str, experts: List[str]
@@ -409,8 +428,11 @@ Presenta brevemente el caso fiscal a analizar. Los expertos presentes son: {expe
 DATOS DEL CONTRIBUYENTE:
 {taxpayer_context}
 
-Da la bienvenida y explica que analizarán cómo optimizar su situación fiscal.
-IMPORTANTE: Tu introducción debe tener entre {DEBATE_MIN_CHARACTER}-{DEBATE_MAX_CHARACTER} caracteres.""",
+Da la bienvenida de forma amigable y explica con PALABRAS SIMPLES que los expertos van a analizar cómo puede pagar menos impuestos o recuperar más dinero.
+IMPORTANTE: 
+- Tu introducción debe tener entre {DEBATE_MIN_CHARACTER}-{DEBATE_MAX_CHARACTER} caracteres
+- Usa LENGUAJE CLARO Y SENCILLO que cualquier persona pueda entender
+- Evita términos técnicos complicados""",
             },
         ]
 
@@ -431,12 +453,15 @@ DISCUSIÓN:
 {conversation}
 
 ENFOQUE DEL RESUMEN:
-- Destaca las propuestas principales de cada experto
-- Identifica los puntos de ACUERDO y DESACUERDO entre los expertos
-- Menciona brevemente qué aspectos están siendo debatidos
+- Destaca las propuestas principales de cada experto usando PALABRAS SIMPLES
+- Identifica en qué están de ACUERDO y en qué NO entre los expertos
+- Menciona qué temas están debatiendo de forma clara y directa
 - Mantén neutralidad, no favorezas ninguna postura
+- Explica todo como si le hablaras a alguien que NO sabe de impuestos
 
-IMPORTANTE: Tu resumen debe tener entre {DEBATE_MIN_CHARACTER}-{DEBATE_MAX_CHARACTER} caracteres.""",
+IMPORTANTE: 
+- Tu resumen debe tener entre {DEBATE_MIN_CHARACTER}-{DEBATE_MAX_CHARACTER} caracteres
+- Usa LENGUAJE SENCILLO sin términos técnicos complicados""",
             },
         ]
 
@@ -449,9 +474,11 @@ IMPORTANTE: Tu resumen debe tener entre {DEBATE_MIN_CHARACTER}-{DEBATE_MAX_CHARA
             {
                 "role": "user",
                 "content": f"""
-Anuncia que es momento de votar por la mejor estrategia fiscal.
-Explica que cada experto votará por la propuesta más sólida.
-IMPORTANTE: Tu anuncio debe tener entre {DEBATE_MIN_CHARACTER}-{DEBATE_MAX_CHARACTER} caracteres.""",
+Anuncia con LENGUAJE SIMPLE que es momento de que los expertos voten por la mejor estrategia.
+Explica de forma clara y amigable que cada experto elegirá la propuesta que considera más útil.
+IMPORTANTE: 
+- Tu anuncio debe tener entre {DEBATE_MIN_CHARACTER}-{DEBATE_MAX_CHARACTER} caracteres
+- Usa palabras sencillas que todos puedan entender""",
             },
         ]
 
@@ -474,8 +501,12 @@ VOTOS: {vote_count}
 DISCUSIÓN COMPLETA:
 {conversation}
 
-Resume la estrategia ganadora y los beneficios esperados para el contribuyente.
-IMPORTANTE: Tu conclusión debe tener entre {DEBATE_MIN_CHARACTER}-{DEBATE_MAX_CHARACTER} caracteres.""",
+Resume la estrategia ganadora y los beneficios con LENGUAJE CLARO Y SENCILLO.
+Explica cuánto dinero podría recuperar o ahorrar en impuestos usando cantidades específicas en pesos ($).
+Habla como si le explicaras a alguien que NO es experto en impuestos.
+IMPORTANTE: 
+- Tu conclusión debe tener entre {DEBATE_MIN_CHARACTER}-{DEBATE_MAX_CHARACTER} caracteres
+- Usa PALABRAS SIMPLES sin términos técnicos complicados""",
             },
         ]
 
@@ -495,12 +526,12 @@ class AgentFactory:
         selected_professions = random.sample(list(Profession), count)
 
         expert_names = [
-            "Dr. Martínez",
-            "Lic. García",
-            "Mtra. López",
-            "Ing. Rodríguez",
-            "C.P. Hernández",
-            "Dr. Ramírez",
+            "Osvaldo",
+            "Erika",
+            "Sofia",
+            "Hugo",
+            "Abigail",
+            "Ernesto",
         ]
         random.shuffle(expert_names)
 
@@ -534,6 +565,25 @@ def build_taxpayer_context(
     isr_table = get_tabla_isr(fiscal_year)
     constants = isr_table.constantes
 
+    # Calculate days remaining until year end
+    today = datetime.now()
+    year_end = datetime(fiscal_year, 12, 31)
+    days_remaining = (year_end - today).days
+
+    # Build time urgency message
+    if days_remaining < 0:
+        time_context = (
+            f"⚠️ El ejercicio fiscal {fiscal_year} ya cerró. Análisis retrospectivo."
+        )
+    elif days_remaining == 0:
+        time_context = f"🚨 ¡ÚLTIMO DÍA del ejercicio fiscal {fiscal_year}!"
+    elif days_remaining <= 30:
+        time_context = f"🚨 URGENTE: Quedan solo {days_remaining} días para que cierre el ejercicio fiscal {fiscal_year}"
+    elif days_remaining <= 60:
+        time_context = f"⚡ IMPORTANTE: Quedan {days_remaining} días para el cierre del ejercicio fiscal {fiscal_year}"
+    else:
+        time_context = f"📅 Tiempo disponible: {days_remaining} días hasta el cierre del ejercicio fiscal {fiscal_year}"
+
     return f"""PERFIL FISCAL {fiscal_year}:
 - Nombre: {taxpayer_data.get("nombre_o_referencia", "Contribuyente")}
 - Ingreso bruto anual: ${calculation_result.gross_annual_income:,.2f}
@@ -551,7 +601,12 @@ def build_taxpayer_context(
 LÍMITES {fiscal_year}:
 - Tope deducciones generales: {constants.tope_general_deducciones_umas} UMAs (${constants.valor_uma_anual * constants.tope_general_deducciones_umas:,.0f})
 - Tope PPR/Afore: {constants.tope_ppr_deducciones_umas} UMAs (${constants.valor_uma_anual * constants.tope_ppr_deducciones_umas:,.0f})
-- UMA anual: ${constants.valor_uma_anual:,.2f}"""
+- UMA anual: ${constants.valor_uma_anual:,.2f}
+
+CONTEXTO TEMPORAL:
+{time_context}
+
+CONSIDERACIÓN CRÍTICA: Las estrategias recomendadas deben ser REALISTAS considerando el tiempo disponible para implementarlas antes del cierre fiscal."""
 
 
 @dataclass

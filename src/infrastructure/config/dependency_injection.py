@@ -10,6 +10,9 @@ from src.application.generate_recommendations_use_case import (
 from src.application.generate_multi_agent_analysis_use_case import (
     GenerateMultiAgentAnalysisUseCase,
 )
+from src.application.multi_agent_chat_use_case import MultiAgentChatUseCase
+from src.domain.ports.memory import MemoryStore
+from src.infrastructure.memory.faiss_memory import FaissMemoryStore
 
 
 class DependencyContainer:
@@ -25,6 +28,8 @@ class DependencyContainer:
         self._recommendations_use_case: GenerateRecommendationsUseCase | None = None
         self._multi_agent_providers: List[MultiAgentProvider] | None = None
         self._multi_agent_use_case: GenerateMultiAgentAnalysisUseCase | None = None
+        self._chat_use_case: MultiAgentChatUseCase | None = None
+        self._memory_store: MemoryStore | None = None
 
     def get_usage_repository(self) -> UsageRepository:
         """Get or create usage repository instance"""
@@ -79,6 +84,13 @@ class DependencyContainer:
             )
         return self._recommendations_use_case
 
+    def get_memory_store(self) -> MemoryStore:
+        """Get or create memory store (FAISS)."""
+        if self._memory_store is None:
+            # Base path for memory storage
+            self._memory_store = FaissMemoryStore(base_path="./memory")
+        return self._memory_store
+
     def get_multi_agent_providers(self) -> List[MultiAgentProvider]:
         """
         Get list of multi-agent providers in priority order.
@@ -120,6 +132,16 @@ class DependencyContainer:
             )
         return self._multi_agent_use_case
 
+    def get_chat_use_case(self) -> MultiAgentChatUseCase:
+        """Get or create multi-agent chat use case instance"""
+        if self._chat_use_case is None:
+            self._chat_use_case = MultiAgentChatUseCase(
+                usage_repository=self.get_usage_repository(),
+                daily_limit=self._settings.daily_recommendations_limit,
+                memory_store=self.get_memory_store(),
+            )
+        return self._chat_use_case
+
     def reset(self) -> None:
         """Reset container (useful for testing)"""
         self._usage_repository = None
@@ -127,6 +149,9 @@ class DependencyContainer:
         self._recommendations_use_case = None
         self._multi_agent_providers = None
         self._multi_agent_use_case = None
+        self._chat_use_case = None
+        self._memory_store = None
+        self._chat_use_case = None
 
 
 @lru_cache

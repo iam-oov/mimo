@@ -28,30 +28,41 @@ Mimo is a **Mexican tax calculator** for individuals (personas físicas) that co
 - Access via: `get_tabla_isr(fiscal_year)` returns `TablaISR` dataclass
 - **Monthly tax brackets** with cuota_fija and porcentaje_excedente for progressive taxation
 
-### 3. AI Recommendations (`fiscal_recommendations.py`)
+### 3. AI Recommendations & Multi-Agent System (Hexagonal + LiteLLM)
 
-- **Factory Pattern:** `RecommendationFactory.create_service()` prioritizes DeepSeek → Gemini → Fallback
-- **Strategy Pattern:** `RecommendationGenerator` interface with 3 implementations:
-  - `DeepSeekRecommendationGenerator` (preferred, streaming via OpenAI-compatible API)
-  - `GeminiRecommendationGenerator` (fallback, uses `google.generativeai`)
-  - `FallbackRecommendationGenerator` (static markdown recommendations)
-- **Shared prompt building:** `build_prompt()` creates detailed prompts with exact UMA calculations and limits
-- **Personality:** Recommendations must include cat puns ("purr-fecto", "gat-rantizo") and greetings based on time of day
-- **Critical:** Must avoid recommending maxed-out deductions by checking current values against official limits
+- **Provider Factory:** `RecommendationFactory.create_service()` prioritizes Claude Sonnet 4.5 (Anthropic) → DeepSeek → Gemini → Fallback
+- **Strategy Pattern:** `RecommendationProvider` interface with 4 implementations:
+  - `ClaudeRecommendationAdapter` (preferred, streaming via Anthropic SDK, model: `claude-sonnet-4.5`)
+  - `DeepSeekRecommendationAdapter` (OpenAI-compatible API)
+  - `GeminiRecommendationAdapter` (Google Gemini API)
+  - `FallbackRecommendationAdapter` (static markdown recommendations)
+- **Prompt building:** `build_fiscal_recommendation_prompt()` in `prompts.py` (single-agent) and `multi_agent_prompts.py` (multi-agent) generate detailed, structured prompts with exact UMA calculations, deduction caps, and Markdown formatting
+- **Personality:** Recommendations must include cat puns ("purr-fecto", "gat-rantizo") and time-based greetings for Mimo
+- **Critical:** Never recommend maxed-out deductions; always check current values vs official limits
+- **Model selection:** All adapters can be swapped via LiteLLM; default is Claude Sonnet 4.5 for production, DeepSeek for fallback, GPT-4.1 for cost-sensitive/free tier
 
-### 4. Multi-Agent Analysis System (`multi_agent_analysis.py`)
+### 4. Multi-Agent Analysis System (modular, prompt-driven, LiteLLM-ready)
 
-- **Architecture:** 3 AI agents with randomized personalities and professions debate tax optimization strategies
-- **Personality Types:** Conservative, Aggressive, Analytical, Pragmatic, Innovative (from `Personality` enum)
-- **Professions:** Auditor, Tax Planner, Accountant, Financial Advisor, Fiscal Lawyer, Business Consultant (from `Profession` enum)
+- **Architecture:** 3 AI agents (configurable) with distinct personalities and professions debate tax optimization strategies
+- **Personality Types:** Conservative, Aggressive, Analytical, Pragmatic, Innovative (see `Personality` enum in `multi_agent_prompts.py`)
+- **Professions:** Auditor, Tax Planner, Accountant, Financial Advisor, Fiscal Lawyer, Business Consultant (see `Profession` enum)
+- **Prompt System:**
+  - Each agent gets a unique system prompt via `build_agent_system_prompt()` (combines personality, profession, and agent name)
+  - Debate context built with `build_debate_context()` (fiscal data, deduction space, etc.)
+  - Each round uses `build_round_prompt()` (initial, response, consensus)
+  - Synthesis/final summary uses `build_synthesis_prompt()`
+- **Model Routing:**
+  - Each agent can use a different model/provider (DeepSeek, Claude, Gemini, OpenAI, etc.) via `AgentModelConfig` and `LiteLLMAdapter`
+  - Default: All agents use Claude Sonnet 4.5 (Anthropic) for best reasoning and compliance; fallback to DeepSeek or GPT-4.1 for cost-sensitive scenarios
+  - Model config per agent in `DEFAULT_AGENT_MODELS` (see `multi_agent_prompts.py`)
 - **Debate Flow:**
-  1. Round 1: Each agent proposes strategy (150-250 chars, configured via `DEBATE_MIN_CHARACTER`/`DEBATE_MAX_CHARACTER`)
-  2. Round 2: Agents respond to others' proposals
+  1. Round 1: Each agent proposes a strategy (150-250 chars, enforced by prompt)
+  2. Round 2: Agents respond to others' proposals (no repetition, unique perspective)
   3. Round 3: Consensus & prioritization with voting
-  4. Final synthesis with implementation roadmap
-- **Provider Chain:** `ModelProviderFactory.create()` → DeepSeek → Gemini (no fallback)
-- **Streaming:** `MultiAgentAnalysisService.run_analysis_stream()` yields events: `agent_intro`, `round_start`, `agent_turn`, `synthesis`, `complete`
-- **Language Style:** MUST use simple everyday language, avoid technical jargon (e.g., "lo que pagas" not "base gravable")
+  4. Final synthesis with implementation roadmap (moderator agent)
+- **Streaming:** All agent responses and synthesis are streamed (SSE)
+- **Language Style:** Use simple, everyday language ("lo que pagas" not "base gravable"); avoid technical jargon
+- **Extensibility:** Add new personalities/professions by updating enums and config dicts; add new models by updating `AgentModelConfig`
 
 ### 5. Authentication & Rate Limiting (`server.py`)
 
@@ -101,23 +112,30 @@ DEEPSEEK_TEMPERATURE=0.6
 - Single table: `recommendation_usage (user_id TEXT, date TEXT, count INTEGER)`
 - No migrations - schema created if not exists
 
-## Project-Specific Conventions
+### Project-Specific Conventions
 
-### Mexican Tax Domain Knowledge
+#### Mexican Tax Domain Knowledge
 
 - **UMA** (Unidad de Medida y Actualización): Official Mexican unit for calculating tax limits
   - Example: 5 UMAs ≈ $198,031.80 for general deductions in 2024
 - **Aguinaldo** (Christmas bonus): Partially exempt up to 30 UMAs daily
 - **Prima vacacional** (vacation premium): Partially exempt up to 15 UMAs daily
 - **Deduction hierarchy:** Personal → PPR → Education, then apply 5 UMA / 15% cap proportionally
+- **Prompt-driven logic:** All AI/agent output is controlled by prompt templates in `prompts.py` and `multi_agent_prompts.py` (no hardcoded logic in adapters)
+- **Model selection:**
+  - **Production:** Use Claude Sonnet 4.5 (Anthropic) for all agents and single-agent recommendations (best for compliance, reasoning, and Spanish)
+  - **Fallback:** Use DeepSeek (OpenAI-compatible) or GPT-4.1 (0x) for cost-sensitive or free-tier scenarios
+  - **LiteLLM:** All model routing is handled via `LiteLLMAdapter` and `AgentModelConfig` (see `multi_agent_prompts.py`)
+  - **Extensible:** Add new models/providers by updating `DEFAULT_AGENT_MODELS` and `.env` API keys
 
 ### API Response Patterns
 
 - **Tax calculation:** Standard JSON with all fields from `TaxCalculationResult`
-- **Recommendations:** Two modes:
-  1. `/api/recommendations` - Accumulates full response, returns `recommendations_markdown` + `usage_info`
-  2. `/api/recommendations/stream` - Server-Sent Events (SSE) with chunks: `{"type":"chunk","content":"..."}` then `{"type":"complete","markdown":"..."}`
+- **Recommendations:**
+  - `/api/recommendations/stream` - Server-Sent Events (SSE) with chunks: `{"type":"chunk","content":"..."}` then `{"type":"complete","markdown":"..."}`
+  - `/api/multi-agent-analysis/stream` - SSE with events: `agent_intro`, `round_start`, `agent_turn`, `synthesis`, `complete`
 - **Usage tracking:** Always increment AFTER successful generation, not before
+- **Model info:** Each response includes which model/provider was used (for auditability)
 
 ### Error Handling
 
@@ -132,14 +150,14 @@ DEEPSEEK_TEMPERATURE=0.6
 **SOLID Principles (Mandatory):**
 
 - **Single Responsibility:** Each class/function has ONE clear purpose
-  - Example: `TaxCalculator` only calculates taxes, `RecommendationGenerator` only generates recommendations
+  - Example: `TaxCalculator` only calculates taxes, `RecommendationProvider` only generates recommendations, `LiteLLMAdapter` only handles model routing
 - **Open/Closed:** Extend via interfaces, not modification
-  - Example: Add new AI providers by implementing `RecommendationGenerator`, not editing existing ones
-- **Liskov Substitution:** All `RecommendationGenerator` implementations are interchangeable
+  - Example: Add new AI providers by implementing `RecommendationProvider` or updating `AgentModelConfig`, not editing existing adapters
+- **Liskov Substitution:** All `RecommendationProvider` and agent adapters are interchangeable
 - **Interface Segregation:** Use ABC/Protocol for clean contracts
-  - Example: `RecommendationGenerator` abstract class defines streaming interface
+  - Example: `RecommendationProvider` and `LiteLLMAdapter` define streaming interface
 - **Dependency Inversion:** Depend on abstractions, not concrete implementations
-  - Example: `RecommendationService` depends on `RecommendationGenerator` interface, not specific providers
+  - Example: `RecommendationService` depends on `RecommendationProvider` interface, not specific adapters
 
 **Code Quality:**
 
@@ -153,6 +171,8 @@ DEEPSEEK_TEMPERATURE=0.6
   - Functions/variables: `snake_case`
   - Classes: `PascalCase`
   - Private methods: `_leading_underscore`
+- **Prompt-driven:** All AI/agent output is controlled by prompt templates (never hardcoded in adapters)
+- **Model extensibility:** Add new models/providers by updating `AgentModelConfig` and `.env` API keys; no code changes required in adapters
 
 ## Key Files Reference
 

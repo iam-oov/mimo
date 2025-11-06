@@ -10,6 +10,7 @@ from src.api.v1.routers import (
     tax_router,
     recommendations_router,
     multi_agent_router,
+    multi_agent_chat_router,
     auth_router,
 )
 from src.infrastructure.config.settings import get_settings
@@ -70,6 +71,7 @@ def create_app() -> FastAPI:
     app.include_router(tax_router.router)
     app.include_router(recommendations_router.router)
     app.include_router(multi_agent_router.router)
+    app.include_router(multi_agent_chat_router.router)
 
     # Root redirect
     @app.get("/")

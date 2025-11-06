@@ -1,7 +1,14 @@
 from functools import lru_cache
 from typing import Optional
+from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from dotenv import load_dotenv
+
+# Load .env file from project root
+# This ensures env vars are available regardless of working directory
+env_path = Path(__file__).parent.parent.parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 
 class Settings(BaseSettings):
@@ -48,6 +55,22 @@ class Settings(BaseSettings):
         default=0.6, ge=0.0, le=2.0, description="Gemini temperature"
     )
 
+    anthropic_api_key: Optional[str] = Field(
+        default=None, description="Anthropic Claude API Key"
+    )
+    anthropic_model: str = Field(
+        default="claude-sonnet-4-20250514", description="Anthropic Claude model name"
+    )
+    anthropic_temperature: float = Field(
+        default=0.6, ge=0.0, le=2.0, description="Anthropic temperature"
+    )
+
+    openai_api_key: Optional[str] = Field(default=None, description="OpenAI API Key")
+    openai_model: str = Field(default="gpt-4o", description="OpenAI model name")
+    openai_temperature: float = Field(
+        default=0.6, ge=0.0, le=2.0, description="OpenAI temperature"
+    )
+
     # Rate Limiting Configuration
     daily_recommendations_limit: int = Field(
         default=3, ge=1, description="Daily limit for AI recommendations per user"
@@ -84,9 +107,22 @@ class Settings(BaseSettings):
         """Check if Gemini is configured"""
         return self.gemini_api_key is not None and len(self.gemini_api_key) > 0
 
+    def has_anthropic_configured(self) -> bool:
+        """Check if Anthropic Claude is configured"""
+        return self.anthropic_api_key is not None and len(self.anthropic_api_key) > 0
+
+    def has_openai_configured(self) -> bool:
+        """Check if OpenAI is configured"""
+        return self.openai_api_key is not None and len(self.openai_api_key) > 0
+
     def has_any_ai_provider(self) -> bool:
         """Check if at least one AI provider is configured"""
-        return self.has_deepseek_configured() or self.has_gemini_configured()
+        return (
+            self.has_deepseek_configured()
+            or self.has_gemini_configured()
+            or self.has_anthropic_configured()
+            or self.has_openai_configured()
+        )
 
 
 @lru_cache

@@ -1126,6 +1126,142 @@
             }
         }
         
+        /* Chat Styles */
+        .agent-btn {
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+        
+        .agent-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .agent-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .agent-btn.selected {
+            border-color: var(--color-accent-primary);
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(255, 140, 66, 0.1) 100%);
+            border-width: 3px;
+        }
+        
+        .agent-btn-icon {
+            font-size: 1.5rem;
+            display: block;
+            margin-bottom: 4px;
+        }
+        
+        .agent-btn-name {
+            font-weight: 600;
+            color: var(--color-text-primary);
+            display: block;
+            margin-bottom: 2px;
+        }
+        
+        .agent-btn-role {
+            font-size: 0.7rem;
+            color: var(--color-text-secondary);
+            display: block;
+        }
+        
+        .chat-message {
+            margin: 12px 0;
+            padding: 12px 14px;
+            border-radius: 12px;
+            max-width: 85%;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .chat-message.user {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .chat-message.agent {
+            background: var(--color-bg-deep-space);
+            border: 1px solid var(--color-border);
+            border-left: 3px solid var(--color-accent-primary);
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .chat-message-header {
+            font-weight: 600;
+            font-size: 0.8rem;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .chat-message.user .chat-message-header {
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .chat-message.agent .chat-message-header {
+            color: var(--color-accent-primary);
+        }
+        
+        .chat-message-content {
+            line-height: 1.5;
+            font-size: 0.9rem;
+        }
+        
+        .chat-typing {
+            display: inline-flex;
+            gap: 4px;
+            padding: 8px 12px;
+        }
+        
+        .chat-typing span {
+            width: 8px;
+            height: 8px;
+            background: var(--color-accent-secondary);
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+        
+        .chat-typing span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .chat-typing span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.5;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+        
     </style>
 </head>
 <body>
@@ -1312,28 +1448,65 @@
                                 <strong>Detener Recomendación</strong>
                             </span>
                         </button>
-                        <button id="startDebateBtn" class="btn-primary ai-powered-btn" style="width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; border-color: #9f7aea !important; color: white !important;">
-                            <span class="btn-icon">🎭</span>
+                        <button id="startChatBtn" class="btn-primary ai-powered-btn" style="width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; border-color: #9f7aea !important; color: white !important;">
+                            <span class="btn-icon">💬</span>
                             <span class="btn-text">
-                                <strong style="color: white;">Debate Fiscal</strong>
-                                <small style="font-size: 0.75rem; font-weight: normal; color: rgba(255, 255, 255, 0.9);">3 expertos analizan</small>
+                                <strong style="color: white;">Chat Fiscal</strong>
+                                <small style="font-size: 0.75rem; font-weight: normal; color: rgba(255, 255, 255, 0.9);">Pregunta a expertos</small>
                             </span>
                         </button>
-                        <button id="stopDebateBtn" class="btn-secondary" style="width: 100%; display: none; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important; border-color: #ef4444 !important;">
-                            <span class="btn-icon">⏹️</span>
+                        <button id="closeChatBtn" class="btn-secondary" style="width: 100%; display: none; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important; border-color: #ef4444 !important;">
+                            <span class="btn-icon">✖️</span>
                             <span class="btn-text">
-                                <strong>Detener Debate</strong>
+                                <strong>Cerrar Chat</strong>
                             </span>
                         </button>
                     </div>
                     <div class="usage-counter" id="usage-counter">
-                        Cargando uso de recomendaciones...
+                        Cargando uso de mensajes...
                     </div>
                     <div class="recommendations-content" id="recommendations-content" style="display: none;">
                     </div>
-                    <div class="recommendations-content" id="debate-content" style="display: none;">
-                        <div id="debate-profiles" style="margin-bottom: 15px;"></div>
-                        <div id="debate-analysis" style="max-height: 550px; overflow-y: auto;"></div>
+                    
+                    <!-- Chat Fiscal Interactivo -->
+                    <div class="recommendations-content" id="chat-content" style="display: none;">
+                        <!-- Perfiles de Agentes -->
+                        <div id="chat-agents" style="margin-bottom: 15px;">
+                            <h4 style="margin: 0 0 10px 0; color: var(--color-accent-primary); font-size: 1rem;">
+                                🎭 Selecciona tu Experto Fiscal
+                            </h4>
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px;" id="agent-buttons">
+                                <!-- Los botones se generarán dinámicamente -->
+                            </div>
+                        </div>
+                        
+                        <!-- Área de Mensajes -->
+                        <div id="chat-messages" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; max-height: 400px; overflow-y: auto; margin-bottom: 15px;">
+                            <div style="text-align: center; color: #9ca3af; padding: 20px;">
+                                <div style="font-size: 2rem; margin-bottom: 10px;">💬</div>
+                                <p>Selecciona un experto y haz tu pregunta fiscal</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Input de Chat -->
+                        <div style="display: flex; gap: 8px;">
+                            <input 
+                                type="text" 
+                                id="chat-input" 
+                                placeholder="Escribe tu pregunta fiscal..."
+                                style="flex: 1; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 0.95rem;"
+                                disabled
+                            />
+                            <button 
+                                id="chat-send-btn" 
+                                class="btn-primary" 
+                                style="padding: 12px 24px; white-space: nowrap;"
+                                disabled
+                            >
+                                <span class="btn-icon">📤</span>
+                                Enviar
+                            </button>
+                        </div>
                     </div>
                 {% else %}
                     <div class="recommendations-content">
@@ -1813,9 +1986,9 @@
                 const response = await fetch('/api/recommendations/usage');
                 if (response.ok) {
                     const data = await response.json();
-                    updateUsageCounter(data.used_today, data.daily_limit);
+                    updateUsageCounter(data.usage_count, data.daily_limit);
                     const generateBtn = document.getElementById('generateRecommendationsBtn');
-                    if (generateBtn) { generateBtn.disabled = data.used_today >= data.daily_limit; }
+                    if (generateBtn) { generateBtn.disabled = data.usage_count >= data.daily_limit; }
                 } else {
                     const generateBtn = document.getElementById('generateRecommendationsBtn');
                     if (generateBtn) { generateBtn.disabled = true; }
@@ -2039,357 +2212,348 @@
             }
         }
 
-        // Multi-Agent Debate Functions
-        async function startFiscalDebate() {
-            const startDebateBtn = document.getElementById('startDebateBtn');
-            const stopDebateBtn = document.getElementById('stopDebateBtn');
-            const debateContent = document.getElementById('debate-content');
+                // Multi-Agent Chat Functions
+        let chatAgents = [];
+        let selectedAgentId = null;
+        let conversationHistory = [];
+        let currentCalculationResult = null;
+        let currentUserData = null;
+        let isChatActive = false;
+        let chatAbortController = null;
+
+        async function initializeFiscalChat() {
+            const startChatBtn = document.getElementById('startChatBtn');
+            const closeChatBtn = document.getElementById('closeChatBtn');
+            const chatContent = document.getElementById('chat-content');
             const recommendationsContent = document.getElementById('recommendations-content');
-            const debateProfiles = document.getElementById('debate-profiles');
-            const debateAnalysis = document.getElementById('debate-analysis');
+            const chatInput = document.getElementById('chat-input');
+            const chatSendBtn = document.getElementById('chat-send-btn');
+            const chatMessages = document.getElementById('chat-messages');
             
-            if (!startDebateBtn || !stopDebateBtn || !debateContent || !debateProfiles || !debateAnalysis) return;
+            if (!chatContent) return;
 
             try {
-                startDebateBtn.style.display = 'none';
-                stopDebateBtn.style.display = 'block';
-                stopDebateBtn.disabled = false;
-                isDebateActive = true;
+                startChatBtn.style.display = 'none';
+                closeChatBtn.style.display = 'block';
+                isChatActive = true;
                 
-                // Enter focus mode
-                enterFocusMode();
-                
-                // Hide recommendations, show debate
+                // Hide recommendations, show chat
                 recommendationsContent.style.display = 'none';
-                debateContent.style.display = 'block';
+                chatContent.style.display = 'block';
                 
-                // Clear previous content
-                debateProfiles.innerHTML = '';
-                debateAnalysis.innerHTML = '<div class="debate-spinner"><div></div><div></div><div></div></div><p style="text-align:center; color: var(--color-text-secondary);">Iniciando debate fiscal...</p>';
-                
+                // Get form data and calculate taxes
                 const formData = getFormData();
+                currentUserData = formData;
                 
-                try {
-                    await generateDebateWithStreaming(formData, debateProfiles, debateAnalysis);
-                    await getRecommendationUsage();
-                } catch (error) {
-                    console.error('Debate error:', error);
-                    
-                    // Check if it was manually stopped
-                    if (error.message === 'DEBATE_STOPPED') {
-                        debateAnalysis.innerHTML += `<div class="conclusion">
-                            <h4>Debate Detenido</h4>
-                            <p>El debate fue detenido manualmente.</p>
-                        </div>`;
-                    } else if (error.message.includes('401')) {
-                        debateAnalysis.innerHTML = `<div class="conclusion">
-                            <h4>🔐 Autenticación Requerida</h4>
-                            <p>Por favor, <a href="/auth/google" style="color: var(--color-accent-primary); text-decoration: underline;">inicia sesión con Google</a> para usar el debate fiscal.</p>
-                        </div>`;
-                    } else if (error.message.includes('429')) {
-                        debateAnalysis.innerHTML = `<div class="conclusion">
-                            <h4>⏱️ Límite Alcanzado</h4>
-                            <p>Has alcanzado el límite diario de análisis. ¡Vuelve mañana para más debates fiscales! 🐱</p>
-                        </div>`;
-                    } else {
-                        debateAnalysis.innerHTML = `<div class="conclusion">
-                            <h4>⚠️ Error</h4>
-                            <p>No se pudo iniciar el debate. Por favor, intenta nuevamente.</p>
-                        </div>`;
-                    }
+                chatMessages.innerHTML = '<div class="chat-typing"><span></span><span></span><span></span></div><p style="text-align:center; color: var(--color-text-secondary); font-size: 0.9rem;">Inicializando expertos fiscales...</p>';
+                
+                // Calculate taxes first
+                const calcResponse = await fetch('/api/calculate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (!calcResponse.ok) {
+                    throw new Error('Error calculando impuestos');
                 }
                 
-            } catch (error) {
-                console.error('Error starting debate:', error);
-                debateAnalysis.innerHTML = `<div class="conclusion"><h4>⚠️ Error</h4><p>Error al iniciar el debate fiscal.</p></div>`;
-            } finally {
-                isDebateActive = false;
-                debateReader = null;
-                startDebateBtn.style.display = 'block';
-                stopDebateBtn.style.display = 'none';
+                currentCalculationResult = await calcResponse.json();
                 
-                setTimeout(() => {
-                    // Exit focus mode if form was modified
-                    if (userHasModifiedInputs || checkFormModified()) {
-                        exitFocusMode();
-                    } else {
-                        updateFocusIndicator();
-                    }
-                }, 1200);
-            }
-        }
-
-        function stopFiscalDebate() {
-            const startDebateBtn = document.getElementById('startDebateBtn');
-            const stopDebateBtn = document.getElementById('stopDebateBtn');
-            
-            if (isDebateActive) {
-                // Abort the fetch request
-                if (debateAbortController) {
-                    debateAbortController.abort();
-                    debateAbortController = null;
+                // Get available agents
+                const agentsResponse = await fetch('/api/chat/agents', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        calculation_result: currentCalculationResult,
+                        user_data: currentUserData,
+                        fiscal_year: formData.fiscal_year
+                    })
+                });
+                
+                if (!agentsResponse.ok) {
+                    throw new Error('Error obteniendo agentes');
                 }
                 
-                // Cancel the reader
-                if (debateReader) {
-                    try {
-                        debateReader.cancel();
-                    } catch (error) {
-                        console.log('Reader already cancelled or closed');
-                    }
-                    debateReader = null;
-                }
+                chatAgents = await agentsResponse.json();
                 
-                isDebateActive = false;
+                // Render agent buttons
+                renderAgentButtons();
                 
-                // Update button visibility immediately
-                if (startDebateBtn && stopDebateBtn) {
-                    startDebateBtn.style.display = 'block';
-                    stopDebateBtn.style.display = 'none';
-                }
-            }
-        }
-
-        async function generateDebateWithStreaming(formData, debateProfiles, debateAnalysis) {
-            debateAbortController = new AbortController();
-            
-            const response = await fetch('/api/multi-agent-analysis', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData),
-                signal: debateAbortController.signal
-            });
-
-            if (!response.ok) {
-                throw new Error(`${response.status}: ${response.statusText}`);
-            }
-
-            const reader = response.body.getReader();
-            debateReader = reader;
-            const decoder = new TextDecoder();
-            
-            let currentPhase = '';
-            let currentAgent = '';
-            let currentIntervention = '';
-            let interventionElement = null;
-
-            try {
-                while (isDebateActive) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-
-                    const chunk = decoder.decode(value);
-                    const lines = chunk.split('\n');
-
-                    for (let line of lines) {
-                        if (!isDebateActive) {
-                            throw new Error('DEBATE_STOPPED');
-                        }
-                        
-                        if (line.startsWith('data: ')) {
-                            try {
-                                const data = JSON.parse(line.slice(6));
-
-                                if (data.type === 'initialization') {
-                                    displayExpertProfiles(data.experts, debateProfiles);
-                                    debateAnalysis.innerHTML = '';
-                                    
-                                } else if (data.type === 'phase') {
-                                    if (!data.agent) {
-                                        displayPhase(data.phase, debateAnalysis);
-                                    } else {
-                                        currentAgent = data.agent;
-                                        currentIntervention = '';
-                                        interventionElement = createInterventionElement(data.agent, data.phase);
-                                        debateAnalysis.appendChild(interventionElement);
-                                        interventionElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                                    }
-                                    currentPhase = data.phase;
-                                    
-                                } else if (data.type === 'chunk') {
-                                    currentIntervention += data.content;
-                                    if (interventionElement) {
-                                        updateInterventionContent(interventionElement, currentIntervention);
-                                        debateAnalysis.scrollTop = debateAnalysis.scrollHeight;
-                                    }
-                                    
-                                } else if (data.type === 'intervention_complete') {
-                                    if (interventionElement) {
-                                        finalizeIntervention(interventionElement);
-                                        interventionElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                                    }
-                                    interventionElement = null;
-                                    currentIntervention = '';
-                                    
-                                } else if (data.type === 'voting_results') {
-                                    displayVotingResults(data.votes, data.winner, debateAnalysis);
-                                    debateAnalysis.scrollTop = debateAnalysis.scrollHeight;
-                                    
-                                } else if (data.type === 'complete') {
-                                    debateAnalysis.scrollTop = debateAnalysis.scrollHeight;
-                                    
-                                } else if (data.type === 'error') {
-                                    debateAnalysis.innerHTML += `<div class="conclusion"><h4>⚠️ Error</h4><p>${data.message || 'Error durante el debate'}</p></div>`;
-                                }
-                                
-                            } catch (parseError) {
-                                console.error('Parse error:', parseError);
-                            }
-                        }
-                    }
-                }
-            } catch (error) {
-                // Check if error is due to abort/manual stop
-                if (error.name === 'AbortError' || error.message === 'DEBATE_STOPPED') {
-                    console.log('Debate stopped by user');
-                    throw new Error('DEBATE_STOPPED');
-                }
-                // Check if error is due to reader cancellation
-                if (error.name === 'TypeError' && !isDebateActive) {
-                    console.log('Debate cancelled, reader closed');
-                    throw new Error('DEBATE_STOPPED');
-                }
-                // Re-throw other errors
-                throw error;
-            } finally {
-                try {
-                    if (reader && reader.locked) {
-                        reader.releaseLock();
-                    }
-                } catch (e) {
-                    console.log('Reader cleanup: ', e.message);
-                }
-                debateReader = null;
-                debateAbortController = null;
-            }
-        }
-
-        function displayExpertProfiles(experts, container) {
-            const cardsContainer = document.createElement('div');
-            cardsContainer.className = 'expert-cards-container';
-            
-            experts.forEach(expert => {
-                const card = document.createElement('div');
-                card.className = 'expert-card';
-                card.innerHTML = `
-                    <div class="expert-card-icon">${getExpertIcon(expert.profession)}</div>
-                    <div class="expert-card-content">
-                        <strong>${expert.name}</strong>
-                        <small style="color: var(--color-accent-secondary);">${expert.profession}</small>
-                        <small style="opacity: 0.8;">${expert.personality}</small>
+                // Clear messages and show welcome
+                chatMessages.innerHTML = `
+                    <div style="text-align: center; color: var(--color-text-secondary); padding: 20px;">
+                        <div style="font-size: 2rem; margin-bottom: 10px;">💬</div>
+                        <p style="margin-bottom: 10px;"><strong>¡Bienvenido al Chat Fiscal!</strong></p>
+                        <p style="font-size: 0.9rem;">Selecciona un experto arriba y haz tu pregunta.</p>
                     </div>
                 `;
-                cardsContainer.appendChild(card);
-            });
-            
-            container.appendChild(cardsContainer);
+                
+                // Reset conversation
+                conversationHistory = [];
+                selectedAgentId = null;
+                chatInput.value = '';
+                chatInput.disabled = true;
+                chatSendBtn.disabled = true;
+                
+                await getRecommendationUsage();
+                
+            } catch (error) {
+                console.error('Error initializing chat:', error);
+                chatMessages.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: #ef4444;">
+                        <div style="font-size: 2rem; margin-bottom: 10px;">⚠️</div>
+                        <p><strong>Error</strong></p>
+                        <p style="font-size: 0.9rem;">${error.message}</p>
+                    </div>
+                `;
+            }
         }
 
-        function getExpertIcon(profession) {
-            const icons = {
+        function renderAgentButtons() {
+            const agentButtonsContainer = document.getElementById('agent-buttons');
+            if (!agentButtonsContainer) return;
+            
+            agentButtonsContainer.innerHTML = '';
+            
+            const agentIcons = {
                 'Auditor Fiscal': '🔍',
                 'Planificador Fiscal': '📊',
                 'Contador Público': '💼',
                 'Asesor Financiero': '💰',
-                'Abogado Fiscal': '⚖️',
+                'Abogado Fiscalista': '⚖️',
                 'Consultor Empresarial': '🎯'
             };
-            return icons[profession] || '👤';
-        }
-
-        function displayPhase(phase, container) {
-            const phaseIndicator = document.createElement('div');
-            phaseIndicator.className = 'phase-indicator';
             
-            const totalRounds = 3;
-            const phaseNames = {
-                'introduction': '🎬 Introducción',
-                'round_1': `🎤 Ronda 1 de ${totalRounds}`,
-                'round_2': `🎤 Ronda 2 de ${totalRounds}`,
-                'round_3': `🎤 Ronda 3 de ${totalRounds}`,
-                'round_1_summary': '',  // No mostrar indicador para resúmenes
-                'round_2_summary': '',
-                'round_3_summary': '',
-                'voting': '🗳️ Votación',
-                'conclusion': '🎯 Conclusión Final'
-            };
-            
-            const phaseName = phaseNames[phase];
-            if (phaseName) {  // Solo mostrar si tiene nombre
-                phaseIndicator.textContent = phaseName;
-                container.appendChild(phaseIndicator);
-            }
-        }
-
-        function createInterventionElement(agent, phase) {
-            const intervention = document.createElement('div');
-            if (agent === 'Moderador') {
-                intervention.className = 'moderator-intervention';
-                intervention.innerHTML = `
-                    <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                        <span style="font-size: 20px; margin-right: 8px;">🎙️</span>
-                        <strong style="color: var(--color-accent-primary);">${agent}</strong>
-                    </div>
-                    <div class="intervention-content" style="font-style: italic;"></div>
+            chatAgents.forEach(agent => {
+                const button = document.createElement('button');
+                button.className = 'agent-btn';
+                button.dataset.agentId = agent.agent_id;
+                
+                const icon = agentIcons[agent.profession] || '👤';
+                
+                button.innerHTML = `
+                    <span class="agent-btn-icon">${icon}</span>
+                    <span class="agent-btn-name">${agent.name}</span>
+                    <span class="agent-btn-role">${agent.profession}</span>
                 `;
-            } else {
-                intervention.className = 'intervention';
-                intervention.innerHTML = `
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-                        <strong style="color: var(--color-accent-secondary);">${agent}</strong>
+                
+                button.addEventListener('click', () => selectAgent(agent.agent_id));
+                agentButtonsContainer.appendChild(button);
+            });
+        }
+
+        function selectAgent(agentId) {
+            selectedAgentId = agentId;
+            const chatInput = document.getElementById('chat-input');
+            const chatSendBtn = document.getElementById('chat-send-btn');
+            
+            // Update button styles
+            document.querySelectorAll('.agent-btn').forEach(btn => {
+                if (btn.dataset.agentId === agentId) {
+                    btn.classList.add('selected');
+                } else {
+                    btn.classList.remove('selected');
+                }
+            });
+            
+            // Enable input
+            if (chatInput && chatSendBtn) {
+                chatInput.disabled = false;
+                chatSendBtn.disabled = false;
+                chatInput.focus();
+            }
+        }
+
+        async function sendChatMessage() {
+            const chatInput = document.getElementById('chat-input');
+            const chatSendBtn = document.getElementById('chat-send-btn');
+            const chatMessages = document.getElementById('chat-messages');
+            
+            if (!chatInput || !chatSendBtn || !selectedAgentId) return;
+            
+            const message = chatInput.value.trim();
+            if (!message) return;
+            
+            try {
+                // Disable input while processing
+                chatInput.disabled = true;
+                chatSendBtn.disabled = true;
+                document.querySelectorAll('.agent-btn').forEach(btn => btn.disabled = true);
+                
+                // Clear input
+                chatInput.value = '';
+                
+                // Add user message to chat
+                const userMessageDiv = document.createElement('div');
+                userMessageDiv.className = 'chat-message user';
+                userMessageDiv.innerHTML = `
+                    <div class="chat-message-header">
+                        <span>👤</span>
+                        Tú
                     </div>
-                    <div class="intervention-content"></div>
+                    <div class="chat-message-content">${escapeHtml(message)}</div>
                 `;
-            }
-            return intervention;
-        }
-
-        function updateInterventionContent(element, content) {
-            const contentDiv = element.querySelector('.intervention-content');
-            if (contentDiv) {
-                contentDiv.textContent = content;
-            }
-        }
-
-        function finalizeIntervention(element) {
-            const dots = element.querySelector('.streaming-dots');
-            if (dots) {
-                dots.remove();
-            }
-        }
-
-        function displayVotingResults(votes, winner, container) {
-            const votingDiv = document.createElement('div');
-            votingDiv.className = 'voting-results';
-            
-            let votesHtml = '<h4 style="margin-bottom: 15px;">🗳️ Resultados de Votación</h4>';
-            
-            for (const [strategy, count] of Object.entries(votes)) {
-                const isWinner = strategy === winner;
-                votesHtml += `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: ${isWinner ? 'var(--color-accent-primary-20)' : 'transparent'}; border-radius: 4px; margin-bottom: 8px;">
-                        <span style="font-weight: ${isWinner ? 'bold' : 'normal'}; color: ${isWinner ? 'var(--color-accent-primary)' : 'var(--color-text-primary)'};">
-                            ${isWinner ? '🏆 ' : ''}${strategy}
-                        </span>
-                        <span style="background: var(--color-accent-secondary); color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold;">
-                            ${count} voto${count !== 1 ? 's' : ''}
-                        </span>
+                chatMessages.appendChild(userMessageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                // Add to conversation history
+                conversationHistory.push({
+                    role: 'user',
+                    content: message
+                });
+                
+                // Get selected agent info
+                const selectedAgent = chatAgents.find(a => a.agent_id === selectedAgentId);
+                if (!selectedAgent) throw new Error('Agente no encontrado');
+                
+                // Create agent message placeholder with typing indicator
+                const agentMessageDiv = document.createElement('div');
+                agentMessageDiv.className = 'chat-message agent';
+                const agentIcon = {
+                    'Auditor Fiscal': '🔍',
+                    'Planificador Fiscal': '📊',
+                    'Contador Público': '💼',
+                    'Asesor Financiero': '💰',
+                    'Abogado Fiscalista': '⚖️',
+                    'Consultor Empresarial': '🎯'
+                }[selectedAgent.profession] || '👤';
+                
+                agentMessageDiv.innerHTML = `
+                    <div class="chat-message-header">
+                        <span>${agentIcon}</span>
+                        ${selectedAgent.name}
+                    </div>
+                    <div class="chat-message-content">
+                        <div class="chat-typing"><span></span><span></span><span></span></div>
                     </div>
                 `;
+                chatMessages.appendChild(agentMessageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                // Send message to backend
+                chatAbortController = new AbortController();
+                
+                const response = await fetch('/api/chat/message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        agent_id: selectedAgentId,
+                        message: message,
+                        calculation_result: currentCalculationResult,
+                        user_data: currentUserData,
+                        fiscal_year: currentUserData.fiscal_year,
+                        conversation_history: conversationHistory.slice(-10) // Last 10 messages
+                    }),
+                    signal: chatAbortController.signal
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                }
+                
+                // Stream response
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let agentResponse = '';
+                
+                const contentDiv = agentMessageDiv.querySelector('.chat-message-content');
+                contentDiv.innerHTML = ''; // Remove typing indicator
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
+                    
+                    for (let line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                
+                                if (data.type === 'chunk') {
+                                    agentResponse += data.content;
+                                    contentDiv.textContent = agentResponse;
+                                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                                } else if (data.type === 'complete') {
+                                    // Add to conversation history
+                                    conversationHistory.push({
+                                        role: 'agent',
+                                        content: agentResponse
+                                    });
+                                }
+                            } catch (e) {
+                                console.error('Parse error:', e);
+                            }
+                        }
+                    }
+                }
+                
+                // Re-enable input
+                chatInput.disabled = false;
+                chatSendBtn.disabled = false;
+                document.querySelectorAll('.agent-btn').forEach(btn => btn.disabled = false);
+                chatInput.focus();
+                
+                // Update usage
+                await getRecommendationUsage();
+                
+            } catch (error) {
+                console.error('Error sending message:', error);
+                
+                // Show error message
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'chat-message agent';
+                errorDiv.innerHTML = `
+                    <div class="chat-message-header" style="color: #ef4444;">
+                        <span>⚠️</span>
+                        Error
+                    </div>
+                    <div class="chat-message-content" style="color: #ef4444;">
+                        ${error.message.includes('429') ? 'Límite diario alcanzado' : 'Error al enviar mensaje'}
+                    </div>
+                `;
+                chatMessages.appendChild(errorDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                // Re-enable input
+                chatInput.disabled = false;
+                chatSendBtn.disabled = false;
+                document.querySelectorAll('.agent-btn').forEach(btn => btn.disabled = false);
             }
-            
-            votingDiv.innerHTML = votesHtml;
-            container.appendChild(votingDiv);
         }
 
-        function displayConclusion(conclusion, container) {
-            const conclusionDiv = document.createElement('div');
-            conclusionDiv.className = 'conclusion';
+        function closeFiscalChat() {
+            const startChatBtn = document.getElementById('startChatBtn');
+            const closeChatBtn = document.getElementById('closeChatBtn');
+            const chatContent = document.getElementById('chat-content');
             
-            const htmlContent = marked.parse(conclusion);
-            conclusionDiv.innerHTML = `<h4 style="color: var(--color-accent-primary); margin-bottom: 15px;">🎯 Conclusión Final</h4><div class="markdown-content">${htmlContent}</div>`;
-            
-            container.appendChild(conclusionDiv);
+            if (startChatBtn && closeChatBtn && chatContent) {
+                startChatBtn.style.display = 'block';
+                closeChatBtn.style.display = 'none';
+                chatContent.style.display = 'none';
+                isChatActive = false;
+                
+                // Abort any pending request
+                if (chatAbortController) {
+                    chatAbortController.abort();
+                    chatAbortController = null;
+                }
+                
+                // Reset chat state
+                chatAgents = [];
+                selectedAgentId = null;
+                conversationHistory = [];
+                currentCalculationResult = null;
+                currentUserData = null;
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         const debouncedCalculateTaxes = debounce(calculateTaxes, 500);
@@ -2417,14 +2581,25 @@
                 stopRecommendationsBtn.addEventListener('click', stopRecommendations);
             }
             
-            const startDebateBtn = document.getElementById('startDebateBtn');
-            if (startDebateBtn) {
-                startDebateBtn.addEventListener('click', startFiscalDebate);
+            const startChatBtn = document.getElementById('startChatBtn');
+            if (startChatBtn) {
+                startChatBtn.addEventListener('click', initializeFiscalChat);
             }
             
-            const stopDebateBtn = document.getElementById('stopDebateBtn');
-            if (stopDebateBtn) {
-                stopDebateBtn.addEventListener('click', stopFiscalDebate);
+            const closeChatBtn = document.getElementById('closeChatBtn');
+            if (closeChatBtn) {
+                closeChatBtn.addEventListener('click', closeFiscalChat);
+            }
+            
+            const chatSendBtn = document.getElementById('chat-send-btn');
+            const chatInput = document.getElementById('chat-input');
+            if (chatSendBtn && chatInput) {
+                chatSendBtn.addEventListener('click', sendChatMessage);
+                chatInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !chatSendBtn.disabled) {
+                        sendChatMessage();
+                    }
+                });
             }
             
             // Se eliminó initializeAccordion()

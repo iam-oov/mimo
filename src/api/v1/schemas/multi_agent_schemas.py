@@ -3,7 +3,7 @@ Multi-agent analysis API schemas.
 Pydantic models for multi-agent debate endpoints.
 """
 
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field
 
 
@@ -81,11 +81,15 @@ class VotingResultsSchema(BaseModel):
     """Schema for voting results."""
 
     votes: List[Dict[str, str]] = Field(
-        ..., description="Individual votes from each expert"
+        default=[], description="Individual votes from each expert"
     )
-    vote_counts: Dict[str, int] = Field(..., description="Vote count by expert name")
-    winner: str = Field(..., description="Name of winning expert")
-    winning_strategy: str = Field(..., description="Description of winning strategy")
+    vote_counts: Dict[str, int] = Field(
+        default={}, description="Vote count by expert name"
+    )
+    winner: str = Field(default="", description="Name of winning expert")
+    winning_strategy: str = Field(
+        default="", description="Description of winning strategy"
+    )
 
     model_config = {
         "json_schema_extra": {
@@ -138,10 +142,14 @@ class MultiAgentAnalysisResponse(BaseModel):
         ..., description="Profiles of participating experts"
     )
     moderator_name: str = Field(..., description="Name of the moderator")
-    rounds: List[DebateRoundSchema] = Field(..., description="All debate rounds")
-    voting_results: VotingResultsSchema = Field(..., description="Voting results")
+    rounds: List[DebateRoundSchema] = Field(default=[], description="All debate rounds")
+    voting_results: Optional[VotingResultsSchema] = Field(
+        default=None, description="Voting results (optional)"
+    )
     conclusion: str = Field(..., description="Final conclusion")
-    full_transcript: str = Field(..., description="Complete conversation transcript")
+    full_transcript: str = Field(
+        default="", description="Complete conversation transcript"
+    )
     usage_info: Dict[str, int] = Field(..., description="Usage tracking information")
 
     model_config = {

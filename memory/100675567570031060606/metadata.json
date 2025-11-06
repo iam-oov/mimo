@@ -1,0 +1,71 @@
+[
+  {
+    "text": "Resumen fiscal 2025: ingreso anual $0; ISR determinado $0; retenido $0; balance a pagar $0; deducciones: generales $0, PPR $0, educación $0.",
+    "metadata": {
+      "type": "calculation_context",
+      "fiscal_year": 2025
+    }
+  },
+  {
+    "text": "Resumen fiscal 2025: ingreso anual $0; ISR determinado $0; retenido $0; balance a pagar $0; deducciones: generales $0, PPR $0, educación $0.",
+    "metadata": {
+      "type": "calculation_context",
+      "fiscal_year": 2025
+    }
+  },
+  {
+    "text": "Pregunta: hola sabes como me llamo ?",
+    "metadata": {
+      "type": "question"
+    }
+  },
+  {
+    "text": "Respuesta: No, no sé tu nombre. Solo tengo información fiscal de 2025 que has compartido.",
+    "metadata": {
+      "type": "answer"
+    }
+  },
+  {
+    "text": "Resumen fiscal 2025: ingreso anual $831,600; ISR determinado $165,679; retenido $176,879; balance a favor $11,200; deducciones: generales $0, PPR $0, educación $0.",
+    "metadata": {
+      "type": "calculation_context",
+      "fiscal_year": 2025
+    }
+  },
+  {
+    "text": "Pregunta: hola sabes cual es mi nombre?",
+    "metadata": {
+      "type": "question"
+    }
+  },
+  {
+    "text": "Respuesta: No, no tengo tu nombre. Solo tengo información fiscal de 2025 que has compartido.",
+    "metadata": {
+      "type": "answer"
+    }
+  },
+  {
+    "text": "Pregunta: que datos he compartido ?",
+    "metadata": {
+      "type": "question"
+    }
+  },
+  {
+    "text": "Respuesta: Compartiste tu situación fiscal 2025: ingresos $831,600, ISR $165,679, retenciones $176,879 y saldo a favor $11,200.",
+    "metadata": {
+      "type": "answer"
+    }
+  },
+  {
+    "text": "Pregunta: como puedo aumentar si saldo a favor ?",
+    "metadata": {
+      "type": "question"
+    }
+  },
+  {
+    "text": "Respuesta: Puedes deducir hasta $124,740 en gastos médicos, colegiaturas o donativos. Así recuperarías más de ese saldo a favor 💰",
+    "metadata": {
+      "type": "answer"
+    }
+  }
+]

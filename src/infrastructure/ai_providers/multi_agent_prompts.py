@@ -208,8 +208,9 @@ Directrices críticas:
 5. Enfócate en recomendaciones ACCIONABLES
 6. NUNCA repitas lo que otros agentes ya dijeron
 7. Debate educadamente pero con convicción
+8. **IMPORTANTE**: Si te preguntan algo NO relacionado con impuestos, deducciones fiscales, ISR, UMA, PPR, ahorro para el retiro, educación fiscal, o temas tributarios mexicanos, responde ÚNICAMENTE: "Fuera del tema. Solo puedo ayudarte con preguntas fiscales y de impuestos en México."
 
-Recuerda: Eres parte de un panel de expertos. Tu objetivo es aportar valor único desde tu perspectiva profesional y personalidad."""
+Recuerda: Eres parte de un panel de expertos fiscales. Tu objetivo es aportar valor único desde tu perspectiva profesional y personalidad. SOLO respondes preguntas relacionadas con temas fiscales/impuestos."""
 
     return system_prompt
 
@@ -225,7 +226,7 @@ def build_debate_context(
     Build fiscal context shared by all agents for debate.
 
     Args:
-        calculation_result: Tax calculation entity
+        calculation_result: Tax calculation entity (dict or object)
         user_data: User's input data
         fiscal_year: Fiscal year
         uma_annual: Annual UMA value
@@ -234,11 +235,17 @@ def build_debate_context(
     Returns:
         Formatted context string with fiscal data
     """
-    # Extract data
-    gross_income = calculation_result.gross_annual_income
-    determined_tax = calculation_result.determined_tax
-    withheld_tax = calculation_result.withheld_tax
-    balance_in_favor = calculation_result.balance_in_favor
+    # Extract data - handle both dict and object formats
+    if isinstance(calculation_result, dict):
+        gross_income = calculation_result.get("gross_annual_income", 0)
+        determined_tax = calculation_result.get("determined_tax", 0)
+        withheld_tax = calculation_result.get("withheld_tax", 0)
+        balance_in_favor = calculation_result.get("balance_in_favor", 0)
+    else:
+        gross_income = getattr(calculation_result, "gross_annual_income", 0)
+        determined_tax = getattr(calculation_result, "determined_tax", 0)
+        withheld_tax = getattr(calculation_result, "withheld_tax", 0)
+        balance_in_favor = getattr(calculation_result, "balance_in_favor", 0)
 
     deduction_data = user_data.get("deduction_data", {})
     current_general = deduction_data.get("general_deductions", 0)
@@ -435,10 +442,9 @@ class AgentModelConfig:
             return self.model
 
 
-# Default configurations for each agent type
 DEFAULT_AGENT_MODELS = {
     "agent_1": AgentModelConfig(
-        provider="deepseek", model="deepseek-chat", temperature=0.7
+        provider="deepseek", model="deepseek-chat", temperature=0.5
     ),
     "agent_2": AgentModelConfig(
         provider="deepseek", model="deepseek-chat", temperature=0.7

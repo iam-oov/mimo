@@ -9,20 +9,7 @@ from datetime import date
 
 from src.domain.ports.repositories import UsageRepository
 from src.domain.ports.ai_providers import MultiAgentProvider
-
-
-# Lazy import to avoid circular dependencies
-_multi_agent_module = None
-
-
-def _get_multi_agent_module():
-    """Lazy load multi_agent_analysis module."""
-    global _multi_agent_module
-    if _multi_agent_module is None:
-        import multi_agent_analysis
-
-        _multi_agent_module = multi_agent_analysis
-    return _multi_agent_module
+from src.application.multi_agent_debate_service import MultiAgentDebateService
 
 
 @dataclass
@@ -41,7 +28,7 @@ class MultiAgentAnalysisResponse:
     expert_profiles: list[Dict[str, str]]
     moderator_name: str
     rounds: list[Dict[str, Any]]
-    voting_results: Dict[str, Any]
+    voting_results: Optional[Dict[str, Any]]
     conclusion: str
     full_transcript: str
 
@@ -111,27 +98,39 @@ class GenerateMultiAgentAnalysisUseCase:
         if provider is None:
             raise ValueError("No AI provider available for multi-agent analysis")
 
-        # Get the multi_agent_analysis module
-        module = _get_multi_agent_module()
+        # Note: This method collects all streaming events into a single response
+        # For streaming UI, use execute_stream() instead
+        debate_service = MultiAgentDebateService()
 
-        # Run the analysis using legacy service
-        result = module.MultiAgentAnalysisService.run_analysis(
+        # Collect all events
+        expert_profiles = []
+        rounds_data = []
+        conclusion = ""
+        full_transcript = ""
+
+        for event in debate_service.run_analysis_stream(
             calculation_result=request.calculation_result,
             user_data=request.user_data,
             fiscal_year=request.fiscal_year,
-        )
+        ):
+            event_type = event.get("type")
+
+            if event_type == "agent_intro":
+                expert_profiles = event.get("agents", [])
+            elif event_type == "synthesis_complete":
+                conclusion = event.get("full_text", "")
 
         # Increment usage after successful generation
         today = date.today()
         self.usage_repository.increment_usage(user_id, today)
 
         return MultiAgentAnalysisResponse(
-            expert_profiles=result.expert_profiles,
-            moderator_name=result.moderator_name,
-            rounds=result.rounds,
-            voting_results=result.voting_results,
-            conclusion=result.conclusion,
-            full_transcript=result.full_transcript,
+            expert_profiles=expert_profiles,
+            moderator_name="Moderador Fiscal",
+            rounds=[],  # Simplified for non-streaming
+            voting_results=None,  # New debate system doesn't use voting
+            conclusion=conclusion,
+            full_transcript=full_transcript,
         )
 
     def execute_stream(
@@ -159,11 +158,11 @@ class GenerateMultiAgentAnalysisUseCase:
         if provider is None:
             raise ValueError("No AI provider available for multi-agent analysis")
 
-        # Get the multi_agent_analysis module
-        module = _get_multi_agent_module()
+        # Create debate service and run streaming analysis
+        debate_service = MultiAgentDebateService()
 
         # Yield each event from the streaming analysis
-        yield from module.MultiAgentAnalysisService.run_analysis_stream(
+        yield from debate_service.run_analysis_stream(
             calculation_result=request.calculation_result,
             user_data=request.user_data,
             fiscal_year=request.fiscal_year,

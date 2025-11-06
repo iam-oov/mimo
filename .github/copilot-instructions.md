@@ -39,19 +39,28 @@ Mimo is a **Mexican tax calculator** for individuals (personas físicas) that co
 - **Personality:** Recommendations must include cat puns ("purr-fecto", "gat-rantizo") and greetings based on time of day
 - **Critical:** Must avoid recommending maxed-out deductions by checking current values against official limits
 
-### 4. Authentication & Rate Limiting (`server.py`)
+### 4. Multi-Agent Analysis System (`multi_agent_analysis.py`)
+
+- **Architecture:** 3 AI agents with randomized personalities and professions debate tax optimization strategies
+- **Personality Types:** Conservative, Aggressive, Analytical, Pragmatic, Innovative (from `Personality` enum)
+- **Professions:** Auditor, Tax Planner, Accountant, Financial Advisor, Fiscal Lawyer, Business Consultant (from `Profession` enum)
+- **Debate Flow:**
+  1. Round 1: Each agent proposes strategy (150-250 chars, configured via `DEBATE_MIN_CHARACTER`/`DEBATE_MAX_CHARACTER`)
+  2. Round 2: Agents respond to others' proposals
+  3. Round 3: Consensus & prioritization with voting
+  4. Final synthesis with implementation roadmap
+- **Provider Chain:** `ModelProviderFactory.create()` → DeepSeek → Gemini (no fallback)
+- **Streaming:** `MultiAgentAnalysisService.run_analysis_stream()` yields events: `agent_intro`, `round_start`, `agent_turn`, `synthesis`, `complete`
+- **Language Style:** MUST use simple everyday language, avoid technical jargon (e.g., "lo que pagas" not "base gravable")
+
+### 5. Authentication & Rate Limiting (`server.py`)
 
 - **Google OAuth 2.0:** `/auth/google` → `/auth/callback` stores user in session
 - **Railway/Proxy-aware:** `get_effective_redirect_uri()` uses `X-Forwarded-Proto` and `X-Forwarded-Host` headers
 - **Daily limits:** SQLite tracks `recommendation_usage` per user_id per date (default: 3/day, configurable via `DAILY_RECOMMENDATIONS_LIMIT`)
+- Rate limiting applies to BOTH `/api/recommendations` and `/api/multi-agent-analysis` endpoints
 - User ID: `user["sub"]` (Google's unique identifier) or falls back to email
-
-### 5. Reference Files (Not Part of Main App)
-
-- **`dynamic_conversation.py`:** Personal reference/guide file demonstrating SOLID principles
-  - Shows Protocol-based abstractions, factory pattern, dependency injection
-  - **DO NOT MODIFY** or reference in main application code
-  - Use as inspiration for architecture patterns only
+- Usage tracking: Increment AFTER successful generation, not before (prevents charging for failures)
 
 ## Development Workflows
 
@@ -147,12 +156,22 @@ DEEPSEEK_TEMPERATURE=0.6
 
 ## Key Files Reference
 
-- `server.py` - Main FastAPI app with all endpoints (861 lines)
+- `server.py` - Main FastAPI app with all endpoints (986 lines)
+  - Tax calculation: `TaxCalculator`, `TaxCalculationResult`, `/api/calculate`
+  - AI recommendations: `/api/recommendations`, `/api/recommendations/stream`
+  - Multi-agent analysis: `/api/multi-agent-analysis` (Server-Sent Events)
+  - OAuth: `/auth/google`, `/auth/callback`, `/logout`
 - `tabla_isr_constants.py` - Tax tables and constants (170 lines)
-- `fiscal_recommendations.py` - AI recommendation system (597 lines)
-- `templates/calculator.html` - Single-page calculator UI
-- `pyproject.toml` - Defines dependencies (uses uv for package management)
-- `dynamic_conversation.py` - **Personal reference guide only** (ignore for main project)
+  - Hardcoded fiscal data for 2024-2025 (no runtime JSON files)
+  - Access via `get_tabla_isr(fiscal_year)` returns `TablaISR` dataclass
+- `fiscal_recommendations.py` - Single-agent AI recommendation system (597 lines)
+  - Factory + Strategy pattern with 3 providers (DeepSeek/Gemini/Fallback)
+  - Shared prompt building via `build_prompt()`
+- `multi_agent_analysis.py` - Multi-agent debate system (972 lines)
+  - 3 agents with randomized personalities/professions
+  - Streaming debate with rounds and synthesis
+- `templates/calculator.html` - Single-page calculator UI with HTMX
+- `pyproject.toml` - Dependencies managed by **uv** (not pip)
 
 ## Testing & Debugging
 
@@ -188,10 +207,26 @@ DEEPSEEK_TEMPERATURE=0.6
 - Set `DAILY_RECOMMENDATIONS_LIMIT` env var (no code changes needed)
 - For per-feature limits, modify `get_user_recommendation_usage()` to accept scope parameter
 
-**Add new AI provider:**
+**Add new AI provider (for single-agent recommendations):**
 
 1. Create new class implementing `RecommendationGenerator` ABC in `fiscal_recommendations.py`
 2. Implement `generate_recommendations_stream()` method (must be a generator)
 3. Update `RecommendationFactory.create_service()` to include new provider in priority chain
 4. Add required API key to environment variables
 5. Follow existing patterns: DeepSeek/Gemini implementations as reference
+
+**Add new AI provider (for multi-agent analysis):**
+
+1. Create new class implementing `LanguageModelProvider` ABC in `multi_agent_analysis.py`
+2. Implement `generate_stream()` method (must be a generator)
+3. Update `ModelProviderFactory.create()` to include new provider in fallback chain
+4. Add required API key to environment variables
+5. Follow existing patterns: DeepSeekProvider/GeminiProvider as reference
+
+**Modify multi-agent debate structure:**
+
+- Change number of agents: Modify `MultiAgentAnalysisService._create_agents()` method
+- Add new personality types: Update `Personality` enum and `PERSONALITY_CONFIGS` dict
+- Add new professions: Update `Profession` enum and `PROFESSION_CONFIGS` dict
+- Adjust debate rounds: Modify `_run_debate_rounds()` method
+- Change character limits: Set `DEBATE_MIN_CHARACTER` and `DEBATE_MAX_CHARACTER` env vars

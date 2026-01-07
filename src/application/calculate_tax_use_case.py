@@ -1,8 +1,12 @@
 from dataclasses import dataclass
-from src.domain.entities.tax_calculation import TaxCalculation
-from src.domain.value_objects.tax_data import TaxpayerInfo, IncomeData, DeductionData
-from src.domain.services.tax_calculation_service import TaxCalculationService
+
 from src.domain.constants.isr_tables import get_tabla_isr
+from src.domain.entities.tax_calculation import TaxCalculation
+from src.domain.services.tax_calculation_service import TaxCalculationService
+from src.domain.value_objects.tax_data import DeductionData, IncomeData, TaxpayerInfo
+from src.infrastructure.logging.structured_logger import get_logger
+
+logger = get_logger(__name__)
 
 
 @dataclass
@@ -30,8 +34,25 @@ class CalculateTaxResponse:
 
 class CalculateTaxUseCase:
     """
-    Use case for calculating tax balance.
-    Orchestrates domain services to fulfill the business requirement.
+    Use case for calculating Mexican ISR annual tax balance.
+
+    Orchestrates domain services to calculate annual tax balance (saldo a favor/a pagar) for
+    individuals (personas físicas) under Mexican tax law. Implements all ISR rules including
+    UMA-based exemptions, deduction caps, and progressive tax brackets.
+
+    **Key Calculations:**
+    1. **Gross Income**: Annual salary + taxable bonuses/vacation premiums
+    2. **Exemptions**: Bonus (30 UMAs daily) + Vacation premium (15 UMAs daily)
+    3. **Deductions**: Apply 5 UMAs OR 15% gross income cap (whichever is lower)
+    4. **Determined Tax**: Monthly ISR sum using progressive brackets
+    5. **Final Balance**: Determined tax - Withheld tax = Refund or Amount to Pay
+
+    **Domain Layer Interaction:**
+    - Uses `TaxCalculationService` for business logic
+    - Uses `TablaISR` constants for fiscal year-specific data (UMA, tax brackets)
+    - Returns `TaxCalculation` entity with all calculation details
+
+    **No external dependencies:** Pure application layer, no AI/database calls.
     """
 
     def execute(self, request: CalculateTaxRequest) -> CalculateTaxResponse:
@@ -48,9 +69,7 @@ class CalculateTaxUseCase:
             ValueError: If fiscal year is invalid or data validation fails
         """
         # Create value objects from request
-        taxpayer_info = TaxpayerInfo(
-            name=request.taxpayer_name, fiscal_year=request.fiscal_year
-        )
+        taxpayer_info = TaxpayerInfo(name=request.taxpayer_name, fiscal_year=request.fiscal_year)
 
         income_data = IncomeData(
             monthly_gross_income=request.monthly_gross_income,
@@ -72,6 +91,4 @@ class CalculateTaxUseCase:
         tax_service = TaxCalculationService(isr_table)
         calculation = tax_service.calculate_tax(income_data, deduction_data)
 
-        return CalculateTaxResponse(
-            calculation=calculation, taxpayer_info=taxpayer_info
-        )
+        return CalculateTaxResponse(calculation=calculation, taxpayer_info=taxpayer_info)

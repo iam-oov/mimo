@@ -3,9 +3,9 @@ LiteLLM adapter for unified multi-model support.
 Allows each agent to use different AI providers seamlessly.
 """
 
-from typing import Generator, Optional
 import logging
 import os
+from collections.abc import Generator
 
 from src.infrastructure.ai_providers.prompts.multi_agent_prompts import AgentModelConfig
 
@@ -45,9 +45,7 @@ class LiteLLMAdapter:
         env_var = provider_env_map.get(provider)
 
         if env_var and not os.getenv(env_var):
-            logger.warning(
-                f"API key for {provider} not found in environment variable {env_var}"
-            )
+            logger.warning(f"API key for {provider} not found in environment variable {env_var}")
 
         # Set DeepSeek base URL if using DeepSeek
         if provider == "deepseek":
@@ -196,7 +194,7 @@ class LiteLLMAdapter:
         return f"{self.model_config.provider}/{self.model_config.model} (temp={self.model_config.temperature})"
 
 
-def create_agent_adapter(agent_id: str) -> Optional[LiteLLMAdapter]:
+def create_agent_adapter(agent_id: str) -> LiteLLMAdapter | None:
     """
     Create LiteLLM adapter for specific agent.
 
@@ -223,9 +221,7 @@ def create_agent_adapter(agent_id: str) -> Optional[LiteLLMAdapter]:
     adapter = LiteLLMAdapter(model_config)
 
     if not adapter.is_available():
-        logger.warning(
-            f"Provider {model_config.provider} not available for agent {agent_id}"
-        )
+        logger.warning(f"Provider {model_config.provider} not available for agent {agent_id}")
         return None
 
     logger.info(f"Created adapter for {agent_id}: {adapter.get_model_info()}")

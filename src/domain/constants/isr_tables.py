@@ -5,7 +5,6 @@ Más eficiente que cargar archivos JSON en runtime
 """
 
 from dataclasses import dataclass
-from typing import List, Dict
 
 
 @dataclass
@@ -49,7 +48,7 @@ class TablaISR:
     ejercicio: int
     constantes: ConstantesISR
     topes_colegiaturas: TopesColegiaturas
-    tabla_isr_mensual: List[TramoPorcentaje]
+    tabla_isr_mensual: list[TramoPorcentaje]
 
 
 # =====================================================
@@ -142,7 +141,7 @@ ISR_2025 = TablaISR(
 # DICCIONARIO PARA ACCESO POR AÑO
 # =====================================================
 
-TABLAS_ISR: Dict[int, TablaISR] = {
+TABLAS_ISR: dict[int, TablaISR] = {
     2024: ISR_2024,
     2025: ISR_2025,
 }

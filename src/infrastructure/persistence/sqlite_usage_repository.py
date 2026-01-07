@@ -1,6 +1,7 @@
 import sqlite3
 from datetime import date
 from pathlib import Path
+
 from src.domain.ports.repositories import UsageRepository
 
 
@@ -85,9 +86,7 @@ class SqliteUsageRepository(UsageRepository):
         conn.commit()
         conn.close()
 
-    def get_remaining_usage(
-        self, user_id: str, usage_date: date, daily_limit: int
-    ) -> int:
+    def get_remaining_usage(self, user_id: str, usage_date: date, daily_limit: int) -> int:
         """Calculate remaining usage for user"""
         current_usage = self.get_usage_count(user_id, usage_date)
         return max(0, daily_limit - current_usage)

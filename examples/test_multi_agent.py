@@ -59,9 +59,7 @@ Límite efectivo: $122,500"""
     for agent in agents:
         print(f"\n{'=' * 70}")
         print(f"👤 {agent['name']}")
-        print(
-            f"   {agent['profession'].value} - Personalidad {agent['personality'].value}"
-        )
+        print(f"   {agent['profession'].value} - Personalidad {agent['personality'].value}")
         print(f"{'=' * 70}\n")
 
         # Create adapter

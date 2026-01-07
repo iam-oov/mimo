@@ -1,9 +1,9 @@
 from functools import lru_cache
-from typing import Optional
 from pathlib import Path
-from pydantic import Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+
 from dotenv import load_dotenv
+from pydantic import Field, model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 env_path = Path(__file__).parent.parent.parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     # Google OAuth Configuration
     google_client_id: str = Field(..., description="Google OAuth Client ID")
     google_client_secret: str = Field(..., description="Google OAuth Client Secret")
-    google_redirect_uri: Optional[str] = Field(
+    google_redirect_uri: str | None = Field(
         default=None, description="Google OAuth Redirect URI (auto-detected if not set)"
     )
 
@@ -30,12 +30,8 @@ class Settings(BaseSettings):
     secret_key: str = Field(..., description="Secret key for session encryption")
 
     # AI Provider Configuration
-    deepseek_api_key: Optional[str] = Field(
-        default=None, description="DeepSeek API Key"
-    )
-    deepseek_model: str = Field(
-        default="deepseek-chat", description="DeepSeek model name"
-    )
+    deepseek_api_key: str | None = Field(default=None, description="DeepSeek API Key")
+    deepseek_model: str = Field(default="deepseek-chat", description="DeepSeek model name")
     deepseek_temperature: float = Field(
         default=0.6, ge=0.0, le=2.0, description="DeepSeek temperature"
     )
@@ -43,19 +39,11 @@ class Settings(BaseSettings):
         default="https://api.deepseek.com", description="DeepSeek API base URL"
     )
 
-    gemini_api_key: Optional[str] = Field(
-        default=None, description="Google Gemini API Key"
-    )
-    gemini_model: str = Field(
-        default="gemini-2.0-flash-exp", description="Gemini model name"
-    )
-    gemini_temperature: float = Field(
-        default=0.6, ge=0.0, le=2.0, description="Gemini temperature"
-    )
+    gemini_api_key: str | None = Field(default=None, description="Google Gemini API Key")
+    gemini_model: str = Field(default="gemini-2.0-flash-exp", description="Gemini model name")
+    gemini_temperature: float = Field(default=0.6, ge=0.0, le=2.0, description="Gemini temperature")
 
-    anthropic_api_key: Optional[str] = Field(
-        default=None, description="Anthropic Claude API Key"
-    )
+    anthropic_api_key: str | None = Field(default=None, description="Anthropic Claude API Key")
     anthropic_model: str = Field(
         default="claude-sonnet-4-20250514", description="Anthropic Claude model name"
     )
@@ -63,11 +51,9 @@ class Settings(BaseSettings):
         default=0.6, ge=0.0, le=2.0, description="Anthropic temperature"
     )
 
-    openai_api_key: Optional[str] = Field(default=None, description="OpenAI API Key")
+    openai_api_key: str | None = Field(default=None, description="OpenAI API Key")
     openai_model: str = Field(default="gpt-4o", description="OpenAI model name")
-    openai_temperature: float = Field(
-        default=0.6, ge=0.0, le=2.0, description="OpenAI temperature"
-    )
+    openai_temperature: float = Field(default=0.6, ge=0.0, le=2.0, description="OpenAI temperature")
 
     # Rate Limiting Configuration
     daily_recommendations_limit: int = Field(
@@ -83,19 +69,45 @@ class Settings(BaseSettings):
     )
 
     # Database Configuration
-    database_url: str = Field(
-        default="recommendations.db", description="SQLite database path"
-    )
+    database_url: str = Field(default="recommendations.db", description="SQLite database path")
 
     # Application Settings
-    environment: str = Field(
-        default="development", description="Application environment"
-    )
+    environment: str = Field(default="development", description="Application environment")
     debug: bool = Field(default=False, description="Debug mode")
 
+    @property
     def is_production(self) -> bool:
         """Check if running in production environment"""
         return self.environment.lower() == "production"
+
+    @property
+    def is_development(self) -> bool:
+        """Check if running in development environment"""
+        return self.environment.lower() == "development"
+
+    @property
+    def log_level(self) -> str:
+        """Get appropriate log level based on environment"""
+        return "INFO" if self.is_production else "DEBUG"
+
+    @model_validator(mode="after")
+    def validate_configuration(self) -> "Settings":
+        """Validate overall configuration after initialization"""
+        # Ensure at least one AI provider is configured
+        if not self.has_any_ai_provider():
+            raise ValueError(
+                "At least one AI provider must be configured. "
+                "Set DEEPSEEK_API_KEY, GEMINI_API_KEY, ANTHROPIC_API_KEY, or OPENAI_API_KEY."
+            )
+
+        # Validate production requirements
+        if self.is_production:
+            if not self.secret_key or len(self.secret_key) < 32:
+                raise ValueError(
+                    "Production environment requires a strong SECRET_KEY (min 32 characters)"
+                )
+
+        return self
 
     def has_deepseek_configured(self) -> bool:
         """Check if DeepSeek is configured"""

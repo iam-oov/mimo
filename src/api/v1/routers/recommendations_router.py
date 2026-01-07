@@ -1,18 +1,19 @@
-from typing import Dict, Any
-from fastapi import APIRouter, HTTPException, Depends
+from typing import Any
+
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
+
 from src.api.v1.schemas.recommendation_schemas import (
     RecommendationRequest,
     UsageInfoResponse,
 )
 from src.application.generate_recommendations_use_case import (
-    GenerateRecommendationsUseCase,
     GenerateRecommendationsRequest,
+    GenerateRecommendationsUseCase,
 )
-from src.infrastructure.config.dependency_injection import get_container
-from src.infrastructure.auth.dependencies import get_user_id
 from src.domain.entities.tax_calculation import TaxCalculation
-
+from src.infrastructure.auth.dependencies import get_user_id
+from src.infrastructure.config.dependency_injection import get_container
 
 router = APIRouter(prefix="/api", tags=["recommendations"])
 
@@ -25,7 +26,7 @@ def get_recommendations_use_case() -> GenerateRecommendationsUseCase:
 
 def _prepare_recommendation_data(
     req: RecommendationRequest,
-) -> tuple[TaxCalculation, Dict[str, Any], int]:
+) -> tuple[TaxCalculation, dict[str, Any], int]:
     """
     Prepare data for recommendations from request.
     Handles both legacy format (with calculation_result/user_data) and new format (form data).
@@ -36,11 +37,11 @@ def _prepare_recommendation_data(
         return calculation, req.user_data, req.fiscal_year
 
     # Otherwise, calculate from form data (new format)
-    from src.application.calculate_tax_use_case import (
-        CalculateTaxUseCase,
-        CalculateTaxRequest,
-    )
     from src.api.v1.schemas.tax_schemas import TaxCalculationRequest as TaxAPIRequest
+    from src.application.calculate_tax_use_case import (
+        CalculateTaxRequest,
+        CalculateTaxUseCase,
+    )
 
     # Use the TaxCalculationRequest to call the /calculate endpoint logic
     tax_api_request = TaxAPIRequest(
@@ -91,10 +92,32 @@ async def get_usage_info(
     use_case: GenerateRecommendationsUseCase = Depends(get_recommendations_use_case),
 ):
     """
-    Get current usage information for authenticated user.
+    Check current AI recommendations usage for authenticated user.
+
+    Returns daily usage statistics for rate limiting. Each user has a daily limit
+    (default: 3 recommendations per day) that resets at midnight.
+
+    Args:
+        user_id: User identifier from Google OAuth (injected)
+        use_case: Recommendations use case (injected)
 
     Returns:
-        Usage count, remaining usage, and daily limit
+        UsageInfoResponse with:
+        - usage_count: Number of recommendations generated today
+        - remaining_usage: Remaining recommendations available
+        - daily_limit: Total daily limit
+
+    Raises:
+        HTTPException 401: User not authenticated (missing Google OAuth session)
+
+    Example Response:
+        ```json
+        {
+          "usage_count": 1,
+          "remaining_usage": 2,
+          "daily_limit": 3
+        }
+        ```
     """
     usage_info = use_case.get_usage_info(user_id)
 
@@ -108,18 +131,43 @@ async def generate_recommendations_stream(
     use_case: GenerateRecommendationsUseCase = Depends(get_recommendations_use_case),
 ):
     """
-    Generate AI-powered fiscal recommendations with Server-Sent Events streaming.
+    Generate AI-powered fiscal recommendations with real-time streaming.
 
-    This endpoint returns recommendations as they are generated, providing
-    a better user experience for long-running AI operations.
+    Uses Server-Sent Events (SSE) to stream AI-generated recommendations from Mimo el Gatito Fiscal 🐱,
+    providing progressive feedback as the AI analyzes tax situation and generates personalized advice.
 
-    Response format: Server-Sent Events (text/event-stream)
-    - Each chunk: data: {"type":"chunk","content":"..."}\n\n
-    - Final message: data: {"type":"complete","markdown":"full text"}\n\n
+    **AI Provider Priority:**
+    1. Claude Sonnet 4.5 (Anthropic) - Best for tax compliance and Spanish
+    2. DeepSeek - Cost-effective fallback
+    3. Gemini - Google's model
+    4. Fallback - Static recommendations if all AI providers fail
+
+    **Rate Limiting:** 3 recommendations/day per user (resets at midnight)
+
+    Args:
+        req: Recommendation request with calculation result and user data (form or legacy format)
+        user_id: User identifier from Google OAuth (injected)
+        use_case: Recommendations use case (injected)
+
+    Returns:
+        StreamingResponse with text/event-stream:
+        - Event chunks: `data: {"type":"chunk","content":"..."}`
+        - Final event: `data: {"type":"complete","markdown":"full text"}`
+        - Error event: `data: {"type":"error","message":"...","code":429|500}`
 
     Raises:
-        HTTPException 401: If user is not authenticated
-        HTTPException 429: If daily limit is exceeded
+        HTTPException 400: Invalid data or missing required fields
+        HTTPException 401: User not authenticated
+        HTTPException 429: Daily limit exceeded (returned in SSE stream)
+
+    Example SSE Stream:
+        ```
+        data: {"type":"chunk","content":"## 🐱 Recomendaciones Fiscales\\n\\n"}
+
+        data: {"type":"chunk","content":"Purr-fecto! Veo que..."}
+
+        data: {"type":"complete","markdown":"## 🐱 Recomendaciones Fiscales..."}
+        ```
     """
     try:
         # Prepare data from request (handles both legacy and new formats)
@@ -154,9 +202,7 @@ async def generate_recommendations_stream(
                 yield f"data: {complete_data}\n\n"
 
             except PermissionError as e:
-                error_data = json.dumps(
-                    {"type": "error", "message": str(e), "code": 429}
-                )
+                error_data = json.dumps({"type": "error", "message": str(e), "code": 429})
                 yield f"data: {error_data}\n\n"
             except Exception as e:
                 error_data = json.dumps(

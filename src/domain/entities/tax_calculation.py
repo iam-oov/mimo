@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, Any
+from typing import Any
 
 
 @dataclass
@@ -56,7 +56,7 @@ class TaxCalculation:
         """Gets the net tax impact (positive = owe, negative = refund)"""
         return self.balance_to_pay - self.balance_in_favor
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Converts entity to dictionary representation"""
         return {
             "gross_annual_income": self.gross_annual_income,
@@ -74,7 +74,7 @@ class TaxCalculation:
             "balance_to_pay": self.balance_to_pay,
         }
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         """Returns a comprehensive summary of the tax calculation"""
         return {
             "income_summary": {

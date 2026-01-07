@@ -3,14 +3,14 @@ AI prompt templates for fiscal recommendations.
 Reusable prompts that can be shared across projects.
 """
 
-from typing import Dict, Any, Optional
 from datetime import datetime
+from typing import Any
 
 # Re-export multi-agent prompts for convenience
 from src.infrastructure.ai_providers.multi_agent_prompts import (
+    AgentModelConfig,
     Personality,
     Profession,
-    AgentModelConfig,
     build_agent_system_prompt,
     build_debate_context,
     build_round_prompt,
@@ -34,12 +34,12 @@ __all__ = [
 
 def build_fiscal_recommendation_prompt(
     calculation_result: Any,
-    user_data: Dict[str, Any],
+    user_data: dict[str, Any],
     fiscal_year: int,
     uma_annual: float,
     general_deduction_limit: float,
     effective_deduction_limit: float,
-    education_limits: Dict[str, float],
+    education_limits: dict[str, float],
 ) -> str:
     """
     Build a comprehensive prompt for AI-powered fiscal recommendations.
@@ -197,7 +197,7 @@ Analiza la siguiente información fiscal de un usuario para el año {fiscal_year
 def build_fallback_recommendations_prompt(
     fiscal_year: int,
     general_limit: float,
-    education_limits: Optional[Dict[str, float]] = None,
+    education_limits: dict[str, float] | None = None,
 ) -> str:
     """
     Build static fallback recommendations when AI providers are unavailable.
@@ -221,13 +221,9 @@ def build_fallback_recommendations_prompt(
             if limit > 0
         ]
         if edu_parts:
-            education_details = "\n".join(
-                ["* **Colegiaturas** (con topes por nivel):", *edu_parts]
-            )
+            education_details = "\n".join(["* **Colegiaturas** (con topes por nivel):", *edu_parts])
     else:
-        education_details = (
-            "* **Colegiaturas** (con límites específicos por nivel educativo)"
-        )
+        education_details = "* **Colegiaturas** (con límites específicos por nivel educativo)"
 
     recommendations = f"""
 # 💡 Recomendaciones Fiscales Generales

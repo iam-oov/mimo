@@ -3,8 +3,8 @@ Multi-agent prompt templates for fiscal debate system.
 Each agent has personality-specific and profession-specific prompts.
 """
 
-from typing import Dict, Any
 from enum import Enum
+from typing import Any
 
 
 class Personality(str, Enum):
@@ -217,7 +217,7 @@ Recuerda: Eres parte de un panel de expertos fiscales. Tu objetivo es aportar va
 
 def build_debate_context(
     calculation_result: Any,
-    user_data: Dict[str, Any],
+    user_data: dict[str, Any],
     fiscal_year: int,
     uma_annual: float,
     effective_deduction_limit: float,
@@ -276,7 +276,7 @@ def build_round_prompt(
     round_number: int,
     round_type: str,
     context: str,
-    previous_arguments: list[Dict[str, str]] = None,
+    previous_arguments: list[dict[str, str]] = None,
 ) -> str:
     """
     Build prompt for specific debate round.
@@ -353,7 +353,7 @@ Tu conclusión:"""
 
 
 def build_synthesis_prompt(
-    all_arguments: list[Dict[str, Any]],
+    all_arguments: list[dict[str, Any]],
     context: str,
 ) -> str:
     """
@@ -443,15 +443,9 @@ class AgentModelConfig:
 
 
 DEFAULT_AGENT_MODELS = {
-    "agent_1": AgentModelConfig(
-        provider="deepseek", model="deepseek-chat", temperature=0.5
-    ),
-    "agent_2": AgentModelConfig(
-        provider="deepseek", model="deepseek-chat", temperature=0.7
-    ),
-    "agent_3": AgentModelConfig(
-        provider="deepseek", model="deepseek-chat", temperature=0.7
-    ),
+    "agent_1": AgentModelConfig(provider="deepseek", model="deepseek-chat", temperature=0.5),
+    "agent_2": AgentModelConfig(provider="deepseek", model="deepseek-chat", temperature=0.7),
+    "agent_3": AgentModelConfig(provider="deepseek", model="deepseek-chat", temperature=0.7),
     "moderator": AgentModelConfig(
         provider="deepseek", model="deepseek-chat", temperature=0.6, max_tokens=800
     ),

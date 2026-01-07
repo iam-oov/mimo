@@ -2,14 +2,15 @@
 Gemini recommendation provider adapter.
 """
 
-from typing import Generator, Any, Dict
 import logging
+from collections.abc import Generator
+from typing import Any
 
 from src.domain.ports.ai_providers import RecommendationProvider
-from src.infrastructure.config.settings import get_settings
 from src.infrastructure.ai_providers.recommendations._shared import (
     build_recommendation_prompt,
 )
+from src.infrastructure.config.settings import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,7 @@ class GeminiRecommendationAdapter(RecommendationProvider):
         self.api_key = settings.gemini_api_key
 
     def generate_recommendations_stream(
-        self, calculation_result: Any, user_data: Dict[str, Any], fiscal_year: int
+        self, calculation_result: Any, user_data: dict[str, Any], fiscal_year: int
     ) -> Generator[str, None, None]:
         """
         Generate recommendations using Gemini with streaming.

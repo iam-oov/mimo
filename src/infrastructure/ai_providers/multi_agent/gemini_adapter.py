@@ -2,8 +2,8 @@
 Gemini multi-agent provider adapter.
 """
 
-from typing import Generator
 import logging
+from collections.abc import Generator
 
 from src.domain.ports.ai_providers import MultiAgentProvider
 from src.infrastructure.config.settings import Settings

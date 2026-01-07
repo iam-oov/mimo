@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Generator, Dict, Any
+from collections.abc import Generator
+from typing import Any
 
 
 class RecommendationProvider(ABC):
@@ -10,7 +11,7 @@ class RecommendationProvider(ABC):
 
     @abstractmethod
     def generate_recommendations_stream(
-        self, calculation_result: Any, user_data: Dict[str, Any], fiscal_year: int
+        self, calculation_result: Any, user_data: dict[str, Any], fiscal_year: int
     ) -> Generator[str, None, None]:
         """
         Generate fiscal recommendations as a streaming response.

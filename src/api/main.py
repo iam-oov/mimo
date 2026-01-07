@@ -1,25 +1,27 @@
 from contextlib import asynccontextmanager
-from typing import Optional, Dict, Any
+from typing import Any
+
 from fastapi import FastAPI, Request
-from fastapi.templating import Jinja2Templates
-from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.exceptions import RequestValidationError
-from starlette.middleware.sessions import SessionMiddleware
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.middleware.sessions import SessionMiddleware
+
+from src.api.middleware.error_handler import (
+    generic_exception_handler,
+    http_exception_handler,
+    log_requests_middleware,
+    validation_exception_handler,
+)
 from src.api.v1.routers import (
-    tax_router,
-    recommendations_router,
-    multi_agent_router,
-    multi_agent_chat_router,
     auth_router,
+    multi_agent_chat_router,
+    multi_agent_router,
+    recommendations_router,
+    tax_router,
 )
 from src.infrastructure.config.settings import get_settings
-from src.api.middleware.error_handler import (
-    http_exception_handler,
-    validation_exception_handler,
-    generic_exception_handler,
-    log_requests_middleware,
-)
 
 
 @asynccontextmanager
@@ -90,7 +92,7 @@ templates = Jinja2Templates(directory="templates")
 
 
 # Keep old calculator endpoint for backward compatibility
-async def get_current_user(request: Request) -> Optional[Dict[str, Any]]:
+async def get_current_user(request: Request) -> dict[str, Any] | None:
     """Get current user from session"""
     user = request.session.get("user")
     if user:
@@ -102,9 +104,7 @@ async def get_current_user(request: Request) -> Optional[Dict[str, Any]]:
 async def calculator_page(request: Request):
     """Render calculator page"""
     user = await get_current_user(request)
-    return templates.TemplateResponse(
-        "calculator.html", {"request": request, "user": user}
-    )
+    return templates.TemplateResponse("calculator.html", {"request": request, "user": user})
 
 
 if __name__ == "__main__":

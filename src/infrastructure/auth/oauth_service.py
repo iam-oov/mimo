@@ -4,12 +4,12 @@ Handles OAuth flow, token verification, and user session management.
 """
 
 import urllib.parse
-from typing import Dict, Any
+from typing import Any
 
-import requests
-import google.oauth2.id_token
 import google.auth.transport.requests as google_requests
-from fastapi import Request, HTTPException
+import google.oauth2.id_token
+import requests
+from fastapi import HTTPException, Request
 
 from src.infrastructure.config.settings import Settings
 
@@ -52,9 +52,8 @@ class GoogleOAuthService:
         Get the OAuth redirect URI.
         Uses configured URI if available, otherwise derives from request.
         """
-        if (
-            self.settings.google_redirect_uri
-            and not self.settings.google_redirect_uri.startswith("http://localhost")
+        if self.settings.google_redirect_uri and not self.settings.google_redirect_uri.startswith(
+            "http://localhost"
         ):
             return self.settings.google_redirect_uri
 
@@ -83,9 +82,7 @@ class GoogleOAuthService:
 
         return f"{self.GOOGLE_AUTH_URL}?{urllib.parse.urlencode(params)}"
 
-    def exchange_code_for_token(
-        self, request: Request, authorization_code: str
-    ) -> Dict[str, Any]:
+    def exchange_code_for_token(self, request: Request, authorization_code: str) -> dict[str, Any]:
         """
         Exchange authorization code for access token.
 
@@ -119,7 +116,7 @@ class GoogleOAuthService:
                 detail=f"Failed to exchange authorization code: {str(e)}",
             )
 
-    def verify_and_decode_token(self, id_token: str) -> Dict[str, Any]:
+    def verify_and_decode_token(self, id_token: str) -> dict[str, Any]:
         """
         Verify and decode Google ID token.
 
@@ -142,13 +139,9 @@ class GoogleOAuthService:
             )
             return user_info
         except Exception as e:
-            raise HTTPException(
-                status_code=401, detail=f"Token verification failed: {str(e)}"
-            )
+            raise HTTPException(status_code=401, detail=f"Token verification failed: {str(e)}")
 
-    def authenticate_user(
-        self, request: Request, authorization_code: str
-    ) -> Dict[str, Any]:
+    def authenticate_user(self, request: Request, authorization_code: str) -> dict[str, Any]:
         """
         Complete authentication flow: exchange code and verify token.
 
@@ -178,7 +171,7 @@ class GoogleOAuthService:
             "name": user_info.get("name", user_info["email"]),
         }
 
-    def store_user_in_session(self, request: Request, user: Dict[str, Any]) -> None:
+    def store_user_in_session(self, request: Request, user: dict[str, Any]) -> None:
         """
         Store authenticated user in session.
 
@@ -188,7 +181,7 @@ class GoogleOAuthService:
         """
         request.session["user"] = user
 
-    def get_user_from_session(self, request: Request) -> Dict[str, Any] | None:
+    def get_user_from_session(self, request: Request) -> dict[str, Any] | None:
         """
         Retrieve user from session if authenticated.
 

@@ -2,19 +2,19 @@
 Shared utilities for recommendation providers.
 """
 
-from typing import Any, Dict
 import logging
+from typing import Any
 
+from src.domain.constants.isr_tables import get_tabla_isr
 from src.infrastructure.ai_providers.prompts.recommendation_prompts import (
     build_fiscal_recommendation_prompt,
 )
-from src.domain.constants.isr_tables import get_tabla_isr
 
 logger = logging.getLogger(__name__)
 
 
 def build_recommendation_prompt(
-    calculation_result: Any, user_data: Dict[str, Any], fiscal_year: int
+    calculation_result: Any, user_data: dict[str, Any], fiscal_year: int
 ) -> str:
     """
     Build the prompt for AI recommendation generation.
@@ -27,9 +27,7 @@ def build_recommendation_prompt(
     general_deduction_limit = 5 * uma_annual
     gross_income = calculation_result.gross_annual_income
     total_deduction_limit_15_percent = gross_income * 0.15
-    effective_deduction_limit = min(
-        general_deduction_limit, total_deduction_limit_15_percent
-    )
+    effective_deduction_limit = min(general_deduction_limit, total_deduction_limit_15_percent)
 
     # Prepare education limits
     education_limits = {

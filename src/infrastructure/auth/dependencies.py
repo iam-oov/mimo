@@ -3,13 +3,13 @@ Authentication dependencies for FastAPI.
 Provides reusable dependencies for auth checks and user retrieval.
 """
 
-from typing import Dict, Any
 from functools import lru_cache
+from typing import Any
 
-from fastapi import Request, HTTPException, Depends
+from fastapi import Depends, HTTPException, Request
 
-from src.infrastructure.config.settings import get_settings
 from src.infrastructure.auth.oauth_service import GoogleOAuthService
+from src.infrastructure.config.settings import get_settings
 
 
 @lru_cache
@@ -22,7 +22,7 @@ def get_oauth_service() -> GoogleOAuthService:
 def get_current_user_optional(
     request: Request,
     oauth_service: GoogleOAuthService = Depends(get_oauth_service),
-) -> Dict[str, Any] | None:
+) -> dict[str, Any] | None:
     """
     Get current authenticated user from session (optional).
     Returns None if user is not authenticated.
@@ -42,7 +42,7 @@ def get_current_user_optional(
 def get_current_user(
     request: Request,
     oauth_service: GoogleOAuthService = Depends(get_oauth_service),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Get current authenticated user from session (required).
     Raises 401 if user is not authenticated.
@@ -70,7 +70,7 @@ def get_current_user(
     return user
 
 
-def get_user_id(user: Dict[str, Any] = Depends(get_current_user)) -> str:
+def get_user_id(user: dict[str, Any] = Depends(get_current_user)) -> str:
     """
     Extract user ID from authenticated user.
     User ID is Google's 'sub' claim, falling back to email.

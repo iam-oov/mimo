@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import date
-from typing import Optional, Dict, List, Any
+from typing import Any
 
 
 class UsageRepository(ABC):
@@ -47,9 +47,7 @@ class UsageRepository(ABC):
         pass
 
     @abstractmethod
-    def get_remaining_usage(
-        self, user_id: str, usage_date: date, daily_limit: int
-    ) -> int:
+    def get_remaining_usage(self, user_id: str, usage_date: date, daily_limit: int) -> int:
         """
         Calculate remaining usage for a user.
 
@@ -71,7 +69,7 @@ class TaxCalculationRepository(ABC):
     """
 
     @abstractmethod
-    def save(self, user_id: str, calculation_data: Dict[str, Any]) -> Optional[str]:
+    def save(self, user_id: str, calculation_data: dict[str, Any]) -> str | None:
         """
         Save a tax calculation for future reference.
 
@@ -85,7 +83,7 @@ class TaxCalculationRepository(ABC):
         pass
 
     @abstractmethod
-    def get_by_id(self, calculation_id: str) -> Optional[Dict[str, Any]]:
+    def get_by_id(self, calculation_id: str) -> dict[str, Any] | None:
         """
         Retrieve a saved tax calculation by ID.
 
@@ -98,9 +96,7 @@ class TaxCalculationRepository(ABC):
         pass
 
     @abstractmethod
-    def get_user_calculations(
-        self, user_id: str, limit: int = 10
-    ) -> List[Dict[str, Any]]:
+    def get_user_calculations(self, user_id: str, limit: int = 10) -> list[dict[str, Any]]:
         """
         Get recent calculations for a user.
 

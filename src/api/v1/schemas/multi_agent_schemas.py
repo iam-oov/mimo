@@ -3,7 +3,8 @@ Multi-agent analysis API schemas.
 Pydantic models for multi-agent debate endpoints.
 """
 
-from typing import List, Dict, Any, Optional
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -53,7 +54,7 @@ class DebateRoundSchema(BaseModel):
     """Schema for a complete debate round."""
 
     round_number: int = Field(..., description="Round number (1-3)")
-    interventions: List[InterventionSchema] = Field(
+    interventions: list[InterventionSchema] = Field(
         ..., description="All interventions in this round"
     )
     moderator_summary: str = Field(..., description="Moderator's summary of the round")
@@ -80,16 +81,10 @@ class DebateRoundSchema(BaseModel):
 class VotingResultsSchema(BaseModel):
     """Schema for voting results."""
 
-    votes: List[Dict[str, str]] = Field(
-        default=[], description="Individual votes from each expert"
-    )
-    vote_counts: Dict[str, int] = Field(
-        default={}, description="Vote count by expert name"
-    )
+    votes: list[dict[str, str]] = Field(default=[], description="Individual votes from each expert")
+    vote_counts: dict[str, int] = Field(default={}, description="Vote count by expert name")
     winner: str = Field(default="", description="Name of winning expert")
-    winning_strategy: str = Field(
-        default="", description="Description of winning strategy"
-    )
+    winning_strategy: str = Field(default="", description="Description of winning strategy")
 
     model_config = {
         "json_schema_extra": {
@@ -111,10 +106,8 @@ class VotingResultsSchema(BaseModel):
 class MultiAgentAnalysisRequest(BaseModel):
     """Request for multi-agent fiscal analysis."""
 
-    calculation_result: Dict[str, Any] = Field(
-        ..., description="Tax calculation result"
-    )
-    user_data: Dict[str, Any] = Field(..., description="User's tax information")
+    calculation_result: dict[str, Any] = Field(..., description="Tax calculation result")
+    user_data: dict[str, Any] = Field(..., description="User's tax information")
     fiscal_year: int = Field(..., ge=2024, le=2030, description="Fiscal year")
 
     model_config = {
@@ -125,9 +118,7 @@ class MultiAgentAnalysisRequest(BaseModel):
                         "gross_annual_income": 158760.00,
                         "balance_in_favor": 3651.14,
                     },
-                    "user_data": {
-                        "contribuyente": {"nombre_o_referencia": "Juan Pérez"}
-                    },
+                    "user_data": {"contribuyente": {"nombre_o_referencia": "Juan Pérez"}},
                     "fiscal_year": 2024,
                 }
             ]
@@ -138,19 +129,17 @@ class MultiAgentAnalysisRequest(BaseModel):
 class MultiAgentAnalysisResponse(BaseModel):
     """Response from multi-agent analysis."""
 
-    expert_profiles: List[ExpertProfileSchema] = Field(
+    expert_profiles: list[ExpertProfileSchema] = Field(
         ..., description="Profiles of participating experts"
     )
     moderator_name: str = Field(..., description="Name of the moderator")
-    rounds: List[DebateRoundSchema] = Field(default=[], description="All debate rounds")
-    voting_results: Optional[VotingResultsSchema] = Field(
+    rounds: list[DebateRoundSchema] = Field(default=[], description="All debate rounds")
+    voting_results: VotingResultsSchema | None = Field(
         default=None, description="Voting results (optional)"
     )
     conclusion: str = Field(..., description="Final conclusion")
-    full_transcript: str = Field(
-        default="", description="Complete conversation transcript"
-    )
-    usage_info: Dict[str, int] = Field(..., description="Usage tracking information")
+    full_transcript: str = Field(default="", description="Complete conversation transcript")
+    usage_info: dict[str, int] = Field(..., description="Usage tracking information")
 
     model_config = {
         "json_schema_extra": {

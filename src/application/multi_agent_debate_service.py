@@ -4,10 +4,11 @@ Implements fiscal expert debate using LiteLLM and personality-based prompts.
 """
 
 import random
-import logging
-from typing import Dict, Any, Generator, List
+from collections.abc import Generator
 from dataclasses import dataclass
+from typing import Any
 
+from src.domain.constants.isr_tables import get_tabla_isr
 from src.infrastructure.ai_providers.litellm.adapter import create_agent_adapter
 from src.infrastructure.ai_providers.prompts.multi_agent_prompts import (
     Personality,
@@ -17,9 +18,9 @@ from src.infrastructure.ai_providers.prompts.multi_agent_prompts import (
     build_round_prompt,
     build_synthesis_prompt,
 )
-from src.domain.constants.isr_tables import get_tabla_isr
+from src.infrastructure.logging.structured_logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass
@@ -38,7 +39,7 @@ class DebateRound:
 
     round_number: int
     round_type: str  # 'initial', 'response', 'consensus'
-    arguments: List[Dict[str, Any]]
+    arguments: list[dict[str, Any]]
 
 
 class MultiAgentDebateService:
@@ -62,7 +63,7 @@ class MultiAgentDebateService:
             "Jorge Ramírez",
         ]
 
-    def _create_agents(self, num_agents: int = 3) -> List[AgentConfig]:
+    def _create_agents(self, num_agents: int = 3) -> list[AgentConfig]:
         """
         Create debate agents with randomized personalities and professions.
 
@@ -78,9 +79,7 @@ class MultiAgentDebateService:
         names = random.sample(self.names, num_agents)
 
         agents = []
-        for i, (name, personality, profession) in enumerate(
-            zip(names, personalities, professions)
-        ):
+        for i, (name, personality, profession) in enumerate(zip(names, personalities, professions)):
             agents.append(
                 AgentConfig(
                     agent_id=f"agent_{i + 1}",
@@ -95,9 +94,9 @@ class MultiAgentDebateService:
     def run_analysis_stream(
         self,
         calculation_result: Any,
-        user_data: Dict[str, Any],
+        user_data: dict[str, Any],
         fiscal_year: int,
-    ) -> Generator[Dict[str, Any], None, None]:
+    ) -> Generator[dict[str, Any], None, None]:
         """
         Run multi-agent analysis with streaming output.
 
@@ -109,8 +108,23 @@ class MultiAgentDebateService:
         Yields:
             Stream events with type and content
         """
+        logger.info("Starting multi-agent debate", fiscal_year=fiscal_year)
+
         # Create agents
         agents = self._create_agents(3)
+
+        logger.debug(
+            "Created debate agents",
+            agent_count=len(agents),
+            agents=[
+                {
+                    "name": a.name,
+                    "personality": a.personality.value,
+                    "profession": a.profession.value,
+                }
+                for a in agents
+            ],
+        )
 
         # Build fiscal context
         tabla_isr = get_tabla_isr(fiscal_year)
@@ -124,9 +138,7 @@ class MultiAgentDebateService:
             gross_income = getattr(calculation_result, "gross_annual_income", 0)
 
         total_deduction_limit_15_percent = gross_income * 0.15
-        effective_deduction_limit = min(
-            general_deduction_limit, total_deduction_limit_15_percent
-        )
+        effective_deduction_limit = min(general_deduction_limit, total_deduction_limit_15_percent)
 
         # build_debate_context now handles both dict and object formats
         context = build_debate_context(
@@ -179,9 +191,7 @@ class MultiAgentDebateService:
             )
 
             # Build round prompt
-            user_prompt = build_round_prompt(
-                round_number=1, round_type="initial", context=context
-            )
+            user_prompt = build_round_prompt(round_number=1, round_type="initial", context=context)
 
             # Stream agent response
             yield {
@@ -202,9 +212,7 @@ class MultiAgentDebateService:
 
             yield {"type": "agent_complete"}
 
-            round_1_args.append(
-                {"agent": agent.name, "content": response_text, "round": 1}
-            )
+            round_1_args.append({"agent": agent.name, "content": response_text, "round": 1})
 
         all_arguments.extend(round_1_args)
 
@@ -250,14 +258,18 @@ class MultiAgentDebateService:
                     response_text += chunk
                     yield {"type": "agent_chunk", "content": chunk}
             except Exception as e:
-                logger.error(f"Error generating response for {agent.name}: {e}")
+                logger.error(
+                    "Error generating agent response",
+                    agent_name=agent.name,
+                    round=2,
+                    error=str(e),
+                    error_type=type(e).__name__,
+                )
                 response_text = "Error generando respuesta."
 
             yield {"type": "agent_complete"}
 
-            round_2_args.append(
-                {"agent": agent.name, "content": response_text, "round": 2}
-            )
+            round_2_args.append({"agent": agent.name, "content": response_text, "round": 2})
 
         all_arguments.extend(round_2_args)
 
@@ -299,14 +311,18 @@ class MultiAgentDebateService:
                     response_text += chunk
                     yield {"type": "agent_chunk", "content": chunk}
             except Exception as e:
-                logger.error(f"Error generating response for {agent.name}: {e}")
+                logger.error(
+                    "Error generating agent response",
+                    agent_name=agent.name,
+                    round=3,
+                    error=str(e),
+                    error_type=type(e).__name__,
+                )
                 response_text = "Error generando respuesta."
 
             yield {"type": "agent_complete"}
 
-            all_arguments.append(
-                {"agent": agent.name, "content": response_text, "round": 3}
-            )
+            all_arguments.append({"agent": agent.name, "content": response_text, "round": 3})
 
         # Final synthesis
         yield {"type": "synthesis_start"}
@@ -314,17 +330,13 @@ class MultiAgentDebateService:
         # Use moderator agent for synthesis
         moderator_adapter = create_agent_adapter("moderator")
         if moderator_adapter:
-            synthesis_prompt = build_synthesis_prompt(
-                all_arguments=all_arguments, context=context
-            )
+            synthesis_prompt = build_synthesis_prompt(all_arguments=all_arguments, context=context)
 
             moderator_system = "Eres un moderador experto en fiscalidad mexicana. Tu tarea es sintetizar el debate de expertos y generar conclusiones accionables."
 
             synthesis_text = ""
             try:
-                for chunk in moderator_adapter.generate_stream(
-                    moderator_system, synthesis_prompt
-                ):
+                for chunk in moderator_adapter.generate_stream(moderator_system, synthesis_prompt):
                     synthesis_text += chunk
                     yield {"type": "synthesis_chunk", "content": chunk}
             except Exception as e:

@@ -1,9 +1,14 @@
+from collections.abc import Generator
 from dataclasses import dataclass
 from datetime import date
-from typing import Generator, Dict, Any, Optional
+from typing import Any
+
 from src.domain.entities.tax_calculation import TaxCalculation
 from src.domain.ports.ai_providers import RecommendationProvider
 from src.domain.ports.repositories import UsageRepository
+from src.infrastructure.logging.structured_logger import get_logger
+
+logger = get_logger(__name__)
 
 
 @dataclass
@@ -12,7 +17,7 @@ class GenerateRecommendationsRequest:
 
     user_id: str
     calculation: TaxCalculation
-    user_data: Dict[str, Any]
+    user_data: dict[str, Any]
     fiscal_year: int
 
 
@@ -43,12 +48,10 @@ class GenerateRecommendationsUseCase:
             True if user has remaining usage, False otherwise
         """
         today = date.today()
-        remaining = self._usage_repository.get_remaining_usage(
-            user_id, today, self._daily_limit
-        )
+        remaining = self._usage_repository.get_remaining_usage(user_id, today, self._daily_limit)
         return remaining > 0
 
-    def get_usage_info(self, user_id: str) -> Dict[str, int]:
+    def get_usage_info(self, user_id: str) -> dict[str, int]:
         """
         Get usage information for a user.
 
@@ -68,9 +71,7 @@ class GenerateRecommendationsUseCase:
             "daily_limit": self._daily_limit,
         }
 
-    def execute_stream(
-        self, request: GenerateRecommendationsRequest
-    ) -> Generator[str, None, None]:
+    def execute_stream(self, request: GenerateRecommendationsRequest) -> Generator[str, None, None]:
         """
         Execute recommendations generation with streaming response.
 
@@ -84,17 +85,31 @@ class GenerateRecommendationsUseCase:
             PermissionError: If user has exceeded daily limit
             RuntimeError: If no AI provider is available
         """
+        logger.info(
+            "Starting recommendation generation",
+            user_id=request.user_id,
+            fiscal_year=request.fiscal_year,
+        )
+
         # Check rate limiting
         if not self.can_generate(request.user_id):
+            logger.warning(
+                "User exceeded daily limit", user_id=request.user_id, daily_limit=self._daily_limit
+            )
             raise PermissionError("Daily recommendation limit exceeded")
 
         # Find available provider
         provider = self._get_available_provider()
         if not provider:
+            logger.error("No AI provider available", providers_count=len(self._providers))
             raise RuntimeError("No AI provider available")
 
         # Generate recommendations
         try:
+            logger.debug(
+                "Using provider", provider=provider.get_provider_name(), user_id=request.user_id
+            )
+
             for chunk in provider.generate_recommendations_stream(
                 request.calculation, request.user_data, request.fiscal_year
             ):
@@ -104,10 +119,23 @@ class GenerateRecommendationsUseCase:
             today = date.today()
             self._usage_repository.increment_usage(request.user_id, today)
 
+            logger.info(
+                "Recommendation generation completed",
+                provider=provider.get_provider_name(),
+                user_id=request.user_id,
+            )
+
         except Exception as e:
+            logger.error(
+                "Failed to generate recommendations",
+                error=str(e),
+                error_type=type(e).__name__,
+                provider=provider.get_provider_name(),
+                user_id=request.user_id,
+            )
             raise RuntimeError(f"Failed to generate recommendations: {str(e)}")
 
-    def _get_available_provider(self) -> Optional[RecommendationProvider]:
+    def _get_available_provider(self) -> RecommendationProvider | None:
         """
         Get first available provider from priority list.
 

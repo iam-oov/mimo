@@ -3,23 +3,22 @@ Centralized error handling middleware.
 Provides consistent error responses across all API endpoints.
 """
 
-import logging
-from typing import Callable
+from collections.abc import Callable
 
 from fastapi import Request, Response, status
-from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-logger = logging.getLogger(__name__)
+from src.infrastructure.logging.structured_logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class ErrorResponse:
     """Standardized error response format."""
 
-    def __init__(
-        self, error: str, message: str, status_code: int, details: dict | None = None
-    ):
+    def __init__(self, error: str, message: str, status_code: int, details: dict | None = None):
         self.error = error
         self.message = message
         self.status_code = status_code
@@ -37,9 +36,7 @@ class ErrorResponse:
         return response
 
 
-async def http_exception_handler(
-    request: Request, exc: StarletteHTTPException
-) -> JSONResponse:
+async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
     """
     Handle HTTP exceptions (4xx, 5xx errors).
 
@@ -55,21 +52,19 @@ async def http_exception_handler(
     # Log error for monitoring
     if exc.status_code >= 500:
         logger.error(
-            f"Server error: {exc.status_code} - {exc.detail}",
-            extra={
-                "path": request.url.path,
-                "method": request.method,
-                "status_code": exc.status_code,
-            },
+            "Server error",
+            path=request.url.path,
+            method=request.method,
+            status_code=exc.status_code,
+            detail=str(exc.detail),
         )
     else:
         logger.warning(
-            f"Client error: {exc.status_code} - {exc.detail}",
-            extra={
-                "path": request.url.path,
-                "method": request.method,
-                "status_code": exc.status_code,
-            },
+            "Client error",
+            path=request.url.path,
+            method=request.method,
+            status_code=exc.status_code,
+            detail=str(exc.detail),
         )
 
     error_response = ErrorResponse(
@@ -97,15 +92,6 @@ async def validation_exception_handler(
     Returns:
         JSON response with validation error details
     """
-    logger.warning(
-        f"Validation error: {exc.errors()}",
-        extra={
-            "path": request.url.path,
-            "method": request.method,
-            "errors": exc.errors(),
-        },
-    )
-
     # Format validation errors for better readability
     formatted_errors = []
     for error in exc.errors():
@@ -117,6 +103,14 @@ async def validation_exception_handler(
                 "type": error["type"],
             }
         )
+
+    logger.warning(
+        "Validation error",
+        path=request.url.path,
+        method=request.method,
+        error_count=len(formatted_errors),
+        errors=formatted_errors,
+    )
 
     error_response = ErrorResponse(
         error="validation_error",
@@ -143,13 +137,11 @@ async def generic_exception_handler(request: Request, exc: Exception) -> JSONRes
         JSON response with generic error message
     """
     logger.exception(
-        f"Unexpected error: {type(exc).__name__} - {str(exc)}",
-        extra={
-            "path": request.url.path,
-            "method": request.method,
-            "exception_type": type(exc).__name__,
-        },
-        exc_info=exc,
+        "Unexpected error",
+        path=request.url.path,
+        method=request.method,
+        exception_type=type(exc).__name__,
+        error=str(exc),
     )
 
     error_response = ErrorResponse(
@@ -158,9 +150,7 @@ async def generic_exception_handler(request: Request, exc: Exception) -> JSONRes
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         details={
             "exception_type": type(exc).__name__,
-        }
-        if logger.level <= logging.DEBUG
-        else {},
+        },
     )
 
     return JSONResponse(
@@ -210,13 +200,11 @@ async def log_requests_middleware(request: Request, call_next: Callable) -> Resp
     """
     # Log request
     logger.info(
-        f"Request: {request.method} {request.url.path}",
-        extra={
-            "method": request.method,
-            "path": request.url.path,
-            "query_params": dict(request.query_params),
-            "client_host": request.client.host if request.client else None,
-        },
+        "Incoming request",
+        method=request.method,
+        path=request.url.path,
+        query_params=dict(request.query_params),
+        client_host=request.client.host if request.client else None,
     )
 
     # Process request
@@ -224,12 +212,10 @@ async def log_requests_middleware(request: Request, call_next: Callable) -> Resp
 
     # Log response
     logger.info(
-        f"Response: {request.method} {request.url.path} - {response.status_code}",
-        extra={
-            "method": request.method,
-            "path": request.url.path,
-            "status_code": response.status_code,
-        },
+        "Request completed",
+        method=request.method,
+        path=request.url.path,
+        status_code=response.status_code,
     )
 
     return response

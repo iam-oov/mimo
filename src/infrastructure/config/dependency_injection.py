@@ -1,18 +1,18 @@
 from functools import lru_cache
-from typing import List
-from src.infrastructure.config.settings import get_settings
-from src.infrastructure.persistence.sqlite_usage_repository import SqliteUsageRepository
-from src.domain.ports.repositories import UsageRepository
-from src.domain.ports.ai_providers import RecommendationProvider, MultiAgentProvider
-from src.application.generate_recommendations_use_case import (
-    GenerateRecommendationsUseCase,
-)
+
 from src.application.generate_multi_agent_analysis_use_case import (
     GenerateMultiAgentAnalysisUseCase,
 )
+from src.application.generate_recommendations_use_case import (
+    GenerateRecommendationsUseCase,
+)
 from src.application.multi_agent_chat_use_case import MultiAgentChatUseCase
+from src.domain.ports.ai_providers import MultiAgentProvider, RecommendationProvider
 from src.domain.ports.memory import MemoryStore
+from src.domain.ports.repositories import UsageRepository
+from src.infrastructure.config.settings import get_settings
 from src.infrastructure.memory.faiss_memory import FaissMemoryStore
+from src.infrastructure.persistence.sqlite_usage_repository import SqliteUsageRepository
 
 
 class DependencyContainer:
@@ -24,9 +24,9 @@ class DependencyContainer:
     def __init__(self):
         self._settings = get_settings()
         self._usage_repository: UsageRepository | None = None
-        self._recommendation_providers: List[RecommendationProvider] | None = None
+        self._recommendation_providers: list[RecommendationProvider] | None = None
         self._recommendations_use_case: GenerateRecommendationsUseCase | None = None
-        self._multi_agent_providers: List[MultiAgentProvider] | None = None
+        self._multi_agent_providers: list[MultiAgentProvider] | None = None
         self._multi_agent_use_case: GenerateMultiAgentAnalysisUseCase | None = None
         self._chat_use_case: MultiAgentChatUseCase | None = None
         self._memory_store: MemoryStore | None = None
@@ -34,12 +34,10 @@ class DependencyContainer:
     def get_usage_repository(self) -> UsageRepository:
         """Get or create usage repository instance"""
         if self._usage_repository is None:
-            self._usage_repository = SqliteUsageRepository(
-                db_path=self._settings.database_url
-            )
+            self._usage_repository = SqliteUsageRepository(db_path=self._settings.database_url)
         return self._usage_repository
 
-    def get_recommendation_providers(self) -> List[RecommendationProvider]:
+    def get_recommendation_providers(self) -> list[RecommendationProvider]:
         """
         Get list of recommendation providers in priority order.
         Uses lazy imports to avoid circular dependencies.
@@ -48,14 +46,14 @@ class DependencyContainer:
             from src.infrastructure.ai_providers.recommendations.deepseek_adapter import (
                 DeepSeekRecommendationAdapter,
             )
-            from src.infrastructure.ai_providers.recommendations.gemini_adapter import (
-                GeminiRecommendationAdapter,
-            )
             from src.infrastructure.ai_providers.recommendations.fallback_adapter import (
                 FallbackRecommendationAdapter,
             )
+            from src.infrastructure.ai_providers.recommendations.gemini_adapter import (
+                GeminiRecommendationAdapter,
+            )
 
-            providers: List[RecommendationProvider] = []
+            providers: list[RecommendationProvider] = []
 
             # Priority 1: DeepSeek
             if self._settings.has_deepseek_configured():
@@ -95,7 +93,7 @@ class DependencyContainer:
             self._memory_store = FaissMemoryStore(base_path="./memory")
         return self._memory_store
 
-    def get_multi_agent_providers(self) -> List[MultiAgentProvider]:
+    def get_multi_agent_providers(self) -> list[MultiAgentProvider]:
         """
         Get list of multi-agent providers in priority order.
         Uses lazy imports to avoid circular dependencies.
@@ -108,7 +106,7 @@ class DependencyContainer:
                 GeminiMultiAgentAdapter,
             )
 
-            providers: List[MultiAgentProvider] = []
+            providers: list[MultiAgentProvider] = []
 
             # Priority 1: DeepSeek
             if self._settings.has_deepseek_configured():

@@ -2,8 +2,8 @@
 DeepSeek multi-agent provider adapter.
 """
 
-from typing import Generator, List, Dict
 import logging
+from collections.abc import Generator
 
 from src.domain.ports.ai_providers import MultiAgentProvider
 from src.infrastructure.config.settings import Settings
@@ -11,7 +11,7 @@ from src.infrastructure.config.settings import Settings
 logger = logging.getLogger(__name__)
 
 
-def _convert_prompt_to_messages(prompt: str) -> List[Dict[str, str]]:
+def _convert_prompt_to_messages(prompt: str) -> list[dict[str, str]]:
     """Convert a single prompt string to messages format."""
     return [{"role": "user", "content": prompt}]
 

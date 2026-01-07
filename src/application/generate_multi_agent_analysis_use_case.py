@@ -3,13 +3,14 @@ Multi-agent analysis use case.
 Orchestrates fiscal expert debate with rate limiting.
 """
 
+from collections.abc import Generator
 from dataclasses import dataclass
-from typing import Dict, Any, Generator, Optional
 from datetime import date
+from typing import Any
 
-from src.domain.ports.repositories import UsageRepository
-from src.domain.ports.ai_providers import MultiAgentProvider
 from src.application.multi_agent_debate_service import MultiAgentDebateService
+from src.domain.ports.ai_providers import MultiAgentProvider
+from src.domain.ports.repositories import UsageRepository
 
 
 @dataclass
@@ -17,7 +18,7 @@ class MultiAgentAnalysisRequest:
     """Request for multi-agent analysis."""
 
     calculation_result: Any
-    user_data: Dict[str, Any]
+    user_data: dict[str, Any]
     fiscal_year: int
 
 
@@ -25,18 +26,36 @@ class MultiAgentAnalysisRequest:
 class MultiAgentAnalysisResponse:
     """Response from multi-agent analysis."""
 
-    expert_profiles: list[Dict[str, str]]
+    expert_profiles: list[dict[str, str]]
     moderator_name: str
-    rounds: list[Dict[str, Any]]
-    voting_results: Optional[Dict[str, Any]]
+    rounds: list[dict[str, Any]]
+    voting_results: dict[str, Any] | None
     conclusion: str
     full_transcript: str
 
 
 class GenerateMultiAgentAnalysisUseCase:
     """
-    Use case for generating multi-agent fiscal analysis.
-    Handles rate limiting and provider selection.
+    Use case for generating multi-agent fiscal analysis with debate.
+
+    Orchestrates a debate between 3 AI fiscal experts (with randomized personalities and professions)
+    to analyze tax situations and generate actionable optimization strategies. Handles rate limiting,
+    provider selection, and usage tracking.
+
+    **Business Rules:**
+    - Rate limit: 3 analyses per user per day (resets at midnight)
+    - Provider fallback: Uses first available provider from priority list
+    - Debate structure: 3 rounds (initial proposals, responses, consensus) + synthesis
+    - Agent selection: Random personalities (Conservative, Aggressive, etc.) + professions (Auditor, Tax Planner, etc.)
+
+    **Use Cases:**
+    - execute(): Non-streaming analysis (collects all events, returns complete response)
+    - execute_stream(): Streaming analysis (yields SSE events in real-time)
+
+    Attributes:
+        providers: List of multi-agent AI providers (priority order)
+        usage_repository: Repository for tracking daily usage
+        _daily_limit: Maximum analyses per user per day (default: 3)
     """
 
     def __init__(
@@ -50,13 +69,32 @@ class GenerateMultiAgentAnalysisUseCase:
         self._daily_limit = daily_limit
 
     def can_generate(self, user_id: str) -> bool:
-        """Check if user can generate more analyses today."""
+        """
+        Check if user can generate more analyses today (rate limiting).
+
+        Args:
+            user_id: Unique user identifier (from Google OAuth)
+
+        Returns:
+            True if user has remaining usage quota, False if daily limit reached
+        """
         today = date.today()
         usage_count = self.usage_repository.get_usage_count(user_id, today)
         return usage_count < self._daily_limit
 
-    def get_usage_info(self, user_id: str) -> Dict[str, int]:
-        """Get current usage information for user."""
+    def get_usage_info(self, user_id: str) -> dict[str, int]:
+        """
+        Get current usage statistics for user.
+
+        Args:
+            user_id: Unique user identifier
+
+        Returns:
+            Dictionary with:
+            - usage_count: Number of analyses generated today
+            - remaining_usage: Remaining analyses available
+            - daily_limit: Total daily limit
+        """
         today = date.today()
         usage_count = self.usage_repository.get_usage_count(user_id, today)
 
@@ -66,7 +104,7 @@ class GenerateMultiAgentAnalysisUseCase:
             "daily_limit": self._daily_limit,
         }
 
-    def _get_available_provider(self) -> Optional[MultiAgentProvider]:
+    def _get_available_provider(self) -> MultiAgentProvider | None:
         """Get first available provider from the list."""
         for provider in self.providers:
             if provider.is_available():
@@ -135,7 +173,7 @@ class GenerateMultiAgentAnalysisUseCase:
 
     def execute_stream(
         self, request: MultiAgentAnalysisRequest, user_id: str
-    ) -> Generator[Dict[str, Any], None, None]:
+    ) -> Generator[dict[str, Any], None, None]:
         """
         Execute multi-agent analysis with streaming output.
 

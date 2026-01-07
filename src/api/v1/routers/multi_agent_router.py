@@ -5,20 +5,21 @@ API endpoints for multi-agent fiscal debate.
 
 import json
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sse_starlette.sse import EventSourceResponse
 
 from src.api.v1.schemas.multi_agent_schemas import (
     MultiAgentAnalysisRequest as MultiAgentAnalysisRequestSchema,
+)
+from src.api.v1.schemas.multi_agent_schemas import (
     UsageInfoResponse,
 )
 from src.application.generate_multi_agent_analysis_use_case import (
     GenerateMultiAgentAnalysisUseCase,
     MultiAgentAnalysisRequest,
 )
-from src.infrastructure.config.dependency_injection import get_container
 from src.infrastructure.auth.dependencies import get_user_id
-
+from src.infrastructure.config.dependency_injection import get_container
 
 router = APIRouter(prefix="/api", tags=["multi-agent-analysis"])
 
@@ -53,26 +54,54 @@ async def generate_multi_agent_analysis(
     """
     Generate multi-agent fiscal analysis with Server-Sent Events streaming.
 
-    Requires authentication. Rate limited per day.
+    Creates a debate between 3 AI fiscal experts with randomized personalities and professions
+    (e.g., Conservative Auditor, Aggressive Tax Planner, Analytical Accountant). Each agent analyzes
+    the tax situation and proposes optimization strategies in 3 debate rounds:
+    1. **Initial Proposals**: Each agent presents their strategy (150-250 chars)
+    2. **Response Round**: Agents respond to others' proposals with counterarguments
+    3. **Consensus Round**: Agents prioritize and vote on best strategies
+
+    Finally, a moderator synthesizes all arguments into a unified action plan with implementation roadmap.
+
+    **AI Models:** Uses LiteLLM adapter with Claude Sonnet 4.5 (default) or DeepSeek for each agent
+    **Rate Limiting:** 3 analyses/day per user (resets at midnight)
 
     Args:
         request_data: Analysis request with calculation result and user data
+        user_id: User identifier from Google OAuth (injected)
+        use_case: Multi-agent analysis use case (injected)
 
     Returns:
-        SSE stream with real-time debate events:
-        - agent_intro: List of agents with profiles
-        - round_start: Start of debate round
-        - agent_turn: Agent starts speaking
-        - agent_chunk: Streaming text content
-        - agent_complete: Agent finished turn
-        - synthesis_start: Final synthesis beginning
-        - synthesis_chunk: Streaming synthesis content
-        - synthesis_complete: Full synthesis text
-        - complete: Debate finished
-        - usage: Usage info
+        EventSourceResponse with Server-Sent Events:
+        - `agent_intro`: List of 3 agents with personalities, professions, expertise
+        - `round_start`: Start of debate round (1, 2, or 3)
+        - `agent_turn`: Agent begins speaking
+        - `agent_chunk`: Streaming text content from agent
+        - `agent_complete`: Agent finished their turn
+        - `synthesis_start`: Final synthesis beginning
+        - `synthesis_chunk`: Streaming synthesis content
+        - `synthesis_complete`: Full synthesis text
+        - `complete`: Debate finished
+        - `usage`: Usage info (count/remaining/limit)
 
     Raises:
-        HTTPException: 401 if not authenticated, 429 if rate limit exceeded
+        HTTPException 401: User not authenticated
+        HTTPException 429: Daily limit exceeded (3 analyses/day)
+
+    Example SSE Events:
+        ```
+        event: message
+        data: {"type":"agent_intro","agents":[{"name":"María González","personality":"conservative",...}]}
+
+        event: message
+        data: {"type":"round_start","round_number":1,"round_name":"Propuestas Iniciales"}
+
+        event: message
+        data: {"type":"agent_turn","agent_name":"María González",...}
+
+        event: message
+        data: {"type":"agent_chunk","content":"Recomiendo priorizar..."}
+        ```
     """
     # Check rate limit
     if not use_case.can_generate(user_id):

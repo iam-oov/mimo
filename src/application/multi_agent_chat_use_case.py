@@ -3,19 +3,20 @@ Multi-agent chat use case.
 Interactive chat where user selects which agent responds.
 """
 
+from collections.abc import Generator
 from dataclasses import dataclass
-from typing import Dict, Any, Generator, Optional
 from datetime import date
+from typing import Any
 
-from src.domain.ports.repositories import UsageRepository
+from src.domain.constants.isr_tables import get_tabla_isr
 from src.domain.ports.memory import MemoryStore
+from src.domain.ports.repositories import UsageRepository
 from src.infrastructure.ai_providers.litellm.adapter import create_agent_adapter
 from src.infrastructure.ai_providers.prompts.multi_agent_prompts import (
     Personality,
     Profession,
     build_debate_context,
 )
-from src.domain.constants.isr_tables import get_tabla_isr
 
 
 @dataclass
@@ -24,10 +25,10 @@ class AgentChatRequest:
 
     agent_id: str  # 'agent_1', 'agent_2', or 'agent_3'
     user_message: str
-    calculation_result: Dict[str, Any]
-    user_data: Dict[str, Any]
+    calculation_result: dict[str, Any]
+    user_data: dict[str, Any]
     fiscal_year: int
-    conversation_history: Optional[list[Dict[str, str]]] = None  # Optional chat history
+    conversation_history: list[dict[str, str]] | None = None  # Optional chat history
 
 
 @dataclass
@@ -57,7 +58,7 @@ class MultiAgentChatUseCase:
         self._daily_limit = daily_limit
         self._memory = memory_store
 
-    def get_usage_info(self, user_id: str) -> Dict[str, int]:
+    def get_usage_info(self, user_id: str) -> dict[str, int]:
         """Get current usage information for user."""
         today = date.today()
         usage_count = self.usage_repository.get_usage_count(user_id, today)
@@ -76,8 +77,8 @@ class MultiAgentChatUseCase:
 
     def get_available_agents(
         self,
-        calculation_result: Dict[str, Any],
-        user_data: Dict[str, Any],
+        calculation_result: dict[str, Any],
+        user_data: dict[str, Any],
         fiscal_year: int,
         user_id: str | None = None,
     ) -> list[AgentInfo]:
@@ -86,6 +87,7 @@ class MultiAgentChatUseCase:
         Generates 3 random agents with different personalities/professions.
         """
         import random
+
         from src.infrastructure.ai_providers.prompts.multi_agent_prompts import (
             PROFESSION_FOCUS,
         )
@@ -173,9 +175,7 @@ class MultiAgentChatUseCase:
         gross_income = request.calculation_result.get("gross_annual_income", 0)
 
         total_deduction_limit_15_percent = gross_income * 0.15
-        effective_deduction_limit = min(
-            general_deduction_limit, total_deduction_limit_15_percent
-        )
+        effective_deduction_limit = min(general_deduction_limit, total_deduction_limit_15_percent)
 
         context = build_debate_context(
             calculation_result=request.calculation_result,
@@ -189,13 +189,10 @@ class MultiAgentChatUseCase:
         memory_context = ""
         if self._memory is not None:
             try:
-                memories = self._memory.search(
-                    user_id=user_id, query=request.user_message, k=5
-                )
+                memories = self._memory.search(user_id=user_id, query=request.user_message, k=5)
                 if memories:
-                    memory_context = (
-                        "\n\nMEMORIA RELEVANTE (de este usuario):\n"
-                        + "\n".join([f"- {m['text']}" for m in memories[:5]])
+                    memory_context = "\n\nMEMORIA RELEVANTE (de este usuario):\n" + "\n".join(
+                        [f"- {m['text']}" for m in memories[:5]]
                     )
             except Exception:
                 pass
@@ -271,8 +268,8 @@ INSTRUCCIONES:
 
     def _build_calculation_summary(
         self,
-        calculation_result: Dict[str, Any],
-        user_data: Dict[str, Any],
+        calculation_result: dict[str, Any],
+        user_data: dict[str, Any],
         fiscal_year: int,
     ) -> str:
         """Create a concise, retrieval-friendly summary of the user's calculation context."""
@@ -288,9 +285,7 @@ INSTRUCCIONES:
             withheld_tax = getattr(calculation_result, "withheld_tax", 0)
             balance_in_favor = getattr(calculation_result, "balance_in_favor", 0)
 
-        deduction_data = (
-            user_data.get("deduction_data", {}) if isinstance(user_data, dict) else {}
-        )
+        deduction_data = user_data.get("deduction_data", {}) if isinstance(user_data, dict) else {}
         general_deductions = deduction_data.get("general_deductions", 0)
         ppr_deductions = deduction_data.get("ppr_deductions", 0)
         education_deductions = deduction_data.get("education_deductions", 0)

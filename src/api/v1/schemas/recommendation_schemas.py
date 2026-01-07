@@ -1,5 +1,7 @@
+from typing import Any
+
 from pydantic import BaseModel, Field
-from typing import Dict, Any, Optional
+
 from src.api.v1.schemas.tax_schemas import TaxCalculationRequest
 
 
@@ -10,8 +12,8 @@ class RecommendationRequest(TaxCalculationRequest):
     """
 
     # Optional fields for backward compatibility with old API format
-    calculation_result: Optional[Dict[str, Any]] = None
-    user_data: Optional[Dict[str, Any]] = None
+    calculation_result: dict[str, Any] | None = None
+    user_data: dict[str, Any] | None = None
 
     model_config = {
         "json_schema_extra": {
@@ -49,13 +51,9 @@ class UsageInfoResponse(BaseModel):
     """API schema for usage information response"""
 
     usage_count: int = Field(description="Number of recommendations generated today")
-    remaining_usage: int = Field(
-        description="Remaining recommendations available today"
-    )
+    remaining_usage: int = Field(description="Remaining recommendations available today")
     daily_limit: int = Field(description="Daily limit for recommendations")
 
     model_config = {
-        "json_schema_extra": {
-            "example": {"usage_count": 1, "remaining_usage": 2, "daily_limit": 3}
-        }
+        "json_schema_extra": {"example": {"usage_count": 1, "remaining_usage": 2, "daily_limit": 3}}
     }

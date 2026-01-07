@@ -2,14 +2,15 @@
 Fallback recommendation provider adapter.
 """
 
-from typing import Generator, Any, Dict
 import logging
+from collections.abc import Generator
+from typing import Any
 
+from src.domain.constants.isr_tables import get_tabla_isr
 from src.domain.ports.ai_providers import RecommendationProvider
 from src.infrastructure.ai_providers.prompts.recommendation_prompts import (
     build_fallback_recommendations_prompt,
 )
-from src.domain.constants.isr_tables import get_tabla_isr
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,7 @@ class FallbackRecommendationAdapter(RecommendationProvider):
         pass
 
     def generate_recommendations_stream(
-        self, calculation_result: Any, user_data: Dict[str, Any], fiscal_year: int
+        self, calculation_result: Any, user_data: dict[str, Any], fiscal_year: int
     ) -> Generator[str, None, None]:
         """
         Generate static fallback recommendations.

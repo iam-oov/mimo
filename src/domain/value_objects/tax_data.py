@@ -13,9 +13,7 @@ class TaxpayerInfo:
 
     def __post_init__(self):
         if self.fiscal_year < 2024 or self.fiscal_year > 2025:
-            raise ValueError(
-                f"Fiscal year must be between 2024 and 2025, got {self.fiscal_year}"
-            )
+            raise ValueError(f"Fiscal year must be between 2024 and 2025, got {self.fiscal_year}")
 
         if not self.name or not self.name.strip():
             object.__setattr__(self, "name", "Contribuyente")

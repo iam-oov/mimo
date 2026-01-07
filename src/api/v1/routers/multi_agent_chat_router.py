@@ -4,19 +4,18 @@ API endpoints for interactive agent chat.
 """
 
 import json
+from typing import Any
 
-from fastapi import APIRouter, HTTPException, Depends
-from sse_starlette.sse import EventSourceResponse
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
-from typing import Dict, Any, List
+from sse_starlette.sse import EventSourceResponse
 
 from src.application.multi_agent_chat_use_case import (
-    MultiAgentChatUseCase,
     AgentChatRequest,
+    MultiAgentChatUseCase,
 )
-from src.infrastructure.config.dependency_injection import get_container
 from src.infrastructure.auth.dependencies import get_user_id
-
+from src.infrastructure.config.dependency_injection import get_container
 
 router = APIRouter(prefix="/api/chat", tags=["multi-agent-chat"])
 
@@ -24,18 +23,12 @@ router = APIRouter(prefix="/api/chat", tags=["multi-agent-chat"])
 class ChatMessageRequest(BaseModel):
     """Request schema for chat message."""
 
-    agent_id: str = Field(
-        ..., description="Selected agent ID (agent_1, agent_2, agent_3)"
-    )
+    agent_id: str = Field(..., description="Selected agent ID (agent_1, agent_2, agent_3)")
     message: str = Field(..., description="User's question/message")
-    calculation_result: Dict[str, Any] = Field(
-        ..., description="Tax calculation result"
-    )
-    user_data: Dict[str, Any] = Field(..., description="User's fiscal data")
+    calculation_result: dict[str, Any] = Field(..., description="Tax calculation result")
+    user_data: dict[str, Any] = Field(..., description="User's fiscal data")
     fiscal_year: int = Field(..., description="Fiscal year")
-    conversation_history: List[Dict[str, str]] = Field(
-        default=[], description="Previous messages"
-    )
+    conversation_history: list[dict[str, str]] = Field(default=[], description="Previous messages")
 
 
 class AgentInfoResponse(BaseModel):
@@ -51,10 +44,8 @@ class AgentInfoResponse(BaseModel):
 class GetAgentsRequest(BaseModel):
     """Request schema for getting available agents."""
 
-    calculation_result: Dict[str, Any] = Field(
-        ..., description="Tax calculation result"
-    )
-    user_data: Dict[str, Any] = Field(..., description="User's fiscal data")
+    calculation_result: dict[str, Any] = Field(..., description="Tax calculation result")
+    user_data: dict[str, Any] = Field(..., description="User's fiscal data")
     fiscal_year: int = Field(..., description="Fiscal year")
 
 
@@ -64,7 +55,7 @@ def get_chat_use_case() -> MultiAgentChatUseCase:
     return container.get_chat_use_case()
 
 
-@router.post("/agents", response_model=List[AgentInfoResponse])
+@router.post("/agents", response_model=list[AgentInfoResponse])
 async def get_available_agents(
     request: GetAgentsRequest,
     user_id: str = Depends(get_user_id),

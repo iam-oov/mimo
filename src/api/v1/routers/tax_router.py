@@ -1,25 +1,65 @@
-from typing import Dict, Any
+from typing import Any
+
 from fastapi import APIRouter, HTTPException
+
 from src.api.v1.schemas.tax_schemas import TaxCalculationRequest, TaxCalculationResponse
 from src.application.calculate_tax_use_case import (
-    CalculateTaxUseCase,
     CalculateTaxRequest as UseCaseRequest,
 )
-
+from src.application.calculate_tax_use_case import (
+    CalculateTaxUseCase,
+)
 
 router = APIRouter(prefix="/api", tags=["tax"])
 
 
 @router.post("/calculate", response_model=TaxCalculationResponse)
-def calculate_tax(request: TaxCalculationRequest) -> Dict[str, Any]:
+def calculate_tax(request: TaxCalculationRequest) -> dict[str, Any]:
     """
-    Calculate annual tax balance for a taxpayer.
+    Calculate annual tax balance (saldo a favor/a pagar) for Mexican individuals.
 
-    This endpoint calculates:
-    - Taxable income (with bonus/vacation exemptions)
-    - Authorized deductions (applying all caps and limits)
-    - Determined tax vs withheld tax
-    - Final balance (refund or amount to pay)
+    Implements Mexican ISR (Impuesto Sobre la Renta) rules including:
+    - Gross/taxable income calculation with UMA-based exemptions:
+      * Aguinaldo (bonus): Exempt up to 30 UMAs daily
+      * Prima vacacional (vacation premium): Exempt up to 15 UMAs daily
+    - Authorized deductions with caps:
+      * Personal/Medical/Funeral: Capped at 5 UMAs annually OR 15% gross income (whichever is lower)
+      * PPR (Retirement contributions): Applied proportionally within cap
+      * Education: By level (preschool to university), applied proportionally within cap
+    - Monthly ISR calculation using progressive tax brackets
+    - Final balance: Determined tax - Withheld tax = Refund (saldo a favor) or Amount to Pay
+
+    Args:
+        request: Tax calculation request with taxpayer info, income, and deductions
+
+    Returns:
+        TaxCalculationResponse with complete breakdown:
+        - gross_annual_income
+        - taxable_income
+        - authorized_deductions
+        - determined_tax
+        - withheld_tax
+        - final_balance (negative = refund, positive = amount to pay)
+        - effective_tax_rate
+
+    Raises:
+        HTTPException 400: Invalid fiscal year or data validation error
+        HTTPException 500: Internal calculation error
+
+    Example:
+        ```json
+        {
+          "taxpayer_name": "Juan Pérez",
+          "fiscal_year": 2024,
+          "monthly_gross_income": 15000.0,
+          "bonus_days": 30,
+          "vacation_days": 12,
+          "vacation_premium_percentage": 25.0,
+          "general_deductions": 50000.0,
+          "total_ppr": 30000.0,
+          "total_tuition": 20000.0
+        }
+        ```
     """
     try:
         # Map API request to use case request

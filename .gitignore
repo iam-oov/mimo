@@ -173,6 +173,12 @@ poetry.toml
 # LSP config files
 pyrightconfig.json
 
+# User memory data (FAISS indices)
+memory/
+!memory/.gitkeep
+
+# SQLite databases
 *.db
+*.db-journal
 
 # End of https://www.toptal.com/developers/gitignore/api/python

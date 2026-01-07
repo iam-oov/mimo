@@ -1,125 +1,188 @@
-# 🏗️ Nueva Arquitectura Hexagonal Híbrida - Guía de Migración
+# 🏗️ Arquitectura Modular (Module-First + Hexagonal)
 
 ## 📁 Estructura del Proyecto
 
 ```
 mimo/
-├── src/                                    # ← Nueva arquitectura
-│   ├── domain/                            # Capa de dominio (lógica de negocio pura)
-│   │   ├── entities/                      # Entidades del dominio
-│   │   │   └── tax_calculation.py        # Entidad TaxCalculation
-│   │   ├── value_objects/                 # Value objects inmutables
-│   │   │   └── tax_data.py               # TaxpayerInfo, IncomeData, DeductionData
-│   │   ├── services/                      # Servicios de dominio
-│   │   │   └── tax_calculation_service.py # Lógica de cálculo ISR
-│   │   └── ports/                         # Interfaces (puertos hexagonales)
-│   │       ├── repositories.py            # UsageRepository, TaxCalculationRepository
-│   │       └── ai_providers.py            # RecommendationProvider, MultiAgentProvider
+├── src/                                    # Nueva arquitectura modular
+│   ├── tax_calculation/                   # 📊 Módulo de cálculo ISR
+│   │   ├── domain/                        # Core: Lógica de negocio
+│   │   │   ├── entities/
+│   │   │   │   └── tax_calculation.py    # TaxCalculation entity
+│   │   │   ├── services/
+│   │   │   │   └── tax_calculation_service.py  # Cálculo ISR
+│   │   │   └── value_objects/
+│   │   │       └── tax_data.py           # TaxpayerInfo, IncomeData
+│   │   ├── application/                   # Use Cases
+│   │   │   └── calculate_tax_use_case.py # Orquestación del cálculo
+│   │   └── infrastructure/                # Adapters
+│   │       └── api/
+│   │           └── tax_router.py         # REST API adapter
 │   │
-│   ├── application/                       # Casos de uso (orquestación)
-│   │   ├── calculate_tax_use_case.py     # Caso de uso: calcular impuestos
-│   │   ├── generate_recommendations_use_case.py  # Caso de uso: generar recomendaciones
-│   │   └── generate_multi_agent_analysis_use_case.py  # Caso de uso: análisis multi-agente
+│   ├── recommendations/                   # 🤖 Módulo de recomendaciones AI
+│   │   ├── domain/
+│   │   │   └── ports/
+│   │   │       └── recommendation_provider.py  # Port interface
+│   │   ├── application/
+│   │   │   └── generate_recommendations_use_case.py
+│   │   └── infrastructure/
+│   │       ├── api/
+│   │       │   └── recommendations_router.py   # REST API adapter
+│   │       ├── providers/                      # Driven adapters
+│   │       │   ├── deepseek_adapter.py
+│   │       │   └── gemini_adapter.py
+│   │       └── prompts/
+│   │           └── recommendation_prompts.py
 │   │
-│   ├── infrastructure/                    # Adaptadores (implementaciones)
-│   │   ├── config/
-│   │   │   ├── settings.py               # Configuración centralizada (Pydantic Settings)
-│   │   │   └── dependency_injection.py   # DI Container
-│   │   ├── persistence/
-│   │   │   └── sqlite_usage_repository.py # Implementación SQLite
-│   │   ├── ai_providers/
-│   │   │   ├── recommendation_adapters.py # Adapters para RecommendationProvider
-│   │   │   └── multi_agent_adapters.py   # Adapters para MultiAgentProvider
-│   │   └── auth/
-│   │       ├── oauth_service.py          # GoogleOAuthService
-│   │       └── dependencies.py           # Auth dependencies para FastAPI
+│   ├── multi_agent/                       # 🎭 Módulo de análisis multi-agente
+│   │   ├── domain/
+│   │   │   └── ports/
+│   │   │       ├── multi_agent_provider.py     # Port interface
+│   │   │       └── memory.py                   # MemoryStore port
+│   │   ├── application/
+│   │   │   ├── generate_multi_agent_analysis_use_case.py
+│   │   │   ├── multi_agent_chat_use_case.py
+│   │   │   └── multi_agent_debate_service.py   # Domain service
+│   │   └── infrastructure/
+│   │       ├── api/
+│   │       │   ├── multi_agent_router.py       # REST API adapter
+│   │       │   └── multi_agent_chat_router.py
+│   │       ├── providers/                      # Driven adapters
+│   │       │   ├── deepseek_adapter.py
+│   │       │   └── gemini_adapter.py
+│   │       ├── litellm/
+│   │       │   └── adapter.py                  # LiteLLM integration
+│   │       ├── memory/
+│   │       │   └── faiss_memory.py            # FAISS adapter
+│   │       └── prompts/
+│   │           └── multi_agent_prompts.py
 │   │
-│   └── api/                               # Capa de presentación
-│       ├── main.py                        # Punto de entrada FastAPI
-│       └── v1/
-│           ├── routers/
-│           │   ├── auth_router.py         # Router de autenticación OAuth
-│           │   ├── tax_router.py          # Router de cálculo de impuestos
-│           │   ├── recommendations_router.py  # Router de recomendaciones AI
-│           │   └── multi_agent_router.py  # Router de análisis multi-agente
-│           └── schemas/
-│               ├── tax_schemas.py         # DTOs para cálculo de impuestos
-│               ├── recommendation_schemas.py  # DTOs para recomendaciones
-│               └── multi_agent_schemas.py # DTOs para multi-agent
+│   ├── auth/                              # 🔐 Módulo de autenticación
+│   │   └── infrastructure/                # Infrastructure-only module
+│   │       ├── api/
+│   │       │   └── auth_router.py        # REST API adapter
+│   │       ├── oauth_service.py          # Google OAuth adapter
+│   │       └── dependencies.py           # FastAPI auth dependencies
+│   │
+│   ├── shared/                            # 🔧 Shared kernel
+│   │   ├── domain/
+│   │   │   ├── constants/
+│   │   │   │   └── isr_tables.py        # ISR tax tables (2024-2025)
+│   │   │   ├── value_objects/           # Shared value objects
+│   │   │   └── ports/
+│   │   │       └── repositories.py      # UsageRepository port
+│   │   └── infrastructure/
+│   │       ├── api/
+│   │       │   ├── middleware/          # Error handlers, logging
+│   │       │   └── schemas/             # Shared DTOs
+│   │       ├── config/
+│   │       │   ├── settings.py          # Pydantic Settings
+│   │       │   └── dependency_injection.py  # DI Container
+│   │       ├── logging/
+│   │       │   └── structured_logger.py # JSON logging
+│   │       └── persistence/
+│   │           └── sqlite_usage_repository.py
+│   │
+│   └── main.py                           # FastAPI application entry point
 │
-├── server.py                              # ← Archivo original (mantener durante migración)
-├── fiscal_recommendations.py              # ← Archivo original (pendiente adaptar)
-├── multi_agent_analysis.py               # ← Archivo original (pendiente adaptar)
-├── tabla_isr_constants.py                # ← Compartido (sin cambios)
-└── templates/                             # ← Frontend (sin cambios)
+└── templates/                            # Frontend (calculator.html)
 ```
 
-## 🚀 Cómo Usar la Nueva Arquitectura
+## 🎯 Principios de Arquitectura
 
-### Opción 1: Usar el nuevo `main.py` (Recomendado)
+### 1. Module-First (Módulo Primero)
 
-```bash
-# Ejecutar con la nueva arquitectura
-uv run uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
-```
+Cada módulo representa un **bounded context** con su propia estructura hexagonal interna:
 
-### Opción 2: Seguir usando `server.py` (Compatibilidad)
+- **tax_calculation**: Cálculo de ISR anual
+- **recommendations**: Recomendaciones fiscales con AI
+- **multi_agent**: Análisis multi-agente con debate
+- **auth**: Autenticación OAuth (infrastructure-only)
+- **shared**: Código compartido entre módulos
 
-```bash
-# Ejecutar con la arquitectura original
-uv run uvicorn server:app --host 0.0.0.0 --port 8000 --reload
-```
+### 2. Hexagonal Architecture (por módulo)
 
-## ✅ Funcionalidad Migrada
-
-### 1. **Cálculo de Impuestos** ✅ COMPLETO
-
-**Endpoint:** `POST /api/calculate`
-
-**Arquitectura:**
+Cada módulo sigue capas hexagonales:
 
 ```
-API Request (TaxCalculationRequest)
-    ↓
-Tax Router (tax_router.py)
-    ↓
-Calculate Tax Use Case (calculate_tax_use_case.py)
-    ↓
-Tax Calculation Service (tax_calculation_service.py)
-    ↓
-Value Objects (IncomeData, DeductionData)
-    ↓
-Tax Calculation Entity (tax_calculation.py)
-    ↓
-API Response (TaxCalculationResponse)
+domain/           → Core (entities, services, ports)
+application/      → Use cases (orchestration)
+infrastructure/   → Adapters (API, providers, databases)
 ```
 
-**Ejemplo de uso:**
+### 3. Dependency Rule
+
+```
+infrastructure → application → domain
+     ↓              ↓            ↓
+  Adapters     Use Cases    Business Logic
+```
+
+Las dependencias siempre apuntan hacia adentro (domain no conoce application ni infrastructure).
+
+### 4. Ports & Adapters
+
+**Ports (interfaces):**
+
+- `RecommendationProvider` → Para proveedores de AI (recommendations)
+- `MultiAgentProvider` → Para proveedores multi-agente
+- `MemoryStore` → Para almacenamiento de conversaciones
+- `UsageRepository` → Para tracking de uso diario
+
+**Adapters (implementaciones):**
+
+- `DeepSeekRecommendationAdapter`, `GeminiRecommendationAdapter`
+- `DeepSeekMultiAgentAdapter`, `GeminiMultiAgentAdapter`
+- `FaissMemoryStore`
+- `SqliteUsageRepository`
+
+### 5. Convenciones de Imports
 
 ```python
-from src.application.calculate_tax_use_case import CalculateTaxUseCase, CalculateTaxRequest
+# ✅ CORRECTO: Imports directos desde archivos
+from src.tax_calculation.domain.entities.tax_calculation import TaxCalculation
+from src.recommendations.domain.ports.recommendation_provider import RecommendationProvider
+from src.shared.domain.constants.isr_tables import get_tabla_isr
 
-# Crear request
-request = CalculateTaxRequest(
-    taxpayer_name="Juan Pérez",
-    fiscal_year=2025,
-    monthly_gross_income=12600.0,
-    bonus_days=15,
-    vacation_days=12,
-    vacation_premium_percentage=0.25,
-    general_deductions=71000.0,
-    ppr_deductions=15000.0,
-    education_deductions=25000.0
-)
-
-# Ejecutar caso de uso
-use_case = CalculateTaxUseCase()
-response = use_case.execute(request)
-
-print(f"Balance a Favor: ${response.calculation.balance_in_favor:,.2f}")
+# ❌ INCORRECTO: Nunca usar __init__.py para exports
+from src.tax_calculation.domain import TaxCalculation  # NO!
 ```
 
-### 2. **Configuración Centralizada** ✅ COMPLETO
+**Razón:** Los `__init__.py` están **vacíos** por convención para evitar imports circulares.
+
+---
+
+## 🔄 Flujos de Datos
+
+### Cálculo de Impuestos
+
+```mermaid
+graph LR
+    A[User] --> B[tax_router.py]
+    B --> C[CalculateTaxUseCase]
+    C --> D[TaxCalculationService]
+    D --> E[ISR Tables]
+    D --> F[TaxCalculation Entity]
+    F --> C
+    C --> B
+    B --> A
+```
+
+### Recomendaciones AI
+
+```mermaid
+graph LR
+    A[User] --> B[recommendations_router.py]
+    B --> C[GenerateRecommendationsUseCase]
+    C --> D{Provider Available?}
+    D -->|Yes| E[DeepSeek/Gemini Adapter]
+    E --> F[Stream Response]
+    F --> B
+    B --> A
+    D -->|No| G[Error: No provider]
+```
+
+### Multi-Agent Analysis
 
 **Ubicación:** `src/infrastructure/config/settings.py`
 

@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sse_starlette.sse import EventSourceResponse
 
-from src.application.multi_agent_chat_use_case import (
+from src.multi_agent.application.multi_agent_chat_use_case import (
     AgentChatRequest,
     MultiAgentChatUseCase,
 )

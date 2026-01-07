@@ -12,73 +12,167 @@ Mimo is a **Mexican tax calculator** for individuals (personas físicas) that co
 
 ## Architecture & Key Components
 
-### 1. Tax Calculation Engine (`server.py`)
+**Module-First Architecture (Hexagonal + Domain-Driven Design)**
 
-- **`TaxCalculator`**: Core calculator implementing Mexican ISR (Impuesto Sobre la Renta) rules
-  - Computes taxable bonus/vacation premium with UMA-based exemptions
-  - Applies deduction caps: 5 UMAs OR 15% of gross income (whichever is lower)
-  - Uses monthly ISR tax brackets from `tabla_isr_constants.py`
-- **`TaxCalculationResult`**: Pydantic model with validation and helper methods (`get_effective_tax_rate()`, `is_refund_due()`)
-- **Data Flow:** User input → `TaxInputData` validation → `TaxCalculator` → `TaxCalculationResult` → JSON response
+Mimo uses a **module-first architecture** where each bounded context (tax_calculation, recommendations, multi_agent, auth) is organized as an independent module with hexagonal layers inside:
 
-### 2. ISR Tax Tables (`tabla_isr_constants.py`)
+```
+src/
+├── tax_calculation/          # Tax calculation bounded context
+│   ├── domain/               # Business logic (entities, services, value objects)
+│   ├── application/          # Use cases (orchestration)
+│   └── infrastructure/
+│       └── api/              # REST adapter (tax_router.py)
+├── recommendations/          # AI recommendations bounded context
+│   ├── domain/               # Recommendation domain logic
+│   ├── application/          # Recommendation use cases
+│   └── infrastructure/
+│       ├── api/              # REST adapter (recommendations_router.py)
+│       ├── providers/        # AI provider adapters (driven ports)
+│       └── prompts/          # Prompt templates
+├── multi_agent/              # Multi-agent analysis bounded context
+│   ├── domain/               # Multi-agent domain logic
+│   ├── application/          # Multi-agent use cases, debate service
+│   └── infrastructure/
+│       ├── api/              # REST adapters (multi_agent_router.py, chat_router.py)
+│       ├── providers/        # Multi-agent AI adapters
+│       ├── litellm/          # LiteLLM integration
+│       └── memory/           # Memory/vector store adapters
+├── auth/                     # Authentication bounded context (infrastructure-only)
+│   └── infrastructure/
+│       ├── api/              # REST adapter (auth_router.py)
+│       ├── oauth_service.py  # Google OAuth service
+│       └── dependencies.py   # Auth dependencies
+└── shared/                   # Shared kernel (cross-cutting concerns)
+    ├── domain/
+    │   ├── constants/        # ISR tables, tax constants
+    │   └── value_objects/    # Shared value objects
+    └── infrastructure/
+        ├── api/              # Middleware, schemas
+        ├── config/           # Settings, dependency injection
+        ├── logging/          # Structured logger
+        └── persistence/      # SQLite repositories
+```
 
-- **Hardcoded constants** (no JSON files at runtime) for fiscal years 2024-2025
-- Contains UMA values, exemption limits, deduction caps, tuition limits per education level
-- Access via: `get_tabla_isr(fiscal_year)` returns `TablaISR` dataclass
-- **Monthly tax brackets** with cuota_fija and porcentaje_excedente for progressive taxation
+**Key Principles:**
 
-### 3. AI Recommendations & Multi-Agent System (Hexagonal + LiteLLM)
+- **Hexagonal Architecture:** Domain at center, application layer for use cases, infrastructure for adapters (both driving like REST API and driven like databases/AI providers)
+- **Module Independence:** Each module has clear boundaries and minimal coupling
+- **Import Rules:** Always import from specific modules, NEVER use `__init__.py` for exports
+  - ✅ `from src.tax_calculation.domain.entities.tax_calculation import TaxCalculation`
+  - ❌ `from src.tax_calculation.domain import TaxCalculation` (don't populate `__init__.py`)
+- **Shared Kernel:** Common code (ISR tables, config, logging, persistence) in `shared/` module
 
-- **Provider Factory:** `RecommendationFactory.create_service()` prioritizes Claude Sonnet 4.5 (Anthropic) → DeepSeek → Gemini → Fallback
-- **Strategy Pattern:** `RecommendationProvider` interface with 4 implementations:
-  - `ClaudeRecommendationAdapter` (preferred, streaming via Anthropic SDK, model: `claude-sonnet-4.5`)
-  - `DeepSeekRecommendationAdapter` (OpenAI-compatible API)
-  - `GeminiRecommendationAdapter` (Google Gemini API)
-  - `FallbackRecommendationAdapter` (static markdown recommendations)
-- **Prompt building:** `build_fiscal_recommendation_prompt()` in `prompts.py` (single-agent) and `multi_agent_prompts.py` (multi-agent) generate detailed, structured prompts with exact UMA calculations, deduction caps, and Markdown formatting
-- **Personality:** Recommendations must include cat puns ("purr-fecto", "gat-rantizo") and time-based greetings for Mimo
-- **Critical:** Never recommend maxed-out deductions; always check current values vs official limits
-- **Model selection:** All adapters can be swapped via LiteLLM; default is Claude Sonnet 4.5 for production, DeepSeek for fallback, GPT-4.1 for cost-sensitive/free tier
+### 1. Tax Calculation Module (`src/tax_calculation/`)
 
-### 4. Multi-Agent Analysis System (modular, prompt-driven, LiteLLM-ready)
+- **Domain Layer:**
+  - `TaxCalculationService`: Core calculator implementing Mexican ISR (Impuesto Sobre la Renta) rules
+    - Computes taxable bonus/vacation premium with UMA-based exemptions
+    - Applies deduction caps: 5 UMAs OR 15% of gross income (whichever is lower)
+    - Uses monthly ISR tax brackets from shared `isr_tables`
+  - `TaxCalculation`: Domain entity with validation and helper methods
+  - `TaxpayerInfo`, `IncomeData`, `DeductionData`: Value objects
+- **Application Layer:**
+  - `CalculateTaxUseCase`: Orchestrates tax calculation flow
+- **Infrastructure Layer:**
+  - `tax_router.py`: REST API adapter (driving port)
+- **Data Flow:** User input → Validation → Use Case → Domain Service → Entity → JSON response
+
+- **Data Flow:** User input → Validation → Use Case → Domain Service → Entity → JSON response
+
+### 2. Shared Module (`src/shared/`)
+
+**Domain Layer:**
+
+- **ISR Tax Tables** (`shared/domain/constants/isr_tables.py`):
+  - Hardcoded constants (no JSON files at runtime) for fiscal years 2024-2025
+  - Contains UMA values, exemption limits, deduction caps, tuition limits per education level
+  - Access via: `get_tabla_isr(fiscal_year)` returns `TablaISR` dataclass
+  - Monthly tax brackets with cuota_fija and porcentaje_excedente for progressive taxation
+
+**Infrastructure Layer:**
+
+- **API Schemas** (`shared/infrastructure/api/schemas/`): Request/response models for all endpoints
+- **Middleware** (`shared/infrastructure/api/middleware/`): Error handlers, logging middleware
+- **Config** (`shared/infrastructure/config/`): Settings, dependency injection container
+- **Logging** (`shared/infrastructure/logging/`): Structured logger (JSON in prod, readable in dev)
+- **Persistence** (`shared/infrastructure/persistence/`): SQLite repositories for usage tracking
+
+### 3. Recommendations Module (`src/recommendations/`)
+
+- **AI Recommendations & Multi-Provider System:**
+  - **Provider Factory:** Prioritizes Claude Sonnet 4.5 (Anthropic) → DeepSeek → Gemini → Fallback
+  - **Strategy Pattern:** `RecommendationProvider` interface with 4 implementations:
+    - `ClaudeRecommendationAdapter` (preferred, streaming via Anthropic SDK, model: `claude-sonnet-4.5`)
+    - `DeepSeekRecommendationAdapter` (OpenAI-compatible API)
+    - `GeminiRecommendationAdapter` (Google Gemini API)
+    - `FallbackRecommendationAdapter` (static markdown recommendations)
+  - **Prompt Templates:** `infrastructure/prompts/recommendation_prompts.py`
+  - **Personality:** Recommendations must include cat puns ("purr-fecto", "gat-rantizo") and time-based greetings
+  - **Critical:** Never recommend maxed-out deductions; always check current values vs official limits
+- **Application Layer:**
+  - `GenerateRecommendationsUseCase`: Orchestrates recommendation generation with rate limiting
+- **Infrastructure Layer:**
+
+  - `recommendations_router.py`: REST API adapter
+  - `providers/`: AI provider implementations (driven adapters)
+
+  - `providers/`: AI provider implementations (driven adapters)
+
+### 4. Multi-Agent Module (`src/multi_agent/`)
 
 - **Architecture:** 3 AI agents (configurable) with distinct personalities and professions debate tax optimization strategies
-- **Personality Types:** Conservative, Aggressive, Analytical, Pragmatic, Innovative (see `Personality` enum in `multi_agent_prompts.py`)
+- **Personality Types:** Conservative, Aggressive, Analytical, Pragmatic, Innovative (see `Personality` enum)
 - **Professions:** Auditor, Tax Planner, Accountant, Financial Advisor, Fiscal Lawyer, Business Consultant (see `Profession` enum)
 - **Prompt System:**
-  - Each agent gets a unique system prompt via `build_agent_system_prompt()` (combines personality, profession, and agent name)
+  - Each agent gets unique system prompt via `build_agent_system_prompt()` (combines personality, profession, agent name)
   - Debate context built with `build_debate_context()` (fiscal data, deduction space, etc.)
   - Each round uses `build_round_prompt()` (initial, response, consensus)
   - Synthesis/final summary uses `build_synthesis_prompt()`
+  - All prompt templates in `infrastructure/prompts/multi_agent_prompts.py`
 - **Model Routing:**
-  - Each agent can use a different model/provider (DeepSeek, Claude, Gemini, OpenAI, etc.) via `AgentModelConfig` and `LiteLLMAdapter`
-  - Default: All agents use Claude Sonnet 4.5 (Anthropic) for best reasoning and compliance; fallback to DeepSeek or GPT-4.1 for cost-sensitive scenarios
-  - Model config per agent in `DEFAULT_AGENT_MODELS` (see `multi_agent_prompts.py`)
+  - Each agent can use different model/provider (DeepSeek, Claude, Gemini, OpenAI, etc.) via `AgentModelConfig` and `LiteLLMAdapter`
+  - Default: All agents use Claude Sonnet 4.5 (Anthropic) for best reasoning and compliance
+  - Fallback: DeepSeek or GPT-4.1 for cost-sensitive scenarios
+  - Model config per agent in `DEFAULT_AGENT_MODELS`
 - **Debate Flow:**
-  1. Round 1: Each agent proposes a strategy (150-250 chars, enforced by prompt)
+  1. Round 1: Each agent proposes strategy (150-250 chars, enforced by prompt)
   2. Round 2: Agents respond to others' proposals (no repetition, unique perspective)
   3. Round 3: Consensus & prioritization with voting
   4. Final synthesis with implementation roadmap (moderator agent)
-- **Streaming:** All agent responses and synthesis are streamed (SSE)
-- **Language Style:** Use simple, everyday language ("lo que pagas" not "base gravable"); avoid technical jargon
-- **Extensibility:** Add new personalities/professions by updating enums and config dicts; add new models by updating `AgentModelConfig`
+- **Streaming:** All agent responses and synthesis streamed via SSE
+- **Language Style:** Simple, everyday language ("lo que pagas" not "base gravable"); avoid technical jargon
+- **Application Layer:**
+  - `MultiAgentDebateService`: Orchestrates debate flow
+  - `MultiAgentChatUseCase`: Interactive chat with agent selection
+  - `GenerateMultiAgentAnalysisUseCase`: Main entry point for analysis
+- **Infrastructure Layer:**
+  - `multi_agent_router.py`, `multi_agent_chat_router.py`: REST API adapters
+  - `litellm/`: LiteLLM integration for model routing
+  - `memory/`: FAISS vector store for conversation memory
 
-### 5. Authentication & Rate Limiting (`server.py`)
+### 5. Auth Module (`src/auth/`)
 
+### 5. Auth Module (`src/auth/`)
+
+- **Infrastructure-only module** (no domain/application layers - pure infrastructure concern)
 - **Google OAuth 2.0:** `/auth/google` → `/auth/callback` stores user in session
 - **Railway/Proxy-aware:** `get_effective_redirect_uri()` uses `X-Forwarded-Proto` and `X-Forwarded-Host` headers
 - **Daily limits:** SQLite tracks `recommendation_usage` per user_id per date (default: 3/day, configurable via `DAILY_RECOMMENDATIONS_LIMIT`)
 - Rate limiting applies to BOTH `/api/recommendations` and `/api/multi-agent-analysis` endpoints
 - User ID: `user["sub"]` (Google's unique identifier) or falls back to email
 - Usage tracking: Increment AFTER successful generation, not before (prevents charging for failures)
+- **Infrastructure Layer:**
+  - `auth_router.py`: REST API adapter
+  - `oauth_service.py`: Google OAuth service
+  - `dependencies.py`: Auth dependencies (get_user_id, get_current_user)
 
 ## Development Workflows
 
 ### Running the Server
 
 ```bash
-uv run uvicorn server:app --host 0.0.0.0 --port 8000 --reload
+uv run uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 - Uses **uv** (fast Python package manager) - not pip!
@@ -171,25 +265,41 @@ DEEPSEEK_TEMPERATURE=0.6
   - Functions/variables: `snake_case`
   - Classes: `PascalCase`
   - Private methods: `_leading_underscore`
+- **`__init__.py` files:** Must be completely empty
+  - ❌ Never add imports, exports, or `__all__` declarations
+  - ✅ Always import directly from the module: `from src.shared.domain.constants.isr_tables import get_tabla_isr`
+  - ✅ Example for tax module: `from src.tax_calculation.domain.entities.tax_calculation import TaxCalculation`
+  - ✅ Example for router: `from src.tax_calculation.infrastructure.api.tax_router import router as tax_router`
+  - Reason: Explicit imports are clearer and avoid circular dependency issues
 - **Prompt-driven:** All AI/agent output is controlled by prompt templates (never hardcoded in adapters)
 - **Model extensibility:** Add new models/providers by updating `AgentModelConfig` and `.env` API keys; no code changes required in adapters
 
 ## Key Files Reference
 
-- `server.py` - Main FastAPI app with all endpoints (986 lines)
-  - Tax calculation: `TaxCalculator`, `TaxCalculationResult`, `/api/calculate`
-  - AI recommendations: `/api/recommendations`, `/api/recommendations/stream`
-  - Multi-agent analysis: `/api/multi-agent-analysis` (Server-Sent Events)
-  - OAuth: `/auth/google`, `/auth/callback`, `/logout`
-- `tabla_isr_constants.py` - Tax tables and constants (170 lines)
+- `src/main.py` - Main FastAPI app entry point
+  - All routers imported directly: `from src.{module}.infrastructure.api.{router} import router`
+  - Lifespan context manager handles startup/shutdown
+- `src/tax_calculation/domain/services/tax_calculation_service.py` - Tax calculation business logic
+  - Implements Mexican ISR rules with UMA-based exemptions
+- `src/tax_calculation/application/calculate_tax_use_case.py` - Tax calculation use case
+  - Orchestrates tax calculation flow with TaxCalculationService
+- `src/tax_calculation/infrastructure/api/tax_router.py` - Tax API endpoints
+  - `/api/calculate` endpoint for tax calculations
+- `src/recommendations/infrastructure/api/recommendations_router.py` - Recommendations API
+  - `/api/recommendations/stream` for AI recommendations
+- `src/multi_agent/infrastructure/api/multi_agent_router.py` - Multi-agent API
+  - `/api/multi-agent-analysis/stream` for agent debates
+- `src/multi_agent/infrastructure/api/multi_agent_chat_router.py` - Interactive chat API
+  - `/api/chat/agents` and `/api/chat/message` for agent selection and chat
+- `src/auth/infrastructure/api/auth_router.py` - OAuth endpoints
+  - `/auth/google`, `/auth/callback`, `/auth/logout`, `/auth/status`
+- `src/shared/domain/constants/isr_tables.py` - Tax tables and constants
   - Hardcoded fiscal data for 2024-2025 (no runtime JSON files)
   - Access via `get_tabla_isr(fiscal_year)` returns `TablaISR` dataclass
-- `fiscal_recommendations.py` - Single-agent AI recommendation system (597 lines)
-  - Factory + Strategy pattern with 3 providers (DeepSeek/Gemini/Fallback)
-  - Shared prompt building via `build_prompt()`
-- `multi_agent_analysis.py` - Multi-agent debate system (972 lines)
-  - 3 agents with randomized personalities/professions
-  - Streaming debate with rounds and synthesis
+- `src/shared/infrastructure/config/settings.py` - Application settings
+  - Pydantic settings with environment variable loading
+- `src/shared/infrastructure/config/dependency_injection.py` - DI container
+  - Provides use cases and repositories with proper dependency injection
 - `templates/calculator.html` - Single-page calculator UI with HTMX
 - `pyproject.toml` - Dependencies managed by **uv** (not pip)
 
@@ -205,48 +315,50 @@ DEEPSEEK_TEMPERATURE=0.6
 
 **Add a new fiscal year:**
 
-1. Add constants to `tabla_isr_constants.py` (UMA values, tax brackets)
+1. Add constants to `src/shared/domain/constants/isr_tables.py` (UMA values, tax brackets)
 2. Update `TABLAS_ISR` dict
-3. Update `fiscal_year` Field validation in `TaxInputData` (ge/le range)
+3. Update `fiscal_year` Field validation in schemas (ge/le range)
 
 **Modify AI prompt behavior:**
 
-- Edit `build_prompt()` in `fiscal_recommendations.py` (shared by all providers)
+- Edit prompt builders in `src/recommendations/infrastructure/prompts/recommendation_prompts.py` (single-agent)
+- Or `src/multi_agent/infrastructure/prompts/multi_agent_prompts.py` (multi-agent)
 - Test with streaming endpoint to see real-time output
 - Remember: Must include cat personality and time-based greetings
 
 **Add new deduction type:**
 
-1. Add field to `TaxInputData` Pydantic model
-2. Modify `_calculate_authorized_deductions()` in `TaxCalculator`
-3. Update prompt in `build_prompt()` to mention new deduction
-4. Add corresponding input field in `calculator.html`
+1. Add field to `TaxpayerInfo`/`IncomeData`/`DeductionData` in `src/tax_calculation/domain/value_objects/tax_data.py`
+2. Modify `_calculate_authorized_deductions()` in `src/tax_calculation/domain/services/tax_calculation_service.py`
+3. Update prompts to mention new deduction
+4. Add corresponding field in `src/shared/infrastructure/api/schemas/tax_schemas.py`
+5. Add input field in `templates/calculator.html`
 
 **Change rate limiting:**
 
 - Set `DAILY_RECOMMENDATIONS_LIMIT` env var (no code changes needed)
-- For per-feature limits, modify `get_user_recommendation_usage()` to accept scope parameter
+- For per-feature limits, modify repository in `src/shared/infrastructure/persistence/`
 
 **Add new AI provider (for single-agent recommendations):**
 
-1. Create new class implementing `RecommendationGenerator` ABC in `fiscal_recommendations.py`
+1. Create new adapter implementing `RecommendationProvider` in `src/recommendations/infrastructure/providers/`
 2. Implement `generate_recommendations_stream()` method (must be a generator)
-3. Update `RecommendationFactory.create_service()` to include new provider in priority chain
+3. Update provider factory in dependency injection
 4. Add required API key to environment variables
-5. Follow existing patterns: DeepSeek/Gemini implementations as reference
+5. Follow existing patterns: DeepSeek/Gemini/Claude implementations as reference
 
 **Add new AI provider (for multi-agent analysis):**
 
-1. Create new class implementing `LanguageModelProvider` ABC in `multi_agent_analysis.py`
-2. Implement `generate_stream()` method (must be a generator)
-3. Update `ModelProviderFactory.create()` to include new provider in fallback chain
+1. Create new adapter in `src/multi_agent/infrastructure/providers/`
+2. Update `LiteLLMAdapter` or create new provider adapter
+3. Update `AgentModelConfig` in `src/multi_agent/infrastructure/prompts/multi_agent_prompts.py`
 4. Add required API key to environment variables
-5. Follow existing patterns: DeepSeekProvider/GeminiProvider as reference
+5. Follow existing patterns: DeepSeek/Claude providers as reference
 
 **Modify multi-agent debate structure:**
 
-- Change number of agents: Modify `MultiAgentAnalysisService._create_agents()` method
-- Add new personality types: Update `Personality` enum and `PERSONALITY_CONFIGS` dict
-- Add new professions: Update `Profession` enum and `PROFESSION_CONFIGS` dict
-- Adjust debate rounds: Modify `_run_debate_rounds()` method
+- Change number of agents: Modify `MultiAgentDebateService._create_agents()` in `src/multi_agent/application/multi_agent_debate_service.py`
+- Add new personality types: Update `Personality` enum and `PERSONALITY_CONFIGS` in prompts file
+- Add new professions: Update `Profession` enum and `PROFESSION_CONFIGS` in prompts file
+- Adjust debate rounds: Modify `_run_debate_rounds()` method in debate service
 - Change character limits: Set `DEBATE_MIN_CHARACTER` and `DEBATE_MAX_CHARACTER` env vars

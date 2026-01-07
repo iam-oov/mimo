@@ -27,7 +27,7 @@ cp .env.example .env
 ### Ejecutar el Servidor
 
 ```bash
-uv run uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
+uv run uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 El servidor estará disponible en:
@@ -38,17 +38,37 @@ El servidor estará disponible en:
 
 ## 🏗️ Arquitectura
 
-Mimo sigue una **arquitectura hexagonal híbrida** con separación clara de concerns:
+Mimo sigue una **arquitectura modular (module-first)** con capas hexagonales dentro de cada módulo:
 
 ```
 src/
-├── domain/          # Lógica de negocio pura (entidades, servicios)
-├── application/     # Casos de uso (orquestación)
-├── infrastructure/  # Adaptadores (DB, AI, OAuth)
-└── api/            # Capa de presentación (FastAPI)
+├── tax_calculation/       # Módulo de cálculo ISR
+│   ├── domain/           # Entities, Services, Value Objects
+│   ├── application/      # Use Cases
+│   └── infrastructure/   # Adapters (API, etc.)
+│
+├── recommendations/      # Módulo de recomendaciones AI
+│   ├── domain/          # Ports (interfaces)
+│   ├── application/     # Use Cases
+│   └── infrastructure/  # Adapters (API, AI providers)
+│
+├── multi_agent/         # Módulo de análisis multi-agente
+│   ├── domain/          # Ports (interfaces)
+│   ├── application/     # Use Cases, Debate Service
+│   └── infrastructure/  # Adapters (API, providers, LiteLLM)
+│
+├── auth/                # Módulo de autenticación (infrastructure-only)
+│   └── infrastructure/  # OAuth, dependencies
+│
+├── shared/              # Código compartido entre módulos
+│   ├── domain/          # ISR tables, constants
+│   └── infrastructure/  # Config, logging, persistence
+│
+└── main.py             # FastAPI application entry point
 ```
 
-Ver [ARCHITECTURE.md](./ARCHITECTURE.md) para detalles completos.
+Ver [ARCHITECTURE.md](./ARCHITECTURE.md) para detalles completos.  
+Ver [MODULES.md](./MODULES.md) para descripción de cada módulo.
 
 ## 🔑 Variables de Entorno
 

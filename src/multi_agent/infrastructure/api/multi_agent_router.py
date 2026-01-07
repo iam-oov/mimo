@@ -8,7 +8,7 @@ import json
 from fastapi import APIRouter, Depends, HTTPException
 from sse_starlette.sse import EventSourceResponse
 
-from src.application.generate_multi_agent_analysis_use_case import (
+from src.multi_agent.application.generate_multi_agent_analysis_use_case import (
     GenerateMultiAgentAnalysisUseCase,
     MultiAgentAnalysisRequest,
 )

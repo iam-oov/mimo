@@ -1,7 +1,7 @@
 from typing import Tuple
 from src.domain.entities.tax_calculation import TaxCalculation
 from src.domain.value_objects.tax_data import IncomeData, DeductionData
-from tabla_isr_constants import TablaISR
+from src.domain.constants.isr_tables import TablaISR
 
 
 class TaxCalculationService:

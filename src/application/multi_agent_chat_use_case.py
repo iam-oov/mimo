@@ -9,13 +9,13 @@ from datetime import date
 
 from src.domain.ports.repositories import UsageRepository
 from src.domain.ports.memory import MemoryStore
-from src.infrastructure.ai_providers.litellm_adapter import create_agent_adapter
-from src.infrastructure.ai_providers.multi_agent_prompts import (
+from src.infrastructure.ai_providers.litellm.adapter import create_agent_adapter
+from src.infrastructure.ai_providers.prompts.multi_agent_prompts import (
     Personality,
     Profession,
     build_debate_context,
 )
-from tabla_isr_constants import get_tabla_isr
+from src.domain.constants.isr_tables import get_tabla_isr
 
 
 @dataclass
@@ -86,7 +86,7 @@ class MultiAgentChatUseCase:
         Generates 3 random agents with different personalities/professions.
         """
         import random
-        from src.infrastructure.ai_providers.multi_agent_prompts import (
+        from src.infrastructure.ai_providers.prompts.multi_agent_prompts import (
             PROFESSION_FOCUS,
         )
 

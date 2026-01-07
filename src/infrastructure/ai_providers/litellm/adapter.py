@@ -7,7 +7,7 @@ from typing import Generator, Optional
 import logging
 import os
 
-from src.infrastructure.ai_providers.multi_agent_prompts import AgentModelConfig
+from src.infrastructure.ai_providers.prompts.multi_agent_prompts import AgentModelConfig
 
 logger = logging.getLogger(__name__)
 
@@ -210,7 +210,7 @@ def create_agent_adapter(agent_id: str) -> Optional[LiteLLMAdapter]:
         >>> adapter = create_agent_adapter('agent_1')
         >>> response = adapter.generate_stream(system_prompt, user_prompt)
     """
-    from src.infrastructure.ai_providers.multi_agent_prompts import (
+    from src.infrastructure.ai_providers.prompts.multi_agent_prompts import (
         get_agent_model_config,
     )
 

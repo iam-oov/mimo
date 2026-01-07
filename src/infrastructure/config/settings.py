@@ -5,8 +5,6 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from dotenv import load_dotenv
 
-# Load .env file from project root
-# This ensures env vars are available regardless of working directory
 env_path = Path(__file__).parent.parent.parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
 

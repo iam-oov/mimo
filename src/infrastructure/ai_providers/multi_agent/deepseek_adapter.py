@@ -1,6 +1,5 @@
 """
-Multi-agent analysis adapters.
-Direct implementations of DeepSeek and Gemini providers for multi-agent analysis.
+DeepSeek multi-agent provider adapter.
 """
 
 from typing import Generator, List, Dict
@@ -56,44 +55,3 @@ class DeepSeekMultiAgentAdapter(MultiAgentProvider):
     def get_model_name(self) -> str:
         """Return the model name for DeepSeek."""
         return self.settings.deepseek_model
-
-
-class GeminiMultiAgentAdapter(MultiAgentProvider):
-    """Adapter for Gemini multi-agent provider."""
-
-    def __init__(self, settings: Settings):
-        self.settings = settings
-        self.api_key = settings.gemini_api_key
-
-    def generate_stream(self, prompt: str) -> Generator[str, None, None]:
-        """Generate streaming response from Gemini."""
-        try:
-            import google.generativeai as genai
-
-            genai.configure(api_key=self.api_key)
-            model = genai.GenerativeModel("gemini-1.5-flash")
-
-            # Extract content from messages format if needed
-            if isinstance(prompt, str):
-                content = prompt
-            else:
-                messages = _convert_prompt_to_messages(prompt)
-                content = messages[0]["content"]
-
-            response = model.generate_content(content, stream=True)
-
-            for chunk in response:
-                if chunk.text:
-                    yield chunk.text
-
-        except Exception as e:
-            logger.error(f"Gemini multi-agent generation error: {e}")
-            raise
-
-    def is_available(self) -> bool:
-        """Check if Gemini is configured and available."""
-        return self.settings.has_gemini_configured()
-
-    def get_model_name(self) -> str:
-        """Return the model name for Gemini."""
-        return "gemini-1.5-flash"

@@ -12,9 +12,9 @@ Mimo is a **Mexican tax calculator** for individuals (personas físicas) that co
 
 ## Architecture & Key Components
 
-### 1. Tax Calculation Engine (`server.py`)
+### 1. Tax Calculation Engine (`src/domain/services/tax_calculation_service.py`)
 
-- **`TaxCalculator`**: Core calculator implementing Mexican ISR (Impuesto Sobre la Renta) rules
+- **`TaxCalculationService`**: Core calculator implementing Mexican ISR (Impuesto Sobre la Renta) rules
   - Computes taxable bonus/vacation premium with UMA-based exemptions
   - Applies deduction caps: 5 UMAs OR 15% of gross income (whichever is lower)
   - Uses monthly ISR tax brackets from `tabla_isr_constants.py`
@@ -64,7 +64,7 @@ Mimo is a **Mexican tax calculator** for individuals (personas físicas) that co
 - **Language Style:** Use simple, everyday language ("lo que pagas" not "base gravable"); avoid technical jargon
 - **Extensibility:** Add new personalities/professions by updating enums and config dicts; add new models by updating `AgentModelConfig`
 
-### 5. Authentication & Rate Limiting (`server.py`)
+### 5. Authentication & Rate Limiting (`src/infrastructure/auth/` & `src/infrastructure/persistence/`)
 
 - **Google OAuth 2.0:** `/auth/google` → `/auth/callback` stores user in session
 - **Railway/Proxy-aware:** `get_effective_redirect_uri()` uses `X-Forwarded-Proto` and `X-Forwarded-Host` headers
@@ -78,7 +78,7 @@ Mimo is a **Mexican tax calculator** for individuals (personas físicas) that co
 ### Running the Server
 
 ```bash
-uv run uvicorn server:app --host 0.0.0.0 --port 8000 --reload
+uv run uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 - Uses **uv** (fast Python package manager) - not pip!
@@ -171,25 +171,28 @@ DEEPSEEK_TEMPERATURE=0.6
   - Functions/variables: `snake_case`
   - Classes: `PascalCase`
   - Private methods: `_leading_underscore`
+- **`__init__.py` files:** Must be completely empty
+  - ❌ Never add imports, exports, or `__all__` declarations
+  - ✅ Always import directly from the module: `from src.domain.constants.isr_tables import get_tabla_isr`
+  - Reason: Explicit imports are clearer and avoid circular dependency issues
 - **Prompt-driven:** All AI/agent output is controlled by prompt templates (never hardcoded in adapters)
 - **Model extensibility:** Add new models/providers by updating `AgentModelConfig` and `.env` API keys; no code changes required in adapters
 
 ## Key Files Reference
 
-- `server.py` - Main FastAPI app with all endpoints (986 lines)
-  - Tax calculation: `TaxCalculator`, `TaxCalculationResult`, `/api/calculate`
-  - AI recommendations: `/api/recommendations`, `/api/recommendations/stream`
-  - Multi-agent analysis: `/api/multi-agent-analysis` (Server-Sent Events)
-  - OAuth: `/auth/google`, `/auth/callback`, `/logout`
-- `tabla_isr_constants.py` - Tax tables and constants (170 lines)
+- `src/api/main.py` - Main FastAPI app entry point
+  - All endpoints: Tax calculation, AI recommendations, Multi-agent analysis, OAuth
+- `src/domain/services/tax_calculation_service.py` - Tax calculation business logic
+  - Implements Mexican ISR rules with UMA-based exemptions
+- `src/infrastructure/ai_providers/recommendation_adapters.py` - AI recommendation adapters
+  - Factory + Strategy pattern with 3 providers (DeepSeek/Gemini/Fallback)
+- `src/infrastructure/ai_providers/multi_agent_adapters.py` - Multi-agent debate adapters
+  - 3 agents with randomized personalities/professions
+- `src/infrastructure/ai_providers/prompts.py` - Single-agent prompt templates
+- `src/infrastructure/ai_providers/multi_agent_prompts.py` - Multi-agent prompt templates
+- `src/domain/constants/isr_tables.py` - Tax tables and constants
   - Hardcoded fiscal data for 2024-2025 (no runtime JSON files)
   - Access via `get_tabla_isr(fiscal_year)` returns `TablaISR` dataclass
-- `fiscal_recommendations.py` - Single-agent AI recommendation system (597 lines)
-  - Factory + Strategy pattern with 3 providers (DeepSeek/Gemini/Fallback)
-  - Shared prompt building via `build_prompt()`
-- `multi_agent_analysis.py` - Multi-agent debate system (972 lines)
-  - 3 agents with randomized personalities/professions
-  - Streaming debate with rounds and synthesis
 - `templates/calculator.html` - Single-page calculator UI with HTMX
 - `pyproject.toml` - Dependencies managed by **uv** (not pip)
 

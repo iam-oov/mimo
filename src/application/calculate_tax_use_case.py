@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from src.domain.entities.tax_calculation import TaxCalculation
 from src.domain.value_objects.tax_data import TaxpayerInfo, IncomeData, DeductionData
 from src.domain.services.tax_calculation_service import TaxCalculationService
-from tabla_isr_constants import get_tabla_isr
+from src.domain.constants.isr_tables import get_tabla_isr
 
 
 @dataclass

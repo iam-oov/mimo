@@ -93,6 +93,14 @@ DAILY_RECOMMENDATIONS_LIMIT=3  # Límite diario de recomendaciones por usuario
 - `POST /api/multi-agent-analysis/stream` - Streaming SSE
 - `GET /api/multi-agent-analysis/usage` - Consultar uso diario
 
+### Chat Interactivo Multi-Agente (requiere autenticación)
+
+- `POST /api/chat/ask` - Enviar pregunta a un agente específico
+- `POST /api/chat/ask/stream` - Chat con streaming SSE
+- `GET /api/chat/agents` - Obtener lista de agentes disponibles
+- `POST /api/chat/context` - Guardar contexto fiscal para chat
+- `GET /api/chat/history` - Consultar historial de conversación
+
 ## 🧪 Ejemplo de Uso
 
 ```python
@@ -127,6 +135,8 @@ print(response.json())
 - ✅ **Deducciones autorizadas**: Personales, PPR, educación con límites oficiales
 - ✅ **Recomendaciones AI**: Generadas por DeepSeek/Gemini con personalidad gatuna
 - ✅ **Análisis multi-agente**: 3 agentes debaten estrategias fiscales
+- ✅ **Chat interactivo**: Conversación con agentes fiscales individuales
+- ✅ **Memoria semántica**: FAISS guarda contexto de conversaciones por usuario
 - ✅ **OAuth Google**: Autenticación segura
 - ✅ **Rate limiting**: 3 consultas AI por día (configurable)
 - ✅ **Error handling**: Respuestas JSON consistentes
@@ -138,6 +148,7 @@ print(response.json())
 - **Auth**: Google OAuth 2.0
 - **AI**: Google Gemini + DeepSeek
 - **Database**: SQLite (usage tracking)
+- **Memory**: FAISS + Sentence Transformers (semantic search)
 - **Package Manager**: uv
 - **Validation**: Pydantic v2
 

@@ -47,27 +47,16 @@ mimo/
 │               ├── recommendation_schemas.py  # DTOs para recomendaciones
 │               └── multi_agent_schemas.py # DTOs para multi-agent
 │
-├── server.py                              # ← Archivo original (mantener durante migración)
-├── fiscal_recommendations.py              # ← Archivo original (pendiente adaptar)
-├── multi_agent_analysis.py               # ← Archivo original (pendiente adaptar)
-├── tabla_isr_constants.py                # ← Compartido (sin cambios)
 └── templates/                             # ← Frontend (sin cambios)
 ```
 
 ## 🚀 Cómo Usar la Nueva Arquitectura
 
-### Opción 1: Usar el nuevo `main.py` (Recomendado)
+### Ejecutar el Servidor
 
 ```bash
-# Ejecutar con la nueva arquitectura
+# Ejecutar con la arquitectura hexagonal
 uv run uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-### Opción 2: Seguir usando `server.py` (Compatibilidad)
-
-```bash
-# Ejecutar con la arquitectura original
-uv run uvicorn server:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ## ✅ Funcionalidad Migrada

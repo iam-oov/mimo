@@ -45,9 +45,13 @@ class DependencyContainer:
         Uses lazy imports to avoid circular dependencies.
         """
         if self._recommendation_providers is None:
-            from src.infrastructure.ai_providers.recommendation_adapters import (
+            from src.infrastructure.ai_providers.recommendations.deepseek_adapter import (
                 DeepSeekRecommendationAdapter,
+            )
+            from src.infrastructure.ai_providers.recommendations.gemini_adapter import (
                 GeminiRecommendationAdapter,
+            )
+            from src.infrastructure.ai_providers.recommendations.fallback_adapter import (
                 FallbackRecommendationAdapter,
             )
 
@@ -97,8 +101,10 @@ class DependencyContainer:
         Uses lazy imports to avoid circular dependencies.
         """
         if self._multi_agent_providers is None:
-            from src.infrastructure.ai_providers.multi_agent_adapters import (
+            from src.infrastructure.ai_providers.multi_agent.deepseek_adapter import (
                 DeepSeekMultiAgentAdapter,
+            )
+            from src.infrastructure.ai_providers.multi_agent.gemini_adapter import (
                 GeminiMultiAgentAdapter,
             )
 

@@ -8,8 +8,8 @@ import logging
 from typing import Dict, Any, Generator, List
 from dataclasses import dataclass
 
-from src.infrastructure.ai_providers.litellm_adapter import create_agent_adapter
-from src.infrastructure.ai_providers.prompts import (
+from src.infrastructure.ai_providers.litellm.adapter import create_agent_adapter
+from src.infrastructure.ai_providers.prompts.multi_agent_prompts import (
     Personality,
     Profession,
     build_agent_system_prompt,
@@ -17,7 +17,7 @@ from src.infrastructure.ai_providers.prompts import (
     build_round_prompt,
     build_synthesis_prompt,
 )
-from tabla_isr_constants import get_tabla_isr
+from src.domain.constants.isr_tables import get_tabla_isr
 
 logger = logging.getLogger(__name__)
 
@@ -138,7 +138,7 @@ class MultiAgentDebateService:
         )
 
         # Yield agent introductions with expertise
-        from src.infrastructure.ai_providers.multi_agent_prompts import PROFESSION_FOCUS
+        from src.infrastructure.ai_providers.prompts.multi_agent_prompts import PROFESSION_FOCUS
 
         yield {
             "type": "agent_intro",

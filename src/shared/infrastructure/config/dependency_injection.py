@@ -6,7 +6,7 @@ from src.multi_agent.application.generate_multi_agent_analysis_use_case import (
 from src.multi_agent.application.multi_agent_chat_use_case import MultiAgentChatUseCase
 from src.multi_agent.domain.ports.memory import MemoryStore
 from src.multi_agent.domain.ports.multi_agent_provider import MultiAgentProvider
-from src.multi_agent.infrastructure.memory.faiss_memory import FaissMemoryStore
+from src.multi_agent.infrastructure.memory.simple_memory import SimpleMemoryStore
 from src.recommendations.application.generate_recommendations_use_case import (
     GenerateRecommendationsUseCase,
 )
@@ -82,10 +82,10 @@ class DependencyContainer:
         return self._recommendations_use_case
 
     def get_memory_store(self) -> MemoryStore:
-        """Get or create memory store (FAISS)."""
+        """Get or create memory store (simple keyword-based)."""
         if self._memory_store is None:
             # Base path for memory storage
-            self._memory_store = FaissMemoryStore(base_path="./memory")
+            self._memory_store = SimpleMemoryStore(base_path="./memory")
         return self._memory_store
 
     def get_multi_agent_providers(self) -> list[MultiAgentProvider]:

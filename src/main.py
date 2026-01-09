@@ -39,11 +39,8 @@ async def lifespan(app: FastAPI):
 
     settings = get_settings()
     _ = SqliteUsageRepository(settings.database_url)
-    # Database is auto-initialized in repository constructor
 
     yield
-
-    # Shutdown: cleanup if needed
     pass
 
 
@@ -86,14 +83,10 @@ def create_app() -> FastAPI:
     return app
 
 
-# Create app instance
 app = create_app()
-
-# Templates (keeping backward compatibility)
 templates = Jinja2Templates(directory="templates")
 
 
-# Keep old calculator endpoint for backward compatibility
 async def get_current_user(request: Request) -> dict[str, Any] | None:
     """Get current user from session"""
     user = request.session.get("user")

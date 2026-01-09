@@ -24,11 +24,14 @@ dependencies = [
     "litellm>=1.50.0",
 ]
 
+[tool.pyright]
+reportUnknownParameterType = "none" # o "warning" en lugar de "error"
+
 [project.optional-dependencies]
 pdf = ["weasyprint>=62.0"]
 
 [tool.ruff]
-line-length = 100
+line-length = 88
 target-version = "py312"
 
 [tool.ruff.lint]

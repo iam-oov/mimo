@@ -73,6 +73,12 @@ def create_app() -> FastAPI:
     app.include_router(multi_agent_router)
     app.include_router(multi_agent_chat_router)
 
+    # Health check endpoint for Railway
+    @app.get("/health")
+    async def health_check():
+        """Health check endpoint for Railway monitoring"""
+        return {"status": "healthy", "service": "mimo"}
+
     # Root redirect
     @app.get("/")
     async def read_root():

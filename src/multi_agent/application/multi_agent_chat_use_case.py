@@ -9,14 +9,17 @@ from datetime import date
 from typing import Any
 
 from src.multi_agent.domain.ports.memory import MemoryStore
-from src.shared.domain.ports.repositories import UsageRepository
 from src.multi_agent.infrastructure.litellm.adapter import create_agent_adapter
 from src.multi_agent.infrastructure.prompts.multi_agent_prompts import (
     Personality,
     Profession,
     build_debate_context,
 )
-from src.shared.domain.constants.isr_tables import get_tabla_isr
+from src.shared.domain.constants.isr_tables import get_isr_table
+from src.shared.domain.ports.repositories import UsageRepository
+from src.shared.infrastructure.logging.structured_logger import StructuredLogger
+
+logger = StructuredLogger(__name__)
 
 
 @dataclass
@@ -57,6 +60,9 @@ class MultiAgentChatUseCase:
         self.usage_repository = usage_repository
         self._daily_limit = daily_limit
         self._memory = memory_store
+        self._agent_sessions: dict[
+            str, AgentInfo
+        ] = {}  # Store agent info by user_id + agent_id
 
     def get_usage_info(self, user_id: str) -> dict[str, int]:
         """Get current usage information for user."""
@@ -117,15 +123,19 @@ class MultiAgentChatUseCase:
             profession = professions[i]
             expertise = PROFESSION_FOCUS[profession]["expertise"]
 
-            agents.append(
-                AgentInfo(
-                    agent_id=agent_id,
-                    name=agent_names[i],
-                    personality=personality.value,
-                    profession=profession.value,
-                    expertise=expertise,
-                )
+            agent_info = AgentInfo(
+                agent_id=agent_id,
+                name=agent_names[i],
+                personality=personality.value,
+                profession=profession.value,
+                expertise=expertise,
             )
+            agents.append(agent_info)
+
+            # Store agent info in session for later use
+            if user_id:
+                session_key = f"{user_id}_{agent_id}"
+                self._agent_sessions[session_key] = agent_info
 
         # Seed memory with calculation context so agents can recall it later
         try:
@@ -161,21 +171,38 @@ class MultiAgentChatUseCase:
         Yields:
             Content chunks from the AI response
         """
+        logger.info(
+            "📝 Chat request received",
+            agent_id=request.agent_id,
+            user_id=user_id,
+            message_preview=request.user_message[:50] if request.user_message else "",
+        )
+
         # Get agent configuration
         adapter = create_agent_adapter(request.agent_id)
 
         if not adapter:
-            raise ValueError(f"No adapter available for agent {request.agent_id}")
+            logger.error(
+                "❌ Cannot create adapter for agent - check API key configuration",
+                agent_id=request.agent_id,
+                user_id=user_id,
+            )
+            raise ValueError(
+                f"No hay un proveedor de IA disponible para el agente {request.agent_id}. "
+                "Verifica que las API keys estén configuradas correctamente."
+            )
 
         # Build fiscal context
-        tabla_isr = get_tabla_isr(request.fiscal_year)
-        uma_annual = tabla_isr.constantes.valor_uma_anual
+        isr_table = get_isr_table(request.fiscal_year)
+        uma_annual = isr_table.constants.annual_uma_value
         general_deduction_limit = 5 * uma_annual
 
         gross_income = request.calculation_result.get("gross_annual_income", 0)
 
         total_deduction_limit_15_percent = gross_income * 0.15
-        effective_deduction_limit = min(general_deduction_limit, total_deduction_limit_15_percent)
+        effective_deduction_limit = min(
+            general_deduction_limit, total_deduction_limit_15_percent
+        )
 
         context = build_debate_context(
             calculation_result=request.calculation_result,
@@ -189,22 +216,30 @@ class MultiAgentChatUseCase:
         memory_context = ""
         if self._memory is not None:
             try:
-                memories = self._memory.search(user_id=user_id, query=request.user_message, k=5)
+                memories = self._memory.search(
+                    user_id=user_id, query=request.user_message, k=5
+                )
                 if memories:
-                    memory_context = "\n\nMEMORIA RELEVANTE (de este usuario):\n" + "\n".join(
-                        [f"- {m['text']}" for m in memories[:5]]
+                    memory_context = (
+                        "\n\nMEMORIA RELEVANTE (de este usuario):\n"
+                        + "\n".join([f"- {m['text']}" for m in memories[:5]])
                     )
             except Exception:
                 pass
 
-        # Get agent's personality and profession (from agent_id)
-        # This assumes agent_id format is 'agent_1', 'agent_2', etc.
-        # We need to retrieve the stored agent info (personality/profession)
-        # For now, we'll use the model config defaults
-        # TODO: Store agent sessions to maintain consistency
+        # Get agent info from session
+        session_key = f"{user_id}_{request.agent_id}"
+        agent_info = self._agent_sessions.get(session_key)
+
+        agent_name = agent_info.name if agent_info else "Experto Fiscal"
+        agent_profession = agent_info.profession if agent_info else "Contador Público"
 
         # Build conversation history context
         history_context = ""
+        is_first_message = (
+            not request.conversation_history or len(request.conversation_history) == 0
+        )
+
         if request.conversation_history:
             history_context = "\n\nCONVERSACIÓN PREVIA:\n"
             for msg in request.conversation_history[-5:]:  # Last 5 messages
@@ -215,28 +250,47 @@ class MultiAgentChatUseCase:
                 else:
                     history_context += f"Agente: {content}\n"
 
-        # Build system prompt (we need personality/profession)
-        # For simplicity, using default Conservative/Auditor
-        # In production, store agent selection in session
-        system_prompt = f"""Eres un experto fiscal mexicano especializado en ISR para personas físicas.
+        # Build system prompt with agent-specific info
+        system_prompt = f"""Eres {agent_name}, un {agent_profession} mexicano especializado en ISR para personas físicas.
 
-Tu tarea es responder preguntas del usuario sobre su situación fiscal de manera clara y práctica.
-
+CONTEXTO FISCAL DEL USUARIO:
 {context}
 {memory_context}
 {history_context}
 
-INSTRUCCIONES:
+COMPORTAMIENTO REQUERIDO:
+1. SIEMPRE responde tomando en cuenta los datos fiscales del usuario mostrados arriba
+2. Cuando menciones cifras, usa los datos reales del usuario (ingresos, deducciones, saldo a favor, etc.)
+3. Si el usuario pregunta algo genérico, personaliza tu respuesta con sus datos específicos
+4. NO inventes datos - solo usa la información proporcionada en el CONTEXTO FISCAL
+
+{"INSTRUCCIÓN ESPECIAL - PRIMER MENSAJE:" if is_first_message else ""}
+{"Si esta es tu primera respuesta, inicia confirmando brevemente los datos clave del usuario (ingreso mensual, saldo a favor/a pagar) y pregunta cómo puedes ayudarle. Ejemplo: '¡Hola! Veo que tienes ingresos de $X al mes y un saldo a favor de $Y. ¿En qué puedo ayudarte hoy? 💰'" if is_first_message else ""}
+
+INSTRUCCIONES DE RESPUESTA:
 - Responde de manera directa y útil
 - Usa un lenguaje simple, evita tecnicismos innecesarios
-- Si el usuario pregunta sobre deducciones, menciona límites y requisitos
-- Si pregunta sobre estrategias, sé específico con montos y plazos
-- Máximo 250 caracteres por respuesta
+- Siempre referencia los datos del usuario cuando sea relevante
 - Usa emojis ocasionalmente para hacer la respuesta más amigable
+
+LONGITUD DINÁMICA DE RESPUESTAS:
+- Para preguntas simples, saludos, o temas no relacionados con su situación fiscal: Responde de forma BREVE (100-150 caracteres)
+- Para preguntas sobre su situación fiscal, estrategias, deducciones, o cuando el usuario muestre interés en profundizar: Responde de forma DETALLADA (300-600 caracteres)
+- Si el usuario pide ejemplos, planes, o pasos específicos: Da una respuesta COMPLETA con puntos numerados o detalles concretos
+- Si el usuario pregunta "¿por qué?", "¿cómo?", "cuéntame más" o similares: Expande tu respuesta con detalles relevantes
+
+EJEMPLOS DE LONGITUD APROPIADA:
+- "hola" → BREVE: "¡Hola! ¿En qué puedo ayudarte con tu situación fiscal? 👋"
+- "gracias" → BREVE: "¡Con gusto! ¿Algo más en lo que pueda ayudarte? 😊"
+- "¿cómo maximizar deducciones?" → DETALLADA: Explica opciones específicas con montos basados en SUS datos
+- "dame un plan para reducir ISR" → COMPLETA: Lista de pasos numerados con cifras concretas de su situación
 """
 
         # Build user prompt
-        user_prompt = f"Pregunta del usuario: {request.user_message}\n\nResponde de manera concisa y práctica."
+        if is_first_message:
+            user_prompt = "El usuario acaba de seleccionarte. Inicia la conversación confirmando sus datos fiscales y preguntando cómo puedes ayudarle."
+        else:
+            user_prompt = f"Pregunta del usuario: {request.user_message}\n\nResponde de manera concisa y práctica, usando sus datos fiscales."
 
         # Stream response while buffering to store in memory afterwards
         full_response_chunks: list[str] = []
@@ -285,7 +339,9 @@ INSTRUCCIONES:
             withheld_tax = getattr(calculation_result, "withheld_tax", 0)
             balance_in_favor = getattr(calculation_result, "balance_in_favor", 0)
 
-        deduction_data = user_data.get("deduction_data", {}) if isinstance(user_data, dict) else {}
+        deduction_data = (
+            user_data.get("deduction_data", {}) if isinstance(user_data, dict) else {}
+        )
         general_deductions = deduction_data.get("general_deductions", 0)
         ppr_deductions = deduction_data.get("ppr_deductions", 0)
         education_deductions = deduction_data.get("education_deductions", 0)

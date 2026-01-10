@@ -1129,9 +1129,9 @@
         /* Chat Styles */
         .agent-btn {
             padding: 12px;
-            border: 2px solid #e5e7eb;
+            border: 2px solid var(--color-border);
             border-radius: 8px;
-            background: white;
+            background: var(--color-bg-panel);
             cursor: pointer;
             transition: all 0.2s ease;
             text-align: center;
@@ -1140,7 +1140,8 @@
         
         .agent-btn:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            border-color: var(--color-accent-secondary);
         }
         
         .agent-btn:disabled {
@@ -1150,7 +1151,7 @@
         
         .agent-btn.selected {
             border-color: var(--color-accent-primary);
-            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(255, 140, 66, 0.1) 100%);
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(45, 212, 191, 0.1) 100%);
             border-width: 3px;
         }
         
@@ -1193,8 +1194,8 @@
         }
         
         .chat-message.user {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: linear-gradient(135deg, var(--color-accent-primary) 0%, #d97706 100%);
+            color: var(--color-bg-deep-space);
             margin-left: auto;
             border-bottom-right-radius: 4px;
         }
@@ -1294,8 +1295,8 @@
                             <div class="form-group">
                                 <label for="fiscal_year">Año Fiscal:</label>
                                 <select id="fiscal_year" name="fiscal_year">
-                                    <option value="2024">2024</option>
-                                    <option value="2025" selected>2025</option>
+                                    <option value="2025">2025</option>
+                                    <option value="2026" selected>2026</option>
                                 </select>
                             </div>
                         </div>
@@ -1469,32 +1470,33 @@
                     </div>
                     
                     <!-- Chat Fiscal Interactivo -->
-                    <div class="recommendations-content" id="chat-content" style="display: none;">
+                    <div class="recommendations-content" id="chat-content" style="display: none; height: 100%; flex-direction: column;">
                         <!-- Perfiles de Agentes -->
-                        <div id="chat-agents" style="margin-bottom: 15px;">
+                        <div id="chat-agents" style="margin-bottom: 12px; flex-shrink: 0;">
                             <h4 style="margin: 0 0 10px 0; color: var(--color-accent-primary); font-size: 1rem;">
                                 🎭 Selecciona tu Experto Fiscal
                             </h4>
-                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px;" id="agent-buttons">
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;" id="agent-buttons">
                                 <!-- Los botones se generarán dinámicamente -->
                             </div>
                         </div>
                         
-                        <!-- Área de Mensajes -->
-                        <div id="chat-messages" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; max-height: 400px; overflow-y: auto; margin-bottom: 15px;">
-                            <div style="text-align: center; color: #9ca3af; padding: 20px;">
+                        <!-- Área de Mensajes - Ahora ocupa todo el espacio disponible -->
+                        <div id="chat-messages" style="background: var(--color-bg-panel); border: 1px solid var(--color-border); border-radius: 8px; padding: 15px; flex: 1; overflow-y: auto; margin-bottom: 12px; min-height: 300px; max-height: calc(100vh - 520px);">
+                            <div style="text-align: center; color: var(--color-text-secondary); padding: 20px;">
                                 <div style="font-size: 2rem; margin-bottom: 10px;">💬</div>
-                                <p>Selecciona un experto y haz tu pregunta fiscal</p>
+                                <p>¡Bienvenido al Chat Fiscal!</p>
+                                <p style="font-size: 0.85rem; margin-top: 5px;">Selecciona un experto arriba y haz tu pregunta.</p>
                             </div>
                         </div>
                         
-                        <!-- Input de Chat -->
-                        <div style="display: flex; gap: 8px;">
+                        <!-- Input de Chat - Fijo en la parte inferior -->
+                        <div style="display: flex; gap: 8px; flex-shrink: 0;">
                             <input 
                                 type="text" 
                                 id="chat-input" 
                                 placeholder="Escribe tu pregunta fiscal..."
-                                style="flex: 1; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 0.95rem;"
+                                style="flex: 1; padding: 12px; border: 2px solid var(--color-border); border-radius: 8px; font-size: 0.95rem; background: var(--color-bg-panel); color: var(--color-text-primary);"
                                 disabled
                             />
                             <button 
@@ -1503,7 +1505,7 @@
                                 style="padding: 12px 24px; white-space: nowrap;"
                                 disabled
                             >
-                                <span class="btn-icon">📤</span>
+                                <span class="btn-icon">🐱</span>
                                 Enviar
                             </button>
                         </div>
@@ -2239,7 +2241,7 @@
                 
                 // Hide recommendations, show chat
                 recommendationsContent.style.display = 'none';
-                chatContent.style.display = 'block';
+                chatContent.style.display = 'flex';
                 
                 // Get form data and calculate taxes
                 const formData = getFormData();
@@ -2474,7 +2476,8 @@
                                 
                                 if (data.type === 'chunk') {
                                     agentResponse += data.content;
-                                    contentDiv.textContent = agentResponse;
+                                    // Render markdown using marked.js
+                                    contentDiv.innerHTML = marked.parse(agentResponse);
                                     chatMessages.scrollTop = chatMessages.scrollHeight;
                                 } else if (data.type === 'complete') {
                                     // Add to conversation history

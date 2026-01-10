@@ -3,13 +3,14 @@ LiteLLM adapter for unified multi-model support.
 Allows each agent to use different AI providers seamlessly.
 """
 
-import logging
 import os
 from collections.abc import Generator
 
 from src.multi_agent.infrastructure.prompts.multi_agent_prompts import AgentModelConfig
+from src.shared.infrastructure.config.settings import get_settings
+from src.shared.infrastructure.logging.structured_logger import StructuredLogger
 
-logger = logging.getLogger(__name__)
+logger = StructuredLogger(__name__)
 
 
 class LiteLLMAdapter:
@@ -26,31 +27,35 @@ class LiteLLMAdapter:
             model_config: Configuration specifying provider, model, and parameters
         """
         self.model_config = model_config
+        self._settings = get_settings()
         self._setup_api_keys()
 
     def _setup_api_keys(self):
         """
-        Setup API keys for different providers.
-        LiteLLM uses standard environment variables.
+        Setup API keys for different providers using project settings.
+        Exports keys to environment variables for LiteLLM to use.
         """
-        # Map provider to required env variable
-        provider_env_map = {
-            "deepseek": "DEEPSEEK_API_KEY",
-            "openai": "OPENAI_API_KEY",
-            "gemini": "GEMINI_API_KEY",
-            "anthropic": "ANTHROPIC_API_KEY",
+        # Export API keys from settings to environment variables for LiteLLM
+        if self._settings.deepseek_api_key:
+            os.environ["DEEPSEEK_API_KEY"] = self._settings.deepseek_api_key
+        if self._settings.gemini_api_key:
+            os.environ["GEMINI_API_KEY"] = self._settings.gemini_api_key
+        if self._settings.anthropic_api_key:
+            os.environ["ANTHROPIC_API_KEY"] = self._settings.anthropic_api_key
+
+        # Set DeepSeek base URL
+        if self._settings.deepseek_base_url:
+            os.environ["DEEPSEEK_BASE_URL"] = self._settings.deepseek_base_url
+
+    def _get_api_key_for_provider(self, provider: str) -> str | None:
+        """Get API key for provider from settings."""
+        provider_key_map = {
+            "deepseek": self._settings.deepseek_api_key,
+            "gemini": self._settings.gemini_api_key,
+            "anthropic": self._settings.anthropic_api_key,
+            "openai": os.getenv("OPENAI_API_KEY"),  # OpenAI not in settings yet
         }
-
-        provider = self.model_config.provider
-        env_var = provider_env_map.get(provider)
-
-        if env_var and not os.getenv(env_var):
-            logger.warning(f"API key for {provider} not found in environment variable {env_var}")
-
-        # Set DeepSeek base URL if using DeepSeek
-        if provider == "deepseek":
-            if not os.getenv("DEEPSEEK_BASE_URL"):
-                os.environ["DEEPSEEK_BASE_URL"] = "https://api.deepseek.com"
+        return provider_key_map.get(provider)
 
     def generate_stream(
         self,
@@ -104,7 +109,11 @@ class LiteLLMAdapter:
 
         except Exception as e:
             logger.error(
-                f"LiteLLM generation error with {self.model_config.provider}/{self.model_config.model}: {e}"
+                "❌ LiteLLM streaming generation failed",
+                provider=self.model_config.provider,
+                model=self.model_config.model,
+                error_type=type(e).__name__,
+                error_message=str(e),
             )
             raise
 
@@ -159,7 +168,11 @@ class LiteLLMAdapter:
 
         except Exception as e:
             logger.error(
-                f"LiteLLM generation error with {self.model_config.provider}/{self.model_config.model}: {e}"
+                "❌ LiteLLM non-streaming generation failed",
+                provider=self.model_config.provider,
+                model=self.model_config.model,
+                error_type=type(e).__name__,
+                error_message=str(e),
             )
             raise
 
@@ -170,18 +183,16 @@ class LiteLLMAdapter:
         Returns:
             True if API key exists for the provider
         """
-        provider_env_map = {
-            "deepseek": "DEEPSEEK_API_KEY",
-            "openai": "OPENAI_API_KEY",
-            "gemini": "GEMINI_API_KEY",
-            "anthropic": "ANTHROPIC_API_KEY",
-        }
+        api_key = self._get_api_key_for_provider(self.model_config.provider)
 
-        env_var = provider_env_map.get(self.model_config.provider)
-        if env_var:
-            return bool(os.getenv(env_var))
+        if not api_key:
+            logger.warning(
+                "⚠️ API key missing for provider",
+                provider=self.model_config.provider,
+                model=self.model_config.model,
+            )
+            return False
 
-        # Unknown provider, assume available
         return True
 
     def get_model_info(self) -> str:
@@ -215,14 +226,28 @@ def create_agent_adapter(agent_id: str) -> LiteLLMAdapter | None:
     model_config = get_agent_model_config(agent_id)
 
     if not model_config:
-        logger.error(f"No model configuration found for agent: {agent_id}")
+        logger.error(
+            "❌ No model configuration found for agent",
+            agent_id=agent_id,
+        )
         return None
 
     adapter = LiteLLMAdapter(model_config)
 
     if not adapter.is_available():
-        logger.warning(f"Provider {model_config.provider} not available for agent {agent_id}")
+        logger.error(
+            "❌ Provider not available - API key missing",
+            agent_id=agent_id,
+            provider=model_config.provider,
+            model=model_config.model,
+            required_env_var=f"{model_config.provider.upper()}_API_KEY",
+        )
         return None
 
-    logger.info(f"Created adapter for {agent_id}: {adapter.get_model_info()}")
+    logger.info(
+        "✅ Created adapter for agent",
+        agent_id=agent_id,
+        provider=model_config.provider,
+        model=model_config.model,
+    )
     return adapter

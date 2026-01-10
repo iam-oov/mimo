@@ -1,168 +1,206 @@
 #!/usr/bin/env python3
 """
-Constantes de la tabla ISR para múltiples ejercicios fiscales
-Más eficiente que cargar archivos JSON en runtime
+ISR table constants for multiple fiscal years.
+More efficient than loading JSON files at runtime.
 """
 
 from dataclasses import dataclass
 
 
 @dataclass
-class TramoPorcentaje:
-    """Representa un tramo de la tabla ISR mensual"""
+class TaxBracket:
+    """Represents a tax bracket in the monthly ISR table"""
 
-    limite_inferior: float
-    limite_superior: float
-    cuota_fija: float
-    porcentaje_excedente: float
-
-
-@dataclass
-class ConstantesISR:
-    """Constantes fiscales para un ejercicio específico"""
-
-    valor_uma_diario: float
-    valor_uma_anual: float
-    exencion_aguinaldo_umas: int
-    exencion_prima_vacacional_umas: int
-    tope_lentes_mxn: float
-    tope_general_deducciones_umas: float
-    tope_ppr_deducciones_umas: float
+    lower_limit: float
+    upper_limit: float
+    fixed_fee: float
+    excess_percentage: float
 
 
 @dataclass
-class TopesColegiaturas:
-    """Límites de deducibilidad para colegiaturas por nivel educativo"""
+class ISRConstants:
+    """Fiscal constants for a specific fiscal year"""
 
-    preescolar: float
-    primaria: float
-    secundaria: float
-    profesional_tecnico: float
-    preparatoria: float
+    daily_uma_value: float
+    annual_uma_value: float
+    bonus_exemption_umas: int
+    vacation_premium_exemption_umas: int
+    glasses_limit_mxn: float
+    general_deduction_cap_umas: float
+    ppr_deduction_cap_umas: float
 
 
 @dataclass
-class TablaISR:
-    """Tabla ISR completa para un ejercicio fiscal"""
+class TuitionLimits:
+    """Deductibility limits for tuition by education level"""
 
-    ejercicio: int
-    constantes: ConstantesISR
-    topes_colegiaturas: TopesColegiaturas
-    tabla_isr_mensual: list[TramoPorcentaje]
+    preschool: float
+    elementary: float
+    middle_school: float
+    technical_professional: float
+    high_school: float
+
+
+@dataclass
+class ISRTable:
+    """Complete ISR table for a fiscal year"""
+
+    fiscal_year: int
+    constants: ISRConstants
+    tuition_limits: TuitionLimits
+    monthly_isr_table: list[TaxBracket]
 
 
 # =====================================================
-# EJERCICIO FISCAL 2024
+# FISCAL YEAR 2024
 # =====================================================
 
-CONSTANTES_2024 = ConstantesISR(
-    valor_uma_diario=108.57,
-    valor_uma_anual=39606.36,
-    exencion_aguinaldo_umas=30,
-    exencion_prima_vacacional_umas=15,
-    tope_lentes_mxn=2500.0,
-    tope_general_deducciones_umas=5.0,
-    tope_ppr_deducciones_umas=5.0,
+ISR_CONSTANTS_2024 = ISRConstants(
+    daily_uma_value=108.57,
+    annual_uma_value=39606.36,
+    bonus_exemption_umas=30,
+    vacation_premium_exemption_umas=15,
+    glasses_limit_mxn=2500.0,
+    general_deduction_cap_umas=5.0,
+    ppr_deduction_cap_umas=5.0,
 )
 
-COLEGIATURAS_2024 = TopesColegiaturas(
-    preescolar=14200.0,
-    primaria=12900.0,
-    secundaria=19900.0,
-    profesional_tecnico=17100.0,
-    preparatoria=24500.0,
+TUITION_LIMITS_2024 = TuitionLimits(
+    preschool=14200.0,
+    elementary=12900.0,
+    middle_school=19900.0,
+    technical_professional=17100.0,
+    high_school=24500.0,
 )
 
-TABLA_ISR_MENSUAL_2024 = [
-    TramoPorcentaje(0.01, 746.04, 0.0, 0.0192),
-    TramoPorcentaje(746.05, 6332.05, 14.32, 0.064),
-    TramoPorcentaje(6332.06, 11128.0, 371.83, 0.1088),
-    TramoPorcentaje(11128.01, 12935.81, 893.64, 0.16),
-    TramoPorcentaje(12935.82, 15487.71, 1182.89, 0.1792),
-    TramoPorcentaje(15487.72, 31236.49, 1640.18, 0.2136),
-    TramoPorcentaje(31236.50, 49233.01, 4998.95, 0.2352),
-    TramoPorcentaje(49233.02, 93993.9, 9235.19, 0.28),
-    TramoPorcentaje(93993.91, 125325.2, 21768.14, 0.32),
-    TramoPorcentaje(125325.21, 375975.6, 31794.26, 0.34),
-    TramoPorcentaje(375975.61, float("inf"), 117020.5, 0.35),
+MONTHLY_ISR_TABLE_2024 = [
+    TaxBracket(0.01, 746.04, 0.0, 0.0192),
+    TaxBracket(746.05, 6332.05, 14.32, 0.064),
+    TaxBracket(6332.06, 11128.0, 371.83, 0.1088),
+    TaxBracket(11128.01, 12935.81, 893.64, 0.16),
+    TaxBracket(12935.82, 15487.71, 1182.89, 0.1792),
+    TaxBracket(15487.72, 31236.49, 1640.18, 0.2136),
+    TaxBracket(31236.50, 49233.01, 4998.95, 0.2352),
+    TaxBracket(49233.02, 93993.9, 9235.19, 0.28),
+    TaxBracket(93993.91, 125325.2, 21768.14, 0.32),
+    TaxBracket(125325.21, 375975.6, 31794.26, 0.34),
+    TaxBracket(375975.61, float("inf"), 117020.5, 0.35),
 ]
 
-ISR_2024 = TablaISR(
-    ejercicio=2024,
-    constantes=CONSTANTES_2024,
-    topes_colegiaturas=COLEGIATURAS_2024,
-    tabla_isr_mensual=TABLA_ISR_MENSUAL_2024,
+ISR_TABLE_2024 = ISRTable(
+    fiscal_year=2024,
+    constants=ISR_CONSTANTS_2024,
+    tuition_limits=TUITION_LIMITS_2024,
+    monthly_isr_table=MONTHLY_ISR_TABLE_2024,
 )
 
 # =====================================================
-# EJERCICIO FISCAL 2025
+# FISCAL YEAR 2025
 # =====================================================
 
-CONSTANTES_2025 = ConstantesISR(
-    valor_uma_diario=108.57,  # Actualizar cuando se publiquen valores oficiales
-    valor_uma_anual=39606.36,  # Actualizar cuando se publiquen valores oficiales
-    exencion_aguinaldo_umas=30,
-    exencion_prima_vacacional_umas=15,
-    tope_lentes_mxn=2500.0,
-    tope_general_deducciones_umas=5.0,
-    tope_ppr_deducciones_umas=5.0,
+ISR_CONSTANTS_2025 = ISRConstants(
+    daily_uma_value=108.57,
+    annual_uma_value=39606.36,
+    bonus_exemption_umas=30,
+    vacation_premium_exemption_umas=15,
+    glasses_limit_mxn=2500.0,
+    general_deduction_cap_umas=5.0,
+    ppr_deduction_cap_umas=5.0,
 )
 
-COLEGIATURAS_2025 = TopesColegiaturas(
-    preescolar=14200.0,  # Actualizar cuando se publiquen valores oficiales
-    primaria=12900.0,
-    secundaria=19900.0,
-    profesional_tecnico=17100.0,
-    preparatoria=24500.0,
+TUITION_LIMITS_2025 = TuitionLimits(
+    preschool=14200.0,
+    elementary=12900.0,
+    middle_school=19900.0,
+    technical_professional=17100.0,
+    high_school=24500.0,
 )
 
-TABLA_ISR_MENSUAL_2025 = [
-    TramoPorcentaje(0.01, 746.04, 0.0, 0.0192),
-    TramoPorcentaje(746.05, 6332.05, 14.32, 0.064),
-    TramoPorcentaje(6332.06, 11128.01, 371.83, 0.1088),
-    TramoPorcentaje(11128.02, 12935.82, 893.63, 0.16),
-    TramoPorcentaje(12935.83, 15487.71, 1182.88, 0.1792),
-    TramoPorcentaje(15487.72, 31236.49, 1640.18, 0.2136),
-    TramoPorcentaje(31236.50, 49233.01, 4998.95, 0.2352),
-    TramoPorcentaje(49233.02, 93993.9, 9235.19, 0.28),
-    TramoPorcentaje(93993.91, 125325.2, 21768.14, 0.32),
-    TramoPorcentaje(125325.21, 375975.6, 31794.26, 0.34),
-    TramoPorcentaje(375975.61, float("inf"), 117020.5, 0.35),
+MONTHLY_ISR_TABLE_2025 = [
+    TaxBracket(0.01, 746.04, 0.0, 0.0192),
+    TaxBracket(746.05, 6332.05, 14.32, 0.064),
+    TaxBracket(6332.06, 11128.01, 371.83, 0.1088),
+    TaxBracket(11128.02, 12935.82, 893.63, 0.16),
+    TaxBracket(12935.83, 15487.71, 1182.88, 0.1792),
+    TaxBracket(15487.72, 31236.49, 1640.18, 0.2136),
+    TaxBracket(31236.50, 49233.01, 4998.95, 0.2352),
+    TaxBracket(49233.02, 93993.9, 9235.19, 0.28),
+    TaxBracket(93993.91, 125325.2, 21768.14, 0.32),
+    TaxBracket(125325.21, 375975.6, 31794.26, 0.34),
+    TaxBracket(375975.61, float("inf"), 117020.5, 0.35),
 ]
 
-ISR_2025 = TablaISR(
-    ejercicio=2025,
-    constantes=CONSTANTES_2025,
-    topes_colegiaturas=COLEGIATURAS_2025,
-    tabla_isr_mensual=TABLA_ISR_MENSUAL_2025,
+ISR_TABLE_2025 = ISRTable(
+    fiscal_year=2025,
+    constants=ISR_CONSTANTS_2025,
+    tuition_limits=TUITION_LIMITS_2025,
+    monthly_isr_table=MONTHLY_ISR_TABLE_2025,
 )
 
 # =====================================================
-# DICCIONARIO PARA ACCESO POR AÑO
+# FISCAL YEAR 2026
+# =====================================================
+ISR_CONSTANTS_2026 = ISRConstants(
+    daily_uma_value=117.31,
+    annual_uma_value=42714.15,
+    bonus_exemption_umas=30,
+    vacation_premium_exemption_umas=15,
+    glasses_limit_mxn=2500.0,
+    general_deduction_cap_umas=5.0,
+    ppr_deduction_cap_umas=5.0,
+)
+
+TUITION_LIMITS_2026 = TuitionLimits(
+    preschool=14200.0,
+    elementary=12900.0,
+    middle_school=19900.0,
+    technical_professional=17100.0,
+    high_school=24500.0,
+)
+
+MONTHLY_ISR_TABLE_2026 = [
+    TaxBracket(0.01, 844.59, 0.0, 0.0192),
+    TaxBracket(844.60, 7168.51, 16.22, 0.064),
+    TaxBracket(7168.52, 12598.02, 420.95, 0.1088),
+    TaxBracket(12598.03, 14644.64, 1011.68, 0.16),
+    TaxBracket(14644.65, 17533.64, 1339.14, 0.1792),
+    TaxBracket(17533.65, 35362.83, 1856.84, 0.2136),
+    TaxBracket(35362.84, 55736.68, 5665.16, 0.2352),
+    TaxBracket(55736.69, float("inf"), 10457.09, 0.35),
+]
+
+ISR_TABLE_2026 = ISRTable(
+    fiscal_year=2026,
+    constants=ISR_CONSTANTS_2026,
+    tuition_limits=TUITION_LIMITS_2026,
+    monthly_isr_table=MONTHLY_ISR_TABLE_2026,
+)
+
+# =====================================================
+# DICTIONARY FOR ACCESS BY YEAR
 # =====================================================
 
-TABLAS_ISR: dict[int, TablaISR] = {
-    2024: ISR_2024,
-    2025: ISR_2025,
+ISR_TABLES: dict[int, ISRTable] = {
+    2024: ISR_TABLE_2024,
+    2025: ISR_TABLE_2025,
+    2026: ISR_TABLE_2026,
 }
 
 
-def get_tabla_isr(ejercicio: int) -> TablaISR:
+def get_isr_table(fiscal_year: int) -> ISRTable:
     """
-    Obtiene la tabla ISR para el ejercicio fiscal especificado
+    Get ISR table for the specified fiscal year.
 
     Args:
-        ejercicio: Año del ejercicio fiscal
+        fiscal_year: Year of the fiscal year
 
     Returns:
-        TablaISR correspondiente al ejercicio
+        ISRTable corresponding to the fiscal year
 
     Raises:
-        KeyError: Si no existe la tabla para el ejercicio solicitado
+        KeyError: If table does not exist for the requested fiscal year
     """
-    if ejercicio not in TABLAS_ISR:
-        # Si no existe el año solicitado, usar el más reciente disponible
-        ejercicio_disponible = max(TABLAS_ISR.keys())
-        return TABLAS_ISR[ejercicio_disponible]
-
-    return TABLAS_ISR[ejercicio]
+    if fiscal_year not in ISR_TABLES:
+        available_fiscal_year = max(ISR_TABLES.keys())
+        return ISR_TABLES[available_fiscal_year]
+    return ISR_TABLES[fiscal_year]

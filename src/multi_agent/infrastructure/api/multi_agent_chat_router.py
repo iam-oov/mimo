@@ -23,12 +23,18 @@ router = APIRouter(prefix="/api/chat", tags=["multi-agent-chat"])
 class ChatMessageRequest(BaseModel):
     """Request schema for chat message."""
 
-    agent_id: str = Field(..., description="Selected agent ID (agent_1, agent_2, agent_3)")
+    agent_id: str = Field(
+        ..., description="Selected agent ID (agent_1, agent_2, agent_3)"
+    )
     message: str = Field(..., description="User's question/message")
-    calculation_result: dict[str, Any] = Field(..., description="Tax calculation result")
+    calculation_result: dict[str, Any] = Field(
+        ..., description="Tax calculation result"
+    )
     user_data: dict[str, Any] = Field(..., description="User's fiscal data")
     fiscal_year: int = Field(..., description="Fiscal year")
-    conversation_history: list[dict[str, str]] = Field(default=[], description="Previous messages")
+    conversation_history: list[dict[str, str]] = Field(
+        default=[], description="Previous messages"
+    )
 
 
 class AgentInfoResponse(BaseModel):
@@ -44,7 +50,9 @@ class AgentInfoResponse(BaseModel):
 class GetAgentsRequest(BaseModel):
     """Request schema for getting available agents."""
 
-    calculation_result: dict[str, Any] = Field(..., description="Tax calculation result")
+    calculation_result: dict[str, Any] = Field(
+        ..., description="Tax calculation result"
+    )
     user_data: dict[str, Any] = Field(..., description="User's fiscal data")
     fiscal_year: int = Field(..., description="Fiscal year")
 
@@ -67,7 +75,10 @@ async def get_available_agents(
     """
     try:
         agents = use_case.get_available_agents(
-            request.calculation_result, request.user_data, request.fiscal_year, user_id=user_id
+            request.calculation_result,
+            request.user_data,
+            request.fiscal_year,
+            user_id=user_id,
         )
         return [
             AgentInfoResponse(
@@ -100,6 +111,17 @@ async def send_chat_message(
         raise HTTPException(
             status_code=429,
             detail=f"Daily limit reached. You have used {usage_info['usage_count']}/{usage_info['daily_limit']} messages today.",
+        )
+
+    # Validate agent adapter is available BEFORE creating SSE stream
+    # This ensures we return proper HTTP error codes instead of 200 with error in stream
+    from src.multi_agent.infrastructure.litellm.adapter import create_agent_adapter
+
+    adapter = create_agent_adapter(request.agent_id)
+    if not adapter:
+        raise HTTPException(
+            status_code=503,
+            detail=f"El agente {request.agent_id} no está disponible. Verifica la configuración de API keys.",
         )
 
     async def event_generator():

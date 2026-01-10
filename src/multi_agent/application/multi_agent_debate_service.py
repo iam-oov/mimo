@@ -17,7 +17,7 @@ from src.multi_agent.infrastructure.prompts.multi_agent_prompts import (
     build_round_prompt,
     build_synthesis_prompt,
 )
-from src.shared.domain.constants.isr_tables import get_tabla_isr
+from src.shared.domain.constants.isr_tables import get_isr_table
 from src.shared.infrastructure.logging.structured_logger import get_logger
 
 logger = get_logger(__name__)
@@ -79,7 +79,9 @@ class MultiAgentDebateService:
         names = random.sample(self.names, num_agents)
 
         agents = []
-        for i, (name, personality, profession) in enumerate(zip(names, personalities, professions)):
+        for i, (name, personality, profession) in enumerate(
+            zip(names, personalities, professions)
+        ):
             agents.append(
                 AgentConfig(
                     agent_id=f"agent_{i + 1}",
@@ -127,8 +129,8 @@ class MultiAgentDebateService:
         )
 
         # Build fiscal context
-        tabla_isr = get_tabla_isr(fiscal_year)
-        uma_annual = tabla_isr.constantes.valor_uma_anual
+        isr_table = get_isr_table(fiscal_year)
+        uma_annual = isr_table.constants.annual_uma_value
         general_deduction_limit = 5 * uma_annual
 
         # Handle calculation_result as dict or object
@@ -138,7 +140,9 @@ class MultiAgentDebateService:
             gross_income = getattr(calculation_result, "gross_annual_income", 0)
 
         total_deduction_limit_15_percent = gross_income * 0.15
-        effective_deduction_limit = min(general_deduction_limit, total_deduction_limit_15_percent)
+        effective_deduction_limit = min(
+            general_deduction_limit, total_deduction_limit_15_percent
+        )
 
         # build_debate_context now handles both dict and object formats
         context = build_debate_context(
@@ -150,7 +154,9 @@ class MultiAgentDebateService:
         )
 
         # Yield agent introductions with expertise
-        from src.multi_agent.infrastructure.prompts.multi_agent_prompts import PROFESSION_FOCUS
+        from src.multi_agent.infrastructure.prompts.multi_agent_prompts import (
+            PROFESSION_FOCUS,
+        )
 
         yield {
             "type": "agent_intro",
@@ -191,7 +197,9 @@ class MultiAgentDebateService:
             )
 
             # Build round prompt
-            user_prompt = build_round_prompt(round_number=1, round_type="initial", context=context)
+            user_prompt = build_round_prompt(
+                round_number=1, round_type="initial", context=context
+            )
 
             # Stream agent response
             yield {
@@ -212,7 +220,9 @@ class MultiAgentDebateService:
 
             yield {"type": "agent_complete"}
 
-            round_1_args.append({"agent": agent.name, "content": response_text, "round": 1})
+            round_1_args.append(
+                {"agent": agent.name, "content": response_text, "round": 1}
+            )
 
         all_arguments.extend(round_1_args)
 
@@ -269,7 +279,9 @@ class MultiAgentDebateService:
 
             yield {"type": "agent_complete"}
 
-            round_2_args.append({"agent": agent.name, "content": response_text, "round": 2})
+            round_2_args.append(
+                {"agent": agent.name, "content": response_text, "round": 2}
+            )
 
         all_arguments.extend(round_2_args)
 
@@ -322,7 +334,9 @@ class MultiAgentDebateService:
 
             yield {"type": "agent_complete"}
 
-            all_arguments.append({"agent": agent.name, "content": response_text, "round": 3})
+            all_arguments.append(
+                {"agent": agent.name, "content": response_text, "round": 3}
+            )
 
         # Final synthesis
         yield {"type": "synthesis_start"}
@@ -330,13 +344,17 @@ class MultiAgentDebateService:
         # Use moderator agent for synthesis
         moderator_adapter = create_agent_adapter("moderator")
         if moderator_adapter:
-            synthesis_prompt = build_synthesis_prompt(all_arguments=all_arguments, context=context)
+            synthesis_prompt = build_synthesis_prompt(
+                all_arguments=all_arguments, context=context
+            )
 
             moderator_system = "Eres un moderador experto en fiscalidad mexicana. Tu tarea es sintetizar el debate de expertos y generar conclusiones accionables."
 
             synthesis_text = ""
             try:
-                for chunk in moderator_adapter.generate_stream(moderator_system, synthesis_prompt):
+                for chunk in moderator_adapter.generate_stream(
+                    moderator_system, synthesis_prompt
+                ):
                     synthesis_text += chunk
                     yield {"type": "synthesis_chunk", "content": chunk}
             except Exception as e:

@@ -1,15 +1,29 @@
-from pydantic import BaseModel, Field
+from datetime import datetime
+
+from pydantic import BaseModel, Field, field_validator
+
+from src.tax_calculation.domain.services.fiscal_year_validator import (
+    FiscalYearValidator,
+)
 
 
 class TaxCalculationRequest(BaseModel):
     """API schema for tax calculation request"""
 
-    taxpayer_name: str = Field(default="", description="Full name of the taxpayer", max_length=100)
-    fiscal_year: int = Field(default=2025, description="Tax fiscal year", ge=2024, le=2025)
+    taxpayer_name: str = Field(
+        default="", description="Full name of the taxpayer", max_length=100
+    )
+    fiscal_year: int = Field(
+        default_factory=lambda: datetime.now().year,
+        description="Tax fiscal year",
+        ge=2024,
+    )
     monthly_gross_income: float = Field(
         default=0.0, description="Monthly gross income", ge=0.0, le=1000000.0
     )
-    monthly_net_income: float = Field(default=0.0, description="Monthly net income", ge=0.0)
+    monthly_net_income: float = Field(
+        default=0.0, description="Monthly net income", ge=0.0
+    )
     bonus_days: int = Field(
         default=15, description="Number of bonus days (aguinaldo)", ge=0, le=365
     )
@@ -37,6 +51,13 @@ class TaxCalculationRequest(BaseModel):
     total_ppr: float = Field(
         default=0.0, description="💰 Total PPR contributions", ge=0.0, le=1000000.0
     )
+
+    @field_validator("fiscal_year")
+    @classmethod
+    def validate_fiscal_year(cls, v: int) -> int:
+        """Validate fiscal year against available ISR tables"""
+        FiscalYearValidator.validate_fiscal_year(v)
+        return v
 
     model_config = {
         "json_schema_extra": {
@@ -68,7 +89,9 @@ class TaxCalculationResponse(BaseModel):
     taxable_vacation_premium: float = Field(
         description="Taxable portion of vacation premium after exemptions", ge=0.0
     )
-    total_taxable_income: float = Field(description="Total income subject to taxation", ge=0.0)
+    total_taxable_income: float = Field(
+        description="Total income subject to taxation", ge=0.0
+    )
     authorized_deductions: float = Field(
         description="Total authorized deductions after caps and limits", ge=0.0
     )
@@ -76,11 +99,19 @@ class TaxCalculationResponse(BaseModel):
         description="Personal deductions (medical, donations, etc.)", ge=0.0
     )
     ppr_deductions: float = Field(description="PPR (retirement) deductions", ge=0.0)
-    education_deductions: float = Field(description="Education/tuition deductions", ge=0.0)
-    taxable_base: float = Field(description="Final tax base after all deductions", ge=0.0)
-    determined_tax: float = Field(description="Tax determined based on taxable base", ge=0.0)
+    education_deductions: float = Field(
+        description="Education/tuition deductions", ge=0.0
+    )
+    taxable_base: float = Field(
+        description="Final tax base after all deductions", ge=0.0
+    )
+    determined_tax: float = Field(
+        description="Tax determined based on taxable base", ge=0.0
+    )
     withheld_tax: float = Field(description="Tax withheld during the year", ge=0.0)
-    balance_in_favor: float = Field(description="Amount in favor of taxpayer (refund)", ge=0.0)
+    balance_in_favor: float = Field(
+        description="Amount in favor of taxpayer (refund)", ge=0.0
+    )
     balance_to_pay: float = Field(description="Additional tax amount to pay", ge=0.0)
 
     model_config = {

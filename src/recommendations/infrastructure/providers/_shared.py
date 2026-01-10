@@ -8,7 +8,7 @@ from typing import Any
 from src.recommendations.infrastructure.prompts.recommendation_prompts import (
     build_fiscal_recommendation_prompt,
 )
-from src.shared.domain.constants.isr_tables import get_tabla_isr
+from src.shared.domain.constants.isr_tables import get_isr_table
 
 logger = logging.getLogger(__name__)
 
@@ -20,20 +20,22 @@ def build_recommendation_prompt(
     Build the prompt for AI recommendation generation.
     Shared across all AI providers for consistency.
     """
-    tabla_isr = get_tabla_isr(fiscal_year)
+    isr_table = get_isr_table(fiscal_year)
 
     # Calculate limits
-    uma_annual = tabla_isr.constantes.valor_uma_anual
+    uma_annual = isr_table.constants.annual_uma_value
     general_deduction_limit = 5 * uma_annual
     gross_income = calculation_result.gross_annual_income
     total_deduction_limit_15_percent = gross_income * 0.15
-    effective_deduction_limit = min(general_deduction_limit, total_deduction_limit_15_percent)
+    effective_deduction_limit = min(
+        general_deduction_limit, total_deduction_limit_15_percent
+    )
 
     # Prepare education limits
     education_limits = {
-        "preescolar": tabla_isr.topes_colegiaturas.preescolar,
-        "primaria": tabla_isr.topes_colegiaturas.primaria,
-        "secundaria": tabla_isr.topes_colegiaturas.secundaria,
+        "preschool": isr_table.tuition_limits.preschool,
+        "elementary": isr_table.tuition_limits.elementary,
+        "middle_school": isr_table.tuition_limits.middle_school,
     }
 
     return build_fiscal_recommendation_prompt(

@@ -12,7 +12,9 @@ from src.auth.infrastructure.api.auth_router import router as auth_router
 from src.multi_agent.infrastructure.api.multi_agent_chat_router import (
     router as multi_agent_chat_router,
 )
-from src.multi_agent.infrastructure.api.multi_agent_router import router as multi_agent_router
+from src.multi_agent.infrastructure.api.multi_agent_router import (
+    router as multi_agent_router,
+)
 from src.recommendations.infrastructure.api.recommendations_router import (
     router as recommendations_router,
 )
@@ -23,6 +25,9 @@ from src.shared.infrastructure.api.middleware.error_handler import (
     validation_exception_handler,
 )
 from src.shared.infrastructure.config.settings import get_settings
+from src.shared.infrastructure.persistence.sqlite_usage_repository import (
+    SqliteUsageRepository,
+)
 from src.tax_calculation.infrastructure.api.tax_router import router as tax_router
 
 
@@ -32,14 +37,8 @@ async def lifespan(app: FastAPI):
     Lifespan context manager for FastAPI application.
     Handles startup and shutdown events.
     """
-    # Startup: Initialize database
-    from src.shared.infrastructure.persistence.sqlite_usage_repository import (
-        SqliteUsageRepository,
-    )
-
     settings = get_settings()
     _ = SqliteUsageRepository(settings.database_url)
-
     yield
     pass
 
@@ -99,7 +98,9 @@ async def get_current_user(request: Request) -> dict[str, Any] | None:
 async def calculator_page(request: Request):
     """Render calculator page"""
     user = await get_current_user(request)
-    return templates.TemplateResponse("calculator.html", {"request": request, "user": user})
+    return templates.TemplateResponse(
+        "calculator.html", {"request": request, "user": user}
+    )
 
 
 if __name__ == "__main__":

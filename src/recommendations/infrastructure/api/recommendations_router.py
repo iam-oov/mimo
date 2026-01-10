@@ -3,16 +3,23 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 
+from src.auth.infrastructure.dependencies import get_user_id
 from src.recommendations.application.generate_recommendations_use_case import (
     GenerateRecommendationsRequest,
     GenerateRecommendationsUseCase,
 )
-from src.auth.infrastructure.dependencies import get_user_id
 from src.shared.infrastructure.api.schemas.recommendation_schemas import (
     RecommendationRequest,
     UsageInfoResponse,
 )
+from src.shared.infrastructure.api.schemas.tax_schemas import (
+    TaxCalculationRequest as TaxAPIRequest,
+)
 from src.shared.infrastructure.config.dependency_injection import get_container
+from src.tax_calculation.application.calculate_tax_use_case import (
+    CalculateTaxRequest,
+    CalculateTaxUseCase,
+)
 from src.tax_calculation.domain.entities.tax_calculation import TaxCalculation
 
 router = APIRouter(prefix="/api", tags=["recommendations"])
@@ -37,14 +44,6 @@ def _prepare_recommendation_data(
         return calculation, req.user_data, req.fiscal_year
 
     # Otherwise, calculate from form data (new format)
-    from src.application.calculate_tax_use_case import (
-        CalculateTaxRequest,
-        CalculateTaxUseCase,
-    )
-    from src.shared.infrastructure.api.schemas.tax_schemas import (
-        TaxCalculationRequest as TaxAPIRequest,
-    )
-
     # Use the TaxCalculationRequest to call the /calculate endpoint logic
     tax_api_request = TaxAPIRequest(
         taxpayer_name=req.taxpayer_name,
@@ -204,7 +203,9 @@ async def generate_recommendations_stream(
                 yield f"data: {complete_data}\n\n"
 
             except PermissionError as e:
-                error_data = json.dumps({"type": "error", "message": str(e), "code": 429})
+                error_data = json.dumps(
+                    {"type": "error", "message": str(e), "code": 429}
+                )
                 yield f"data: {error_data}\n\n"
             except Exception as e:
                 error_data = json.dumps(

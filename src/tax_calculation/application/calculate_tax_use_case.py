@@ -1,9 +1,11 @@
 from dataclasses import dataclass
 
-from src.shared.domain.constants.isr_tables import get_tabla_isr
+from src.shared.domain.constants.isr_tables import get_isr_table
 from src.shared.infrastructure.logging.structured_logger import get_logger
 from src.tax_calculation.domain.entities.tax_calculation import TaxCalculation
-from src.tax_calculation.domain.services.tax_calculation_service import TaxCalculationService
+from src.tax_calculation.domain.services.tax_calculation_service import (
+    TaxCalculationService,
+)
 from src.tax_calculation.domain.value_objects.tax_data import (
     DeductionData,
     IncomeData,
@@ -70,10 +72,12 @@ class CalculateTaxUseCase:
             Tax calculation response with results
 
         Raises:
-            ValueError: If fiscal year is invalid or data validation fails
+            ValueError: If data validation fails
         """
         # Create value objects from request
-        taxpayer_info = TaxpayerInfo(name=request.taxpayer_name, fiscal_year=request.fiscal_year)
+        taxpayer_info = TaxpayerInfo(
+            name=request.taxpayer_name, fiscal_year=request.fiscal_year
+        )
 
         income_data = IncomeData(
             monthly_gross_income=request.monthly_gross_income,
@@ -89,10 +93,12 @@ class CalculateTaxUseCase:
         )
 
         # Get ISR table for fiscal year
-        isr_table = get_tabla_isr(request.fiscal_year)
+        isr_table = get_isr_table(request.fiscal_year)
 
         # Execute domain service
         tax_service = TaxCalculationService(isr_table)
         calculation = tax_service.calculate_tax(income_data, deduction_data)
 
-        return CalculateTaxResponse(calculation=calculation, taxpayer_info=taxpayer_info)
+        return CalculateTaxResponse(
+            calculation=calculation, taxpayer_info=taxpayer_info
+        )

@@ -6,11 +6,13 @@ import logging
 from collections.abc import Generator
 from typing import Any
 
-from src.recommendations.domain.ports.recommendation_provider import RecommendationProvider
+from src.recommendations.domain.ports.recommendation_provider import (
+    RecommendationProvider,
+)
 from src.recommendations.infrastructure.prompts.recommendation_prompts import (
     build_fallback_recommendations_prompt,
 )
-from src.shared.domain.constants.isr_tables import get_tabla_isr
+from src.shared.domain.constants.isr_tables import get_isr_table
 
 logger = logging.getLogger(__name__)
 
@@ -30,8 +32,8 @@ class FallbackRecommendationAdapter(RecommendationProvider):
         """
         Generate static fallback recommendations.
         """
-        tabla_isr = get_tabla_isr(fiscal_year)
-        uma_annual = tabla_isr.constantes.valor_uma_anual
+        isr_table = get_isr_table(fiscal_year)
+        uma_annual = isr_table.constants.annual_uma_value
         general_limit = 5 * uma_annual
 
         recommendations = build_fallback_recommendations_prompt(

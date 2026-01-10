@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Any
 
 # Re-export multi-agent prompts for convenience
-from src.infrastructure.ai_providers.multi_agent_prompts import (
+from src.multi_agent.infrastructure.prompts.multi_agent_prompts import (
     AgentModelConfig,
     Personality,
     Profession,
@@ -221,9 +221,13 @@ def build_fallback_recommendations_prompt(
             if limit > 0
         ]
         if edu_parts:
-            education_details = "\n".join(["* **Colegiaturas** (con topes por nivel):", *edu_parts])
+            education_details = "\n".join(
+                ["* **Colegiaturas** (con topes por nivel):", *edu_parts]
+            )
     else:
-        education_details = "* **Colegiaturas** (con límites específicos por nivel educativo)"
+        education_details = (
+            "* **Colegiaturas** (con límites específicos por nivel educativo)"
+        )
 
     recommendations = f"""
 # 💡 Recomendaciones Fiscales Generales

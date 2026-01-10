@@ -1,3 +1,5 @@
+import logging
+from dataclasses import asdict
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
@@ -6,6 +8,7 @@ from src.shared.infrastructure.api.schemas.tax_schemas import (
     TaxCalculationRequest,
     TaxCalculationResponse,
 )
+from src.shared.infrastructure.logging.structured_logger import StructuredLogger
 from src.tax_calculation.application.calculate_tax_use_case import (
     CalculateTaxRequest as UseCaseRequest,
 )
@@ -13,6 +16,7 @@ from src.tax_calculation.application.calculate_tax_use_case import (
     CalculateTaxUseCase,
 )
 
+logger = StructuredLogger(__name__)
 router = APIRouter(prefix="/api", tags=["tax"])
 
 
@@ -65,6 +69,10 @@ def calculate_tax(request: TaxCalculationRequest) -> dict[str, Any]:
         ```
     """
     try:
+        logger.info(
+            "📝 Tax calculation request received", request_data=request.model_dump()
+        )
+
         # Map API request to use case request
         use_case_request = UseCaseRequest(
             taxpayer_name=request.taxpayer_name,
@@ -78,14 +86,36 @@ def calculate_tax(request: TaxCalculationRequest) -> dict[str, Any]:
             education_deductions=request.total_tuition,
         )
 
+        logger.debug(
+            "✅ Request mapped to use case",
+            use_case_request=asdict(use_case_request),
+        )
+
         # Execute use case
         use_case = CalculateTaxUseCase()
         response = use_case.execute(use_case_request)
+
+        logger.info(
+            "✅ Tax calculation completed successfully",
+            taxpayer=request.taxpayer_name,
+            fiscal_year=request.fiscal_year,
+        )
 
         # Map domain entity to API response
         return response.calculation.to_dict()
 
     except ValueError as e:
+        logger.error(
+            "❌ Validation error in tax calculation",
+            error_message=str(e),
+            request_data=request.model_dump(),
+        )
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
+        logger.error(
+            "❌ Unexpected error in tax calculation",
+            error_type=type(e).__name__,
+            error_message=str(e),
+            exc_info=True,
+        )
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

@@ -1,4 +1,4 @@
-from src.shared.domain.constants.isr_tables import TablaISR
+from src.shared.domain.constants.isr_tables import ISRTable
 from src.tax_calculation.domain.entities.tax_calculation import TaxCalculation
 from src.tax_calculation.domain.value_objects.tax_data import DeductionData, IncomeData
 
@@ -9,7 +9,7 @@ class TaxCalculationService:
     Pure business rules with no infrastructure dependencies.
     """
 
-    def __init__(self, isr_table: TablaISR):
+    def __init__(self, isr_table: ISRTable):
         self._isr_table = isr_table
 
     def calculate_tax(
@@ -28,7 +28,9 @@ class TaxCalculationService:
         taxable_bonus = self._calculate_taxable_bonus(income_data)
         taxable_vacation_premium = self._calculate_taxable_vacation_premium(income_data)
 
-        total_taxable_income = gross_annual_income + taxable_bonus + taxable_vacation_premium
+        total_taxable_income = (
+            gross_annual_income + taxable_bonus + taxable_vacation_premium
+        )
 
         total_exemptions = (gross_bonus - taxable_bonus) + (
             gross_vacation_premium - taxable_vacation_premium
@@ -71,10 +73,10 @@ class TaxCalculationService:
         monthly_base = taxable_base / 12
         monthly_tax = 0.0
 
-        for bracket in self._isr_table.tabla_isr_mensual:
-            if bracket.limite_inferior <= monthly_base <= bracket.limite_superior:
-                surplus = monthly_base - bracket.limite_inferior + 0.01
-                monthly_tax = bracket.cuota_fija + (surplus * bracket.porcentaje_excedente)
+        for bracket in self._isr_table.monthly_isr_table:
+            if bracket.lower_limit <= monthly_base <= bracket.upper_limit:
+                surplus = monthly_base - bracket.lower_limit + 0.01
+                monthly_tax = bracket.fixed_fee + (surplus * bracket.excess_percentage)
                 break
 
         return monthly_tax * 12
@@ -86,8 +88,8 @@ class TaxCalculationService:
         """
         total_bonus = income_data.gross_bonus
 
-        uma_daily = self._isr_table.constantes.valor_uma_diario
-        exemption_umas = self._isr_table.constantes.exencion_aguinaldo_umas
+        uma_daily = self._isr_table.constants.daily_uma_value
+        exemption_umas = self._isr_table.constants.bonus_exemption_umas
         bonus_exemption = uma_daily * exemption_umas
 
         return max(0, total_bonus - bonus_exemption)
@@ -99,8 +101,8 @@ class TaxCalculationService:
         """
         total_premium = income_data.gross_vacation_premium
 
-        uma_daily = self._isr_table.constantes.valor_uma_diario
-        exemption_umas = self._isr_table.constantes.exencion_prima_vacacional_umas
+        uma_daily = self._isr_table.constants.daily_uma_value
+        exemption_umas = self._isr_table.constants.vacation_premium_exemption_umas
         premium_exemption = uma_daily * exemption_umas
 
         return max(0, total_premium - premium_exemption)
@@ -124,24 +126,26 @@ class TaxCalculationService:
 
         Returns: (total_capped, personal, ppr, education)
         """
-        uma_annual = self._isr_table.constantes.valor_uma_anual
+        uma_annual = self._isr_table.constants.annual_uma_value
 
         # Step 1: Apply individual caps
-        general_cap = uma_annual * self._isr_table.constantes.tope_general_deducciones_umas
+        general_cap = uma_annual * self._isr_table.constants.general_deduction_cap_umas
         limited_general_deductions = min(deduction_data.general_deductions, general_cap)
 
-        ppr_cap = uma_annual * self._isr_table.constantes.tope_ppr_deducciones_umas
+        ppr_cap = uma_annual * self._isr_table.constants.ppr_deduction_cap_umas
         limited_ppr = min(deduction_data.ppr_deductions, ppr_cap)
 
         education_caps = {
-            "preescolar": self._isr_table.topes_colegiaturas.preescolar,
-            "primaria": self._isr_table.topes_colegiaturas.primaria,
-            "secundaria": self._isr_table.topes_colegiaturas.secundaria,
-            "profesional_tecnico": self._isr_table.topes_colegiaturas.profesional_tecnico,
-            "preparatoria": self._isr_table.topes_colegiaturas.preparatoria,
+            "preschool": self._isr_table.tuition_limits.preschool,
+            "elementary": self._isr_table.tuition_limits.elementary,
+            "middle_school": self._isr_table.tuition_limits.middle_school,
+            "technical_professional": self._isr_table.tuition_limits.technical_professional,
+            "high_school": self._isr_table.tuition_limits.high_school,
         }
         max_education_cap = max(education_caps.values()) if education_caps else 0
-        limited_education_deductions = min(deduction_data.education_deductions, max_education_cap)
+        limited_education_deductions = min(
+            deduction_data.education_deductions, max_education_cap
+        )
 
         # Step 2: Calculate global cap (5 UMAs OR 15% of gross, whichever is lower)
         cap_5_umas = uma_annual * 5
@@ -149,12 +153,16 @@ class TaxCalculationService:
         total_legal_cap = min(cap_5_umas, cap_15_percent)
 
         # Step 3: Apply global cap
-        total_uncapped = limited_general_deductions + limited_ppr + limited_education_deductions
+        total_uncapped = (
+            limited_general_deductions + limited_ppr + limited_education_deductions
+        )
         total_capped = min(total_uncapped, total_legal_cap)
 
         # Step 4: If exceeded, reduce proportionally
         if total_capped < total_uncapped:
-            adjustment_factor = total_capped / total_uncapped if total_uncapped > 0 else 0
+            adjustment_factor = (
+                total_capped / total_uncapped if total_uncapped > 0 else 0
+            )
             limited_general_deductions *= adjustment_factor
             limited_ppr *= adjustment_factor
             limited_education_deductions *= adjustment_factor

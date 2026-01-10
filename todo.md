@@ -1,6 +1,7 @@
-- mejorar el responsivo del sitio web
 - los agentes deben ser inteligentes para detectar los cambios en los inputs
 - los campos input agregar el simbolo de $ y la "," como separador de miles
 - agregar perfil de usuario para guardar preferencias
 - una opcion para subir facturas (carpeta de documentos)
 - dockerizar
+- mejorar el responsivo del sitio web
+- hacer el feeling mas agentico y no tanto de calculadora

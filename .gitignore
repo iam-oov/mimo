@@ -10,6 +10,9 @@ __pycache__/
 # C extensions
 *.so
 
+# .playwright-mcp files
+.playwright-mcp/
+
 # Distribution / packaging
 .Python
 build/

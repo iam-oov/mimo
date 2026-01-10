@@ -72,6 +72,7 @@ class Settings(BaseSettings):
     database_url: str = Field(default="recommendations.db", description="SQLite database path")
 
     # Application Settings
+    app_version: str = Field(default="1.0.0", description="Application version")
     environment: str = Field(default="development", description="Application environment")
     debug: bool = Field(default=False, description="Debug mode")
 

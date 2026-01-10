@@ -31,7 +31,9 @@ class Settings(BaseSettings):
 
     # AI Provider Configuration
     deepseek_api_key: str | None = Field(default=None, description="DeepSeek API Key")
-    deepseek_model: str = Field(default="deepseek-chat", description="DeepSeek model name")
+    deepseek_model: str = Field(
+        default="deepseek-chat", description="DeepSeek model name"
+    )
     deepseek_temperature: float = Field(
         default=0.6, ge=0.0, le=2.0, description="DeepSeek temperature"
     )
@@ -39,11 +41,19 @@ class Settings(BaseSettings):
         default="https://api.deepseek.com", description="DeepSeek API base URL"
     )
 
-    gemini_api_key: str | None = Field(default=None, description="Google Gemini API Key")
-    gemini_model: str = Field(default="gemini-2.0-flash-exp", description="Gemini model name")
-    gemini_temperature: float = Field(default=0.6, ge=0.0, le=2.0, description="Gemini temperature")
+    gemini_api_key: str | None = Field(
+        default=None, description="Google Gemini API Key"
+    )
+    gemini_model: str = Field(
+        default="gemini-2.0-flash-exp", description="Gemini model name"
+    )
+    gemini_temperature: float = Field(
+        default=0.6, ge=0.0, le=2.0, description="Gemini temperature"
+    )
 
-    anthropic_api_key: str | None = Field(default=None, description="Anthropic Claude API Key")
+    anthropic_api_key: str | None = Field(
+        default=None, description="Anthropic Claude API Key"
+    )
     anthropic_model: str = Field(
         default="claude-sonnet-4-20250514", description="Anthropic Claude model name"
     )
@@ -53,7 +63,9 @@ class Settings(BaseSettings):
 
     openai_api_key: str | None = Field(default=None, description="OpenAI API Key")
     openai_model: str = Field(default="gpt-4o", description="OpenAI model name")
-    openai_temperature: float = Field(default=0.6, ge=0.0, le=2.0, description="OpenAI temperature")
+    openai_temperature: float = Field(
+        default=0.6, ge=0.0, le=2.0, description="OpenAI temperature"
+    )
 
     # Rate Limiting Configuration
     daily_recommendations_limit: int = Field(
@@ -69,11 +81,15 @@ class Settings(BaseSettings):
     )
 
     # Database Configuration
-    database_url: str = Field(default="recommendations.db", description="SQLite database path")
+    database_url: str = Field(
+        default="recommendations.db", description="SQLite database path"
+    )
 
     # Application Settings
     app_version: str = Field(default="1.0.0", description="Application version")
-    environment: str = Field(default="development", description="Application environment")
+    environment: str = Field(
+        default="development", description="Application environment"
+    )
     debug: bool = Field(default=False, description="Debug mode")
 
     @property

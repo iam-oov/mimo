@@ -98,16 +98,13 @@ async def get_current_user(request: Request) -> dict[str, Any] | None:
 async def calculator_page(request: Request):
     """Render calculator page"""
     from src.shared.infrastructure.config.settings import get_settings
-    
+
     user = await get_current_user(request)
     settings = get_settings()
-    
+
     return templates.TemplateResponse(
-        "calculator.html", {
-            "request": request,
-            "user": user,
-            "version": settings.app_version
-        }
+        "calculator.html",
+        {"request": request, "user": user, "version": settings.app_version},
     )
 
 

@@ -10,8 +10,9 @@ __pycache__/
 # C extensions
 *.so
 
-# .playwright-mcp files
+# ai files
 .playwright-mcp/
+docs-ai/
 
 # Distribution / packaging
 .Python

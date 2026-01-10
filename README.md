@@ -6,6 +6,17 @@
 
 Mimo es una aplicación web que simplifica el cálculo de impuestos anuales para contribuyentes mexicanos, aplicando las reglas oficiales del SAT y proporcionando análisis fiscal inteligente mediante múltiples agentes de IA con personalidades únicas.
 
+### 💡 Origen del Nombre
+
+**Mimo** proviene del juego de palabras en spanglish **"MI MO"ney** (Mi Dinero), simbolizando que tus recursos financieros te pertenecen, no al SAT. El proyecto nace de la necesidad de democratizar el conocimiento fiscal en México, donde la falta de información accesible lleva a muchos contribuyentes a perder beneficios legítimos al no solicitar facturas o realizar su declaración anual.
+
+Mimo busca empoderar a las personas físicas para que tomen control de su situación fiscal mediante:
+
+- **Transparencia**: Cálculos claros y explicados paso a paso
+- **Educación**: Recomendaciones personalizadas que enseñan optimización fiscal legal
+- **Accesibilidad**: Herramientas profesionales sin necesidad de conocimiento contable previo
+- **Autonomía**: Información que permite tomar decisiones financieras informadas
+
 ### ¿Qué hace Mimo?
 
 - **Cálculo preciso de ISR**: Aplica las tablas ISR oficiales 2024-2025 con exenciones de UMA

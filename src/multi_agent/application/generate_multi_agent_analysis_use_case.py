@@ -1,14 +1,11 @@
-"""
-Multi-agent analysis use case.
-Orchestrates fiscal expert debate with rate limiting.
-"""
-
 from collections.abc import Generator
 from dataclasses import dataclass
 from datetime import date
 from typing import Any
 
-from src.multi_agent.application.multi_agent_debate_service import MultiAgentDebateService
+from src.multi_agent.application.multi_agent_debate_service import (
+    MultiAgentDebateService,
+)
 from src.multi_agent.domain.ports.multi_agent_provider import MultiAgentProvider
 from src.shared.domain.ports.repositories import UsageRepository
 

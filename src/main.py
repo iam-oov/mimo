@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -15,6 +16,7 @@ from src.multi_agent.infrastructure.api.multi_agent_chat_router import (
 from src.multi_agent.infrastructure.api.multi_agent_router import (
     router as multi_agent_router,
 )
+from src.multi_agent.infrastructure.memory.cleanup import periodic_cleanup
 from src.recommendations.infrastructure.api.recommendations_router import (
     router as recommendations_router,
 )
@@ -60,9 +62,26 @@ async def lifespan(app: FastAPI):
         )
         raise
 
+    # Start background cleanup task
+    cleanup_task = asyncio.create_task(
+        periodic_cleanup(
+            memory_dir="memory",
+            max_age_days=7,
+            interval_hours=24,
+        )
+    )
+    logger.info("✅ Memory cleanup task started")
+
     logger.info("✅ Mimo Tax Calculator started successfully")
 
     yield
+
+    # Shutdown: cancel background tasks
+    cleanup_task.cancel()
+    try:
+        await cleanup_task
+    except asyncio.CancelledError:
+        pass
 
     logger.info("👋 Shutting down Mimo Tax Calculator...")
 
@@ -129,7 +148,7 @@ async def calculator_page(request: Request):
     """Render calculator page"""
 
     user = await get_current_user(request)
-    app_version = "1.3.7"
+    app_version = "1.3.8"
 
     return templates.TemplateResponse(
         "calculator.html",

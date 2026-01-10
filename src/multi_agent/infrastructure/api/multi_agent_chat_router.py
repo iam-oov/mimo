@@ -1,8 +1,3 @@
-"""
-Multi-agent chat router.
-API endpoints for interactive agent chat.
-"""
-
 import json
 from typing import Any
 

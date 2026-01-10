@@ -1,8 +1,3 @@
-"""
-Multi-agent debate service using new architecture.
-Implements fiscal expert debate using LiteLLM and personality-based prompts.
-"""
-
 import random
 from collections.abc import Generator
 from dataclasses import dataclass

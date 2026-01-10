@@ -1,7 +1,8 @@
-"""
-API key validation on startup.
-Validates that configured AI provider API keys are valid before accepting requests.
-"""
+import asyncio
+
+import anthropic
+import google.generativeai as genai
+import httpx
 
 from src.shared.domain.exceptions import ConfigurationError
 from src.shared.infrastructure.config.settings import Settings
@@ -137,14 +138,10 @@ async def _validate_anthropic(settings: Settings) -> None:
     Raises:
         Exception: If validation fails
     """
-    import anthropic
-
     client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
 
     # Minimal test request (uses very few tokens)
     # Anthropic SDK is sync, so we run in executor to avoid blocking
-    import asyncio
-
     await asyncio.to_thread(
         lambda: client.messages.create(
             model=settings.anthropic_model,
@@ -164,8 +161,6 @@ async def _validate_deepseek(settings: Settings) -> None:
     Raises:
         Exception: If validation fails
     """
-    import httpx
-
     async with httpx.AsyncClient(timeout=10.0) as client:
         response = await client.post(
             f"{settings.deepseek_base_url}/chat/completions",
@@ -192,10 +187,6 @@ async def _validate_gemini(settings: Settings) -> None:
     Raises:
         Exception: If validation fails
     """
-    import asyncio
-
-    import google.generativeai as genai
-
     genai.configure(api_key=settings.gemini_api_key)
     model = genai.GenerativeModel(settings.gemini_model)
 
@@ -224,8 +215,6 @@ async def _validate_openai(settings: Settings) -> None:
     Raises:
         Exception: If validation fails
     """
-    import httpx
-
     async with httpx.AsyncClient(timeout=10.0) as client:
         response = await client.post(
             "https://api.openai.com/v1/chat/completions",

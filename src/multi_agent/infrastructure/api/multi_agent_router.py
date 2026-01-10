@@ -1,8 +1,3 @@
-"""
-Multi-agent analysis router.
-API endpoints for multi-agent fiscal debate.
-"""
-
 import json
 
 from fastapi import APIRouter, Depends, HTTPException

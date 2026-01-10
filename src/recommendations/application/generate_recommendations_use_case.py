@@ -3,7 +3,9 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any
 
-from src.recommendations.domain.ports.recommendation_provider import RecommendationProvider
+from src.recommendations.domain.ports.recommendation_provider import (
+    RecommendationProvider,
+)
 from src.shared.domain.ports.repositories import UsageRepository
 from src.shared.infrastructure.logging.structured_logger import get_logger
 from src.tax_calculation.domain.entities.tax_calculation import TaxCalculation
@@ -48,7 +50,9 @@ class GenerateRecommendationsUseCase:
             True if user has remaining usage, False otherwise
         """
         today = date.today()
-        remaining = self._usage_repository.get_remaining_usage(user_id, today, self._daily_limit)
+        remaining = self._usage_repository.get_remaining_usage(
+            user_id, today, self._daily_limit
+        )
         return remaining > 0
 
     def get_usage_info(self, user_id: str) -> dict[str, int]:
@@ -71,7 +75,9 @@ class GenerateRecommendationsUseCase:
             "daily_limit": self._daily_limit,
         }
 
-    def execute_stream(self, request: GenerateRecommendationsRequest) -> Generator[str, None, None]:
+    def execute_stream(
+        self, request: GenerateRecommendationsRequest
+    ) -> Generator[str, None, None]:
         """
         Execute recommendations generation with streaming response.
 
@@ -94,20 +100,26 @@ class GenerateRecommendationsUseCase:
         # Check rate limiting
         if not self.can_generate(request.user_id):
             logger.warning(
-                "User exceeded daily limit", user_id=request.user_id, daily_limit=self._daily_limit
+                "User exceeded daily limit",
+                user_id=request.user_id,
+                daily_limit=self._daily_limit,
             )
             raise PermissionError("Daily recommendation limit exceeded")
 
         # Find available provider
         provider = self._get_available_provider()
         if not provider:
-            logger.error("No AI provider available", providers_count=len(self._providers))
+            logger.error(
+                "No AI provider available", providers_count=len(self._providers)
+            )
             raise RuntimeError("No AI provider available")
 
         # Generate recommendations
         try:
             logger.debug(
-                "Using provider", provider=provider.get_provider_name(), user_id=request.user_id
+                "Using provider",
+                provider=provider.get_provider_name(),
+                user_id=request.user_id,
             )
 
             for chunk in provider.generate_recommendations_stream(

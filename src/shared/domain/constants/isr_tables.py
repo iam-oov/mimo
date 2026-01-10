@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-ISR table constants for multiple fiscal years.
-More efficient than loading JSON files at runtime.
-"""
-
 from dataclasses import dataclass
 
 

@@ -1,8 +1,3 @@
-"""
-Google OAuth authentication service.
-Handles OAuth flow, token verification, and user session management.
-"""
-
 import urllib.parse
 from typing import Any
 
@@ -52,8 +47,9 @@ class GoogleOAuthService:
         Get the OAuth redirect URI.
         Uses configured URI if available, otherwise derives from request.
         """
-        if self.settings.google_redirect_uri and not self.settings.google_redirect_uri.startswith(
-            "http://localhost"
+        if (
+            self.settings.google_redirect_uri
+            and not self.settings.google_redirect_uri.startswith("http://localhost")
         ):
             return self.settings.google_redirect_uri
 
@@ -82,7 +78,9 @@ class GoogleOAuthService:
 
         return f"{self.GOOGLE_AUTH_URL}?{urllib.parse.urlencode(params)}"
 
-    def exchange_code_for_token(self, request: Request, authorization_code: str) -> dict[str, Any]:
+    def exchange_code_for_token(
+        self, request: Request, authorization_code: str
+    ) -> dict[str, Any]:
         """
         Exchange authorization code for access token.
 
@@ -139,9 +137,13 @@ class GoogleOAuthService:
             )
             return user_info
         except Exception as e:
-            raise HTTPException(status_code=401, detail=f"Token verification failed: {str(e)}")
+            raise HTTPException(
+                status_code=401, detail=f"Token verification failed: {str(e)}"
+            )
 
-    def authenticate_user(self, request: Request, authorization_code: str) -> dict[str, Any]:
+    def authenticate_user(
+        self, request: Request, authorization_code: str
+    ) -> dict[str, Any]:
         """
         Complete authentication flow: exchange code and verify token.
 

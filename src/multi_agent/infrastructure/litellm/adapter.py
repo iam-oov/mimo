@@ -1,8 +1,3 @@
-"""
-LiteLLM adapter for unified multi-model support.
-Allows each agent to use different AI providers seamlessly.
-"""
-
 import os
 from collections.abc import Generator
 

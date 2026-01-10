@@ -1,8 +1,16 @@
 import asyncio
 
-import anthropic
-import google.generativeai as genai
 import httpx
+
+try:
+    import anthropic
+except ImportError:
+    anthropic = None  # type: ignore
+
+try:
+    from google import genai
+except ImportError:
+    genai = None  # type: ignore
 
 from src.shared.domain.exceptions import ConfigurationError
 from src.shared.infrastructure.config.settings import Settings
@@ -138,6 +146,9 @@ async def _validate_anthropic(settings: Settings) -> None:
     Raises:
         Exception: If validation fails
     """
+    if anthropic is None:
+        raise ImportError("anthropic package not installed")
+
     client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
 
     # Minimal test request (uses very few tokens)
@@ -187,14 +198,17 @@ async def _validate_gemini(settings: Settings) -> None:
     Raises:
         Exception: If validation fails
     """
-    genai.configure(api_key=settings.gemini_api_key)
-    model = genai.GenerativeModel(settings.gemini_model)
+    if genai is None:
+        raise ImportError("google-genai package not installed")
 
-    # Minimal test request (Gemini SDK is sync, use executor)
+    client = genai.Client(api_key=settings.gemini_api_key)
+
+    # Minimal test request (new API is async-compatible)
     response = await asyncio.to_thread(
-        lambda: model.generate_content(
-            "test",
-            generation_config=genai.GenerationConfig(
+        lambda: client.models.generate_content(
+            model=settings.gemini_model,
+            contents="test",
+            config=genai.types.GenerateContentConfig(
                 max_output_tokens=5,
                 temperature=settings.gemini_temperature,
             ),

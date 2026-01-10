@@ -6,7 +6,7 @@ import logging
 from collections.abc import Generator
 from typing import Any
 
-import google.generativeai as genai
+from google import genai
 
 from src.recommendations.domain.ports.recommendation_provider import (
     RecommendationProvider,
@@ -27,6 +27,7 @@ class GeminiRecommendationAdapter(RecommendationProvider):
     def __init__(self):
         settings = get_settings()
         self.api_key = settings.gemini_api_key
+        self.client = genai.Client(api_key=self.api_key)
 
     def generate_recommendations_stream(
         self, calculation_result: Any, user_data: dict[str, Any], fiscal_year: int
@@ -35,13 +36,15 @@ class GeminiRecommendationAdapter(RecommendationProvider):
         Generate recommendations using Gemini with streaming.
         """
         try:
-            genai.configure(api_key=self.api_key)
-            model = genai.GenerativeModel("gemini-pro")
             prompt = build_recommendation_prompt(
                 calculation_result, user_data, fiscal_year
             )
 
-            response = model.generate_content(prompt, stream=True)
+            # Use new API with streaming
+            response = self.client.models.generate_content_stream(
+                model="gemini-2.0-flash-exp",
+                contents=prompt,
+            )
 
             for chunk in response:
                 if chunk.text:

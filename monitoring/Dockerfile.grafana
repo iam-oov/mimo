@@ -1,0 +1,27 @@
+# Dockerfile for Grafana
+# Self-hosted Grafana for Railway deployment
+
+FROM grafana/grafana:10.2.3
+
+# Set environment variables
+ENV GF_SECURITY_ADMIN_USER=admin
+ENV GF_SECURITY_ADMIN_PASSWORD=changeme
+ENV GF_AUTH_ANONYMOUS_ENABLED=false
+ENV GF_INSTALL_PLUGINS=grafana-piechart-panel
+
+# Copy Grafana datasource configuration
+COPY grafana-datasources.yml /etc/grafana/provisioning/datasources/
+
+# Copy Grafana dashboard configuration
+COPY grafana-dashboards.yml /etc/grafana/provisioning/dashboards/
+COPY dashboards/ /var/lib/grafana/dashboards/
+
+# Expose Grafana port
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost:3000/api/health || exit 1
+
+# Run Grafana
+CMD ["/run.sh"]

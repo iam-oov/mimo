@@ -1,0 +1,16 @@
+# Grafana Dashboards Configuration
+# Auto-provision dashboards from JSON files
+
+apiVersion: 1
+
+providers:
+  - name: 'Mimo Dashboards'
+    orgId: 1
+    folder: 'Mimo'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: true

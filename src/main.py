@@ -4,8 +4,9 @@ from typing import Any
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -26,8 +27,10 @@ from src.shared.infrastructure.api.middleware.error_handler import (
     log_requests_middleware,
     validation_exception_handler,
 )
+from src.shared.infrastructure.api.middleware.metrics import PrometheusMiddleware
 from src.shared.infrastructure.config.api_key_validator import validate_api_keys
 from src.shared.infrastructure.config.settings import get_settings
+from src.shared.infrastructure.health.health_check import HealthCheckService
 from src.shared.infrastructure.logging.structured_logger import get_logger
 from src.shared.infrastructure.persistence.sqlite_usage_repository import (
     SqliteUsageRepository,
@@ -105,7 +108,8 @@ def create_app() -> FastAPI:
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
     app.add_exception_handler(Exception, generic_exception_handler)
 
-    # Add middlewares
+    # Add middlewares (order matters: Prometheus → Logging → Session)
+    app.add_middleware(PrometheusMiddleware)
     app.middleware("http")(log_requests_middleware)
     app.add_middleware(SessionMiddleware, secret_key=settings.secret_key)
 
@@ -116,11 +120,31 @@ def create_app() -> FastAPI:
     app.include_router(multi_agent_router)
     app.include_router(multi_agent_chat_router)
 
+    # Prometheus metrics endpoint
+    @app.get("/metrics")
+    async def metrics():
+        """Expose Prometheus metrics"""
+        return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
     # Health check endpoint for Railway
     @app.get("/health")
     async def health_check():
-        """Health check endpoint for Railway monitoring"""
-        return {"status": "healthy", "service": "mimo"}
+        """
+        Health check endpoint with detailed component checks.
+        Returns 200 if healthy, 503 if degraded.
+        """
+        import json
+
+        settings = get_settings()
+        health_service = HealthCheckService(settings)
+        result = await health_service.check_all()
+
+        status_code = 200 if result["status"] == "healthy" else 503
+        return Response(
+            content=json.dumps(result),
+            status_code=status_code,
+            media_type="application/json",
+        )
 
     # Root redirect
     @app.get("/")

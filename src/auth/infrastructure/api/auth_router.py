@@ -13,8 +13,11 @@ from src.auth.infrastructure.dependencies import (
     get_oauth_service,
 )
 from src.auth.infrastructure.oauth_service import GoogleOAuthService
+from src.shared.domain.exceptions import AuthenticationError
+from src.shared.infrastructure.logging.structured_logger import get_logger
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
+logger = get_logger(__name__)
 
 
 @router.get("/google")
@@ -82,10 +85,24 @@ async def google_callback(
         # Redirect to calculator
         return RedirectResponse(url="/calculator", status_code=302)
 
+    except AuthenticationError as e:
+        logger.warning(
+            "Authentication failed",
+            error_message=e.message,
+            internal_details=e.internal_details,
+        )
+        raise HTTPException(
+            status_code=400,
+            detail="Error de autenticación. Por favor intenta de nuevo.",
+        )
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Authentication failed: {str(e)}")
+    except Exception:
+        logger.exception("Unexpected error during authentication")
+        raise HTTPException(
+            status_code=400,
+            detail="Error de autenticación. Por favor intenta de nuevo.",
+        )
 
 
 @router.get("/logout")

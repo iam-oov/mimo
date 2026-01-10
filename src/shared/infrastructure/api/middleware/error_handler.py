@@ -10,6 +10,19 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from src.shared.domain.exceptions import (
+    AIProviderError,
+    AIProviderUnavailableError,
+    AuthenticationError,
+    AuthorizationError,
+    ConfigurationError,
+    DatabaseError,
+    MemoryStoreError,
+    MimoException,
+    RateLimitExceededError,
+    TaxCalculationError,
+    ValidationError,
+)
 from src.shared.infrastructure.logging.structured_logger import get_logger
 
 logger = get_logger(__name__)
@@ -18,7 +31,9 @@ logger = get_logger(__name__)
 class ErrorResponse:
     """Standardized error response format."""
 
-    def __init__(self, error: str, message: str, status_code: int, details: dict | None = None):
+    def __init__(
+        self, error: str, message: str, status_code: int, details: dict | None = None
+    ):
         self.error = error
         self.message = message
         self.status_code = status_code
@@ -36,7 +51,9 @@ class ErrorResponse:
         return response
 
 
-async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+async def http_exception_handler(
+    request: Request, exc: StarletteHTTPException
+) -> JSONResponse:
     """
     Handle HTTP exceptions (4xx, 5xx errors).
 
@@ -128,29 +145,179 @@ async def validation_exception_handler(
 async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """
     Handle unexpected exceptions (500 Internal Server Error).
+    Also handles domain-specific exceptions with appropriate status codes.
 
     Args:
         request: FastAPI request
         exc: Any exception
 
     Returns:
-        JSON response with generic error message
+        JSON response with appropriate error message
     """
+    # Handle domain-specific exceptions
+    if isinstance(exc, RateLimitExceededError):
+        logger.warning(
+            "Rate limit exceeded",
+            path=request.url.path,
+            user_id=getattr(exc, "usage_count", None),
+        )
+        return JSONResponse(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            content=ErrorResponse(
+                error="rate_limit_exceeded",
+                message=exc.message,
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                details={
+                    "usage_count": exc.usage_count,
+                    "daily_limit": exc.daily_limit,
+                },
+            ).to_dict(),
+        )
+
+    if isinstance(exc, ValidationError):
+        logger.warning(
+            "Validation error",
+            path=request.url.path,
+            message=exc.message,
+        )
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content=ErrorResponse(
+                error="validation_error",
+                message=exc.message,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            ).to_dict(),
+        )
+
+    if isinstance(exc, TaxCalculationError):
+        logger.error(
+            "Tax calculation error",
+            path=request.url.path,
+            message=exc.message,
+            internal_details=exc.internal_details,
+        )
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content=ErrorResponse(
+                error="tax_calculation_error",
+                message="Error al calcular impuestos. Por favor verifica tus datos.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            ).to_dict(),
+        )
+
+    if isinstance(exc, (AuthenticationError, AuthorizationError)):
+        logger.warning(
+            "Authentication/Authorization error",
+            path=request.url.path,
+            error_type=type(exc).__name__,
+        )
+        status_code = (
+            status.HTTP_401_UNAUTHORIZED
+            if isinstance(exc, AuthenticationError)
+            else status.HTTP_403_FORBIDDEN
+        )
+        return JSONResponse(
+            status_code=status_code,
+            content=ErrorResponse(
+                error="authentication_error"
+                if isinstance(exc, AuthenticationError)
+                else "authorization_error",
+                message=exc.message,
+                status_code=status_code,
+            ).to_dict(),
+        )
+
+    if isinstance(exc, AIProviderUnavailableError):
+        logger.error(
+            "AI provider unavailable",
+            path=request.url.path,
+            internal_details=exc.internal_details,
+        )
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content=ErrorResponse(
+                error="service_unavailable",
+                message="El servicio de IA no está disponible. Intenta más tarde.",
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            ).to_dict(),
+        )
+
+    if isinstance(exc, AIProviderError):
+        logger.error(
+            "AI provider error",
+            path=request.url.path,
+            internal_details=exc.internal_details,
+        )
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content=ErrorResponse(
+                error="ai_provider_error",
+                message="Error en el servicio de IA. Intenta más tarde.",
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            ).to_dict(),
+        )
+
+    if isinstance(exc, (DatabaseError, MemoryStoreError)):
+        logger.error(
+            "Storage error",
+            path=request.url.path,
+            error_type=type(exc).__name__,
+            internal_details=exc.internal_details,
+        )
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content=ErrorResponse(
+                error="storage_error",
+                message="Error de almacenamiento. Nuestro equipo ha sido notificado.",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            ).to_dict(),
+        )
+
+    if isinstance(exc, ConfigurationError):
+        logger.critical(
+            "Configuration error",
+            path=request.url.path,
+            message=exc.message,
+            internal_details=exc.internal_details,
+        )
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content=ErrorResponse(
+                error="configuration_error",
+                message="Error de configuración. Nuestro equipo ha sido notificado.",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            ).to_dict(),
+        )
+
+    if isinstance(exc, MimoException):
+        logger.error(
+            "Mimo domain error",
+            path=request.url.path,
+            error_type=type(exc).__name__,
+            message=exc.message,
+            internal_details=exc.internal_details,
+        )
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content=ErrorResponse(
+                error="domain_error",
+                message="Error en el sistema. Nuestro equipo ha sido notificado.",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            ).to_dict(),
+        )
+
+    # Handle truly unexpected exceptions
     logger.exception(
         "Unexpected error",
         path=request.url.path,
         method=request.method,
         exception_type=type(exc).__name__,
-        error=str(exc),
     )
 
     error_response = ErrorResponse(
         error="internal_server_error",
-        message="An unexpected error occurred. Please try again later.",
+        message="Error inesperado. Por favor intenta de nuevo más tarde.",
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        details={
-            "exception_type": type(exc).__name__,
-        },
     )
 
     return JSONResponse(

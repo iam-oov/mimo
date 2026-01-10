@@ -4,6 +4,7 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
+from src.shared.domain.exceptions import TaxCalculationError, ValidationError
 from src.shared.infrastructure.api.schemas.tax_schemas import (
     TaxCalculationRequest,
     TaxCalculationResponse,
@@ -104,6 +105,25 @@ def calculate_tax(request: TaxCalculationRequest) -> dict[str, Any]:
         # Map domain entity to API response
         return response.calculation.to_dict()
 
+    except ValidationError as e:
+        logger.warning(
+            "⚠️ Validation error in tax calculation",
+            error_message=e.message,
+            internal_details=e.internal_details,
+            request_data=request.model_dump(),
+        )
+        raise HTTPException(status_code=400, detail=e.message)
+    except TaxCalculationError as e:
+        logger.error(
+            "❌ Tax calculation error",
+            error_message=e.message,
+            internal_details=e.internal_details,
+            request_data=request.model_dump(),
+        )
+        raise HTTPException(
+            status_code=400,
+            detail="Error al calcular impuestos. Por favor verifica tus datos.",
+        )
     except ValueError as e:
         logger.error(
             "❌ Validation error in tax calculation",
@@ -112,10 +132,11 @@ def calculate_tax(request: TaxCalculationRequest) -> dict[str, Any]:
         )
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(
+        logger.exception(
             "❌ Unexpected error in tax calculation",
             error_type=type(e).__name__,
-            error_message=str(e),
-            exc_info=True,
         )
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Error interno del servidor. Nuestro equipo ha sido notificado.",
+        )

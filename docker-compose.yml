@@ -1,0 +1,46 @@
+services:
+  mimo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mimo-app
+    ports:
+      - "8000:8000"
+    environment:
+      # OAuth (required for AI recommendations)
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI:-}
+
+      # Session security
+      - SECRET_KEY=${SECRET_KEY}
+
+      # AI Providers
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+
+      # Optional settings
+      - DAILY_RECOMMENDATIONS_LIMIT=${DAILY_RECOMMENDATIONS_LIMIT:-3}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+    volumes:
+      # Persist SQLite database
+      - mimo-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  mimo-data:
+    driver: local

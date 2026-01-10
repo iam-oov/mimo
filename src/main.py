@@ -24,11 +24,15 @@ from src.shared.infrastructure.api.middleware.error_handler import (
     log_requests_middleware,
     validation_exception_handler,
 )
+from src.shared.infrastructure.config.api_key_validator import validate_api_keys
 from src.shared.infrastructure.config.settings import get_settings
+from src.shared.infrastructure.logging.structured_logger import get_logger
 from src.shared.infrastructure.persistence.sqlite_usage_repository import (
     SqliteUsageRepository,
 )
 from src.tax_calculation.infrastructure.api.tax_router import router as tax_router
+
+logger = get_logger(__name__)
 
 
 @asynccontextmanager
@@ -38,9 +42,29 @@ async def lifespan(app: FastAPI):
     Handles startup and shutdown events.
     """
     settings = get_settings()
+
+    logger.info("🚀 Starting Mimo Tax Calculator...")
+
+    # Initialize database
     _ = SqliteUsageRepository(settings.database_url)
+    logger.info("✅ Database initialized")
+
+    # Validate API keys (fail fast if invalid)
+    try:
+        await validate_api_keys(settings)
+        logger.info("✅ API keys validated")
+    except Exception as e:
+        logger.critical(
+            "❌ API key validation failed - application will not start",
+            error=str(e),
+        )
+        raise
+
+    logger.info("✅ Mimo Tax Calculator started successfully")
+
     yield
-    pass
+
+    logger.info("👋 Shutting down Mimo Tax Calculator...")
 
 
 def create_app() -> FastAPI:

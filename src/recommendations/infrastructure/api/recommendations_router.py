@@ -5,6 +5,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 
 from src.auth.infrastructure.dependencies import get_user_id
+from src.shared.domain.exceptions import (
+    AIProviderError,
+    RateLimitExceededError,
+    TaxCalculationError,
+    ValidationError,
+)
 from src.recommendations.application.generate_recommendations_use_case import (
     GenerateRecommendationsRequest,
     GenerateRecommendationsUseCase,
@@ -201,16 +207,36 @@ async def generate_recommendations_stream(
                 )
                 yield f"data: {complete_data}\n\n"
 
+            except RateLimitExceededError as e:
+                error_data = json.dumps(
+                    {
+                        "type": "error",
+                        "message": e.message,
+                        "code": 429,
+                        "usage_count": e.usage_count,
+                        "daily_limit": e.daily_limit,
+                    }
+                )
+                yield f"data: {error_data}\n\n"
             except PermissionError as e:
                 error_data = json.dumps(
                     {"type": "error", "message": str(e), "code": 429}
                 )
                 yield f"data: {error_data}\n\n"
-            except Exception as e:
+            except AIProviderError as e:
                 error_data = json.dumps(
                     {
                         "type": "error",
-                        "message": f"Failed to generate recommendations: {str(e)}",
+                        "message": "El servicio de recomendaciones no está disponible. Intenta más tarde.",
+                        "code": 503,
+                    }
+                )
+                yield f"data: {error_data}\n\n"
+            except Exception:
+                error_data = json.dumps(
+                    {
+                        "type": "error",
+                        "message": "Error al generar recomendaciones. Nuestro equipo ha sido notificado.",
                         "code": 500,
                     }
                 )
@@ -226,5 +252,10 @@ async def generate_recommendations_stream(
             },
         )
 
+    except (ValidationError, TaxCalculationError) as e:
+        raise HTTPException(
+            status_code=400,
+            detail=e.message if hasattr(e, "message") else str(e),
+        )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=f"Invalid data: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Datos inválidos: {str(e)}")

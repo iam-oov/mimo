@@ -1364,11 +1364,11 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="monthly_gross_income">Ingreso Bruto Mensual ($):</label>
-                                <input type="number" id="monthly_gross_income" name="monthly_gross_income" step="0.01" min="0" value="0">
+                                <input type="text" id="monthly_gross_income" name="monthly_gross_income" class="currency-input" value="$0.00" inputmode="decimal">
                             </div>
                             <div class="form-group">
                                 <label for="monthly_net_income">Ingreso Neto Mensual ($):</label>
-                                <input type="number" id="monthly_net_income" name="monthly_net_income" step="0.01" min="0" value="0">
+                                <input type="text" id="monthly_net_income" name="monthly_net_income" class="currency-input" value="$0.00" inputmode="decimal">
                             </div>
                         </div>
                         <div class="form-row">
@@ -1398,7 +1398,7 @@
                                     <div class="form-group">
                                         <label for="general_deductions">Total Deducciones Generales ($):</label>
                                         <small class="input-subtitle">Médico/Dental • Funeral • Donaciones • Intereses Hipotecarios • Jubilación • Primas de Seguro de Gastos Médicos • Pediatra • Ginecólogo • Psicología • Nutriología</small>
-                                        <input type="number" id="general_deductions" name="general_deductions" step="0.01" min="0" value="0">
+                                        <input type="text" id="general_deductions" name="general_deductions" class="currency-input" value="$0.00" inputmode="decimal">
                                     </div>
                                 </div>
                             </div>
@@ -1408,7 +1408,7 @@
                                     <div class="form-group">
                                         <label for="total_tuition">Total Colegiaturas ($):</label>
                                         <small class="input-subtitle">Preescolar • Primaria • Secundaria • Técnico • Preparatoria</small>
-                                        <input type="number" id="total_tuition" name="total_tuition" step="0.01" min="0" value="0">
+                                        <input type="text" id="total_tuition" name="total_tuition" class="currency-input" value="$0.00" inputmode="decimal">
                                     </div>
                                 </div>
                             </div>
@@ -1418,7 +1418,7 @@
                                     <div class="form-group">
                                         <label for="total_ppr">Total Contribuciones ($):</label>
                                         <small class="input-subtitle">Contribuciones PPR • Contribuciones Afore</small>
-                                        <input type="number" id="total_ppr" name="total_ppr" step="0.01" min="0" value="0">
+                                        <input type="text" id="total_ppr" name="total_ppr" class="currency-input" value="$0.00" inputmode="decimal">
                                     </div>
                                 </div>
                             </div>
@@ -1907,8 +1907,21 @@
             }
         }
 
+        function parseCurrencyValue(value) {
+            if (typeof value === 'number') return value;
+            return parseFloat(value.replace(/[$,]/g, '')) || 0;
+        }
+
+        function formatCurrencyInput(value) {
+            const num = parseCurrencyValue(value);
+            return '$' + num.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
         function distributeUnifiedValues() {
-            const generalTotal = parseFloat(document.getElementById('general_deductions').value) || 0;
+            const generalTotal = parseCurrencyValue(document.getElementById('general_deductions').value) || 0;
             const generalProportion = generalTotal / 9;
             document.getElementById('medical_dental_expenses').value = generalProportion;
             document.getElementById('funeral_expenses').value = generalProportion;
@@ -1919,14 +1932,14 @@
             document.getElementById('school_transportation_expenses').value = generalProportion;
             document.getElementById('special_savings_account_deposits').value = generalProportion;
             document.getElementById('educational_services_payments').value = generalProportion;
-            const tuitionTotal = parseFloat(document.getElementById('total_tuition').value) || 0;
+            const tuitionTotal = parseCurrencyValue(document.getElementById('total_tuition').value) || 0;
             const tuitionProportion = tuitionTotal / 5;
             document.getElementById('preschool_tuition').value = tuitionProportion;
             document.getElementById('elementary_tuition').value = tuitionProportion;
             document.getElementById('middle_school_tuition').value = tuitionProportion;
             document.getElementById('technical_school_tuition').value = tuitionProportion;
             document.getElementById('high_school_tuition').value = tuitionProportion;
-            const pprTotal = parseFloat(document.getElementById('total_ppr').value) || 0;
+            const pprTotal = parseCurrencyValue(document.getElementById('total_ppr').value) || 0;
             const pprProportion = pprTotal / 3;
             document.getElementById('ppr_contributions').value = pprProportion;
             document.getElementById('ppr_additional_contributions').value = pprProportion;
@@ -1939,7 +1952,7 @@
             for (let [key, value] of formData.entries()) {
                 if (key === 'taxpayer_name') { data[key] = value; }
                 else if (key === 'fiscal_year' || key === 'bonus_days' || key === 'vacation_days') { data[key] = parseInt(value) || 0; }
-                else { data[key] = parseFloat(value) || 0; }
+                else { data[key] = parseCurrencyValue(value) || 0; }
             }
             return data;
         }
@@ -2616,12 +2629,42 @@
             return div.innerHTML;
         }
 
+        function initializeCurrencyInputs() {
+            const currencyInputs = document.querySelectorAll('.currency-input');
+            
+            currencyInputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    const value = parseCurrencyValue(this.value);
+                    if (value === 0) {
+                        this.value = '';
+                    } else {
+                        this.value = value.toString();
+                    }
+                    this.select();
+                });
+                
+                input.addEventListener('blur', function() {
+                    this.value = formatCurrencyInput(this.value);
+                });
+                
+                input.addEventListener('input', function(e) {
+                    let value = this.value.replace(/[^0-9.]/g, '');
+                    const parts = value.split('.');
+                    if (parts.length > 2) {
+                        value = parts[0] + '.' + parts.slice(1).join('');
+                    }
+                    this.value = value;
+                });
+            });
+        }
+
         const debouncedCalculateTaxes = debounce(calculateTaxes, 500);
 
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('taxForm');
             const inputs = form.querySelectorAll('input, select');
             
+            initializeCurrencyInputs();
             captureInitialFormState();
             
             inputs.forEach(input => {

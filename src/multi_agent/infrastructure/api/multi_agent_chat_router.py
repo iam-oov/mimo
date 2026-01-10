@@ -16,6 +16,11 @@ from src.multi_agent.application.multi_agent_chat_use_case import (
     MultiAgentChatUseCase,
 )
 from src.multi_agent.infrastructure.litellm.adapter import create_agent_adapter
+from src.shared.domain.exceptions import (
+    AIProviderError,
+    AIProviderUnavailableError,
+    RateLimitExceededError,
+)
 from src.shared.infrastructure.config.dependency_injection import get_container
 
 router = APIRouter(prefix="/api/chat", tags=["multi-agent-chat"])
@@ -91,8 +96,16 @@ async def get_available_agents(
             )
             for agent in agents
         ]
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get agents: {str(e)}")
+    except AIProviderError:
+        raise HTTPException(
+            status_code=503,
+            detail="El servicio de chat no está disponible. Intenta más tarde.",
+        )
+    except Exception:
+        raise HTTPException(
+            status_code=500,
+            detail="Error al obtener agentes. Nuestro equipo ha sido notificado.",
+        )
 
 
 @router.post("/message")
@@ -156,15 +169,52 @@ async def send_chat_message(
                 "data": json.dumps(usage_info),
             }
 
+        except RateLimitExceededError as e:
+            yield {
+                "event": "error",
+                "data": json.dumps(
+                    {
+                        "error": e.message,
+                        "code": 429,
+                        "usage_count": e.usage_count,
+                        "daily_limit": e.daily_limit,
+                    }
+                ),
+            }
+        except AIProviderUnavailableError:
+            yield {
+                "event": "error",
+                "data": json.dumps(
+                    {
+                        "error": "El agente no está disponible. Intenta más tarde.",
+                        "code": 503,
+                    }
+                ),
+            }
+        except AIProviderError:
+            yield {
+                "event": "error",
+                "data": json.dumps(
+                    {
+                        "error": "Error en el servicio de chat. Intenta más tarde.",
+                        "code": 503,
+                    }
+                ),
+            }
         except ValueError as e:
             yield {
                 "event": "error",
-                "data": json.dumps({"error": str(e)}),
+                "data": json.dumps({"error": str(e), "code": 400}),
             }
-        except Exception as e:
+        except Exception:
             yield {
                 "event": "error",
-                "data": json.dumps({"error": f"Chat failed: {str(e)}"}),
+                "data": json.dumps(
+                    {
+                        "error": "Error en el chat. Nuestro equipo ha sido notificado.",
+                        "code": 500,
+                    }
+                ),
             }
 
     return EventSourceResponse(event_generator())

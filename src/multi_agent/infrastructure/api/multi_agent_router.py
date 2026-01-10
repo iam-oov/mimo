@@ -8,11 +8,16 @@ import json
 from fastapi import APIRouter, Depends, HTTPException
 from sse_starlette.sse import EventSourceResponse
 
+from src.auth.infrastructure.dependencies import get_user_id
 from src.multi_agent.application.generate_multi_agent_analysis_use_case import (
     GenerateMultiAgentAnalysisUseCase,
     MultiAgentAnalysisRequest,
 )
-from src.auth.infrastructure.dependencies import get_user_id
+from src.shared.domain.exceptions import (
+    AIProviderError,
+    RateLimitExceededError,
+    ValidationError,
+)
 from src.shared.infrastructure.api.schemas.multi_agent_schemas import (
     MultiAgentAnalysisRequest as MultiAgentAnalysisRequestSchema,
 )
@@ -135,16 +140,47 @@ async def generate_multi_agent_analysis(
                 "data": json.dumps(usage_info),
             }
 
-        except ValueError as e:
-            error_msg = str(e)
+        except RateLimitExceededError as e:
             yield {
                 "event": "error",
-                "data": json.dumps({"error": error_msg}),
+                "data": json.dumps(
+                    {
+                        "error": e.message,
+                        "code": 429,
+                        "usage_count": e.usage_count,
+                        "daily_limit": e.daily_limit,
+                    }
+                ),
             }
-        except Exception as e:
+        except ValidationError as e:
             yield {
                 "event": "error",
-                "data": json.dumps({"error": f"Analysis failed: {str(e)}"}),
+                "data": json.dumps({"error": e.message, "code": 400}),
+            }
+        except AIProviderError:
+            yield {
+                "event": "error",
+                "data": json.dumps(
+                    {
+                        "error": "El servicio de análisis no está disponible. Intenta más tarde.",
+                        "code": 503,
+                    }
+                ),
+            }
+        except ValueError as e:
+            yield {
+                "event": "error",
+                "data": json.dumps({"error": str(e), "code": 400}),
+            }
+        except Exception:
+            yield {
+                "event": "error",
+                "data": json.dumps(
+                    {
+                        "error": "Error en el análisis. Nuestro equipo ha sido notificado.",
+                        "code": 500,
+                    }
+                ),
             }
 
     return EventSourceResponse(event_generator())

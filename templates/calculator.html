@@ -1263,6 +1263,54 @@
             }
         }
         
+        /* Banner Informativo */
+        .info-banner {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            padding: 6px 16px;
+            text-align: center;
+            font-size: 0.8rem;
+            border-bottom: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        
+        .info-banner-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            line-height: 1.4;
+        }
+        
+        .info-banner-icon {
+            font-size: 0.9rem;
+        }
+        
+        .info-banner-text {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .info-banner-text strong {
+            color: #fbbf24;
+            font-weight: 600;
+        }
+        
+        .info-banner-badge {
+            background: rgba(251, 191, 36, 0.2);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            white-space: nowrap;
+        }
+        
     </style>
 </head>
 <body>
@@ -1280,6 +1328,15 @@
             </div>
         </div>
     </nav>
+
+    <!-- Banner Informativo -->
+    <div class="info-banner">
+        <div class="info-banner-content">
+            <span><strong>Herramienta de Proyección</strong> para personas físicas bajo</span>
+            <span class="info-banner-badge">🇲🇽 Sueldos y Salarios</span>
+            <span>• Cálculos estimados, no sustituyen asesoría profesional</span>
+        </div>
+    </div>
 
     <div class="main-container">
         <div class="calculator-grid">

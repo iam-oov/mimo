@@ -5,3 +5,4 @@
 - dockerizar
 - mejorar el responsivo del sitio web
 - hacer el feeling mas agentico y no tanto de calculadora
+- el endpoint de /calcular debe estar en el modulo tax_calculation, no ?

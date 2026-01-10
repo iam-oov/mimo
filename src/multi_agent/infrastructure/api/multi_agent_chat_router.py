@@ -10,11 +10,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sse_starlette.sse import EventSourceResponse
 
+from src.auth.infrastructure.dependencies import get_user_id
 from src.multi_agent.application.multi_agent_chat_use_case import (
     AgentChatRequest,
     MultiAgentChatUseCase,
 )
-from src.auth.infrastructure.dependencies import get_user_id
+from src.multi_agent.infrastructure.litellm.adapter import create_agent_adapter
 from src.shared.infrastructure.config.dependency_injection import get_container
 
 router = APIRouter(prefix="/api/chat", tags=["multi-agent-chat"])
@@ -115,8 +116,6 @@ async def send_chat_message(
 
     # Validate agent adapter is available BEFORE creating SSE stream
     # This ensures we return proper HTTP error codes instead of 200 with error in stream
-    from src.multi_agent.infrastructure.litellm.adapter import create_agent_adapter
-
     adapter = create_agent_adapter(request.agent_id)
     if not adapter:
         raise HTTPException(

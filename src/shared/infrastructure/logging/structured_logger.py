@@ -1,11 +1,6 @@
-"""
-Structured logging module for Mimo.
-Provides JSON logging for production and readable logs for development.
-"""
-
 import json
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from src.shared.infrastructure.config.settings import get_settings
@@ -39,7 +34,7 @@ class StructuredLogger:
     def _format_log(self, level: str, message: str, **context: Any) -> str:
         """Format log entry based on environment"""
         log_entry = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
             "level": level,
             "logger": self.logger.name,
             "message": message,

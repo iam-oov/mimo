@@ -3,6 +3,7 @@ Multi-agent chat use case.
 Interactive chat where user selects which agent responds.
 """
 
+import random
 from collections.abc import Generator
 from dataclasses import dataclass
 from datetime import date
@@ -11,6 +12,7 @@ from typing import Any
 from src.multi_agent.domain.ports.memory import MemoryStore
 from src.multi_agent.infrastructure.litellm.adapter import create_agent_adapter
 from src.multi_agent.infrastructure.prompts.multi_agent_prompts import (
+    PROFESSION_FOCUS,
     Personality,
     Profession,
     build_debate_context,
@@ -92,12 +94,6 @@ class MultiAgentChatUseCase:
         Get list of available agents with their profiles.
         Generates 3 random agents with different personalities/professions.
         """
-        import random
-
-        from src.multi_agent.infrastructure.prompts.multi_agent_prompts import (
-            PROFESSION_FOCUS,
-        )
-
         # Generate 3 unique agents
         personalities = list(Personality)
         professions = list(Profession)

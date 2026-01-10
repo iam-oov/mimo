@@ -5,6 +5,8 @@ Gemini multi-agent provider adapter.
 import logging
 from collections.abc import Generator
 
+import google.generativeai as genai
+
 from src.multi_agent.domain.ports.multi_agent_provider import MultiAgentProvider
 from src.shared.infrastructure.config.settings import Settings
 
@@ -21,8 +23,6 @@ class GeminiMultiAgentAdapter(MultiAgentProvider):
     def generate_stream(self, prompt: str) -> Generator[str, None, None]:
         """Generate streaming response from Gemini."""
         try:
-            import google.generativeai as genai
-
             genai.configure(api_key=self.api_key)
             model = genai.GenerativeModel("gemini-1.5-flash")
 

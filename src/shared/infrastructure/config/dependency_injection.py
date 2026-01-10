@@ -7,13 +7,29 @@ from src.multi_agent.application.multi_agent_chat_use_case import MultiAgentChat
 from src.multi_agent.domain.ports.memory import MemoryStore
 from src.multi_agent.domain.ports.multi_agent_provider import MultiAgentProvider
 from src.multi_agent.infrastructure.memory.simple_memory import SimpleMemoryStore
+from src.multi_agent.infrastructure.providers.deepseek_adapter import (
+    DeepSeekMultiAgentAdapter,
+)
+from src.multi_agent.infrastructure.providers.gemini_adapter import (
+    GeminiMultiAgentAdapter,
+)
 from src.recommendations.application.generate_recommendations_use_case import (
     GenerateRecommendationsUseCase,
 )
-from src.recommendations.domain.ports.recommendation_provider import RecommendationProvider
+from src.recommendations.domain.ports.recommendation_provider import (
+    RecommendationProvider,
+)
+from src.recommendations.infrastructure.providers.deepseek_adapter import (
+    DeepSeekRecommendationAdapter,
+)
+from src.recommendations.infrastructure.providers.gemini_adapter import (
+    GeminiRecommendationAdapter,
+)
 from src.shared.domain.ports.repositories import UsageRepository
 from src.shared.infrastructure.config.settings import get_settings
-from src.shared.infrastructure.persistence.sqlite_usage_repository import SqliteUsageRepository
+from src.shared.infrastructure.persistence.sqlite_usage_repository import (
+    SqliteUsageRepository,
+)
 
 
 class DependencyContainer:
@@ -35,22 +51,14 @@ class DependencyContainer:
     def get_usage_repository(self) -> UsageRepository:
         """Get or create usage repository instance"""
         if self._usage_repository is None:
-            self._usage_repository = SqliteUsageRepository(db_path=self._settings.database_url)
+            self._usage_repository = SqliteUsageRepository(
+                db_path=self._settings.database_url
+            )
         return self._usage_repository
 
     def get_recommendation_providers(self) -> list[RecommendationProvider]:
-        """
-        Get list of recommendation providers in priority order.
-        Uses lazy imports to avoid circular dependencies.
-        """
+        """Get list of recommendation providers in priority order."""
         if self._recommendation_providers is None:
-            from src.recommendations.infrastructure.providers.deepseek_adapter import (
-                DeepSeekRecommendationAdapter,
-            )
-            from src.recommendations.infrastructure.providers.gemini_adapter import (
-                GeminiRecommendationAdapter,
-            )
-
             providers: list[RecommendationProvider] = []
 
             # Priority 1: DeepSeek
@@ -89,18 +97,8 @@ class DependencyContainer:
         return self._memory_store
 
     def get_multi_agent_providers(self) -> list[MultiAgentProvider]:
-        """
-        Get list of multi-agent providers in priority order.
-        Uses lazy imports to avoid circular dependencies.
-        """
+        """Get list of multi-agent providers in priority order."""
         if self._multi_agent_providers is None:
-            from src.multi_agent.infrastructure.providers.deepseek_adapter import (
-                DeepSeekMultiAgentAdapter,
-            )
-            from src.multi_agent.infrastructure.providers.gemini_adapter import (
-                GeminiMultiAgentAdapter,
-            )
-
             providers: list[MultiAgentProvider] = []
 
             # Priority 1: DeepSeek

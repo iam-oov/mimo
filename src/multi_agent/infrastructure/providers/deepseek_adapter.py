@@ -5,6 +5,8 @@ DeepSeek multi-agent provider adapter.
 import logging
 from collections.abc import Generator
 
+from openai import OpenAI
+
 from src.multi_agent.domain.ports.multi_agent_provider import MultiAgentProvider
 from src.shared.infrastructure.config.settings import Settings
 
@@ -28,8 +30,6 @@ class DeepSeekMultiAgentAdapter(MultiAgentProvider):
     def generate_stream(self, prompt: str) -> Generator[str, None, None]:
         """Generate streaming response from DeepSeek."""
         try:
-            from openai import OpenAI
-
             client = OpenAI(api_key=self.api_key, base_url=self.base_url)
             messages = _convert_prompt_to_messages(prompt)
 

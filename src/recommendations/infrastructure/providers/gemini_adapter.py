@@ -6,7 +6,11 @@ import logging
 from collections.abc import Generator
 from typing import Any
 
-from src.recommendations.domain.ports.recommendation_provider import RecommendationProvider
+import google.generativeai as genai
+
+from src.recommendations.domain.ports.recommendation_provider import (
+    RecommendationProvider,
+)
 from src.recommendations.infrastructure.providers._shared import (
     build_recommendation_prompt,
 )
@@ -31,11 +35,11 @@ class GeminiRecommendationAdapter(RecommendationProvider):
         Generate recommendations using Gemini with streaming.
         """
         try:
-            import google.generativeai as genai
-
             genai.configure(api_key=self.api_key)
             model = genai.GenerativeModel("gemini-pro")
-            prompt = build_recommendation_prompt(calculation_result, user_data, fiscal_year)
+            prompt = build_recommendation_prompt(
+                calculation_result, user_data, fiscal_year
+            )
 
             response = model.generate_content(prompt, stream=True)
 

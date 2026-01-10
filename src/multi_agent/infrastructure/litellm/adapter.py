@@ -6,7 +6,12 @@ Allows each agent to use different AI providers seamlessly.
 import os
 from collections.abc import Generator
 
-from src.multi_agent.infrastructure.prompts.multi_agent_prompts import AgentModelConfig
+import litellm
+
+from src.multi_agent.infrastructure.prompts.multi_agent_prompts import (
+    AgentModelConfig,
+    get_agent_model_config,
+)
 from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.logging.structured_logger import StructuredLogger
 
@@ -76,8 +81,6 @@ class LiteLLMAdapter:
             Exception: If generation fails
         """
         try:
-            import litellm
-
             # Configure LiteLLM settings
             litellm.drop_params = True  # Drop unsupported params instead of failing
             litellm.set_verbose = False  # Disable verbose logging
@@ -136,8 +139,6 @@ class LiteLLMAdapter:
             Exception: If generation fails
         """
         try:
-            import litellm
-
             # Configure LiteLLM settings
             litellm.drop_params = True
             litellm.set_verbose = False
@@ -219,10 +220,6 @@ def create_agent_adapter(agent_id: str) -> LiteLLMAdapter | None:
         >>> adapter = create_agent_adapter('agent_1')
         >>> response = adapter.generate_stream(system_prompt, user_prompt)
     """
-    from src.multi_agent.infrastructure.prompts.multi_agent_prompts import (
-        get_agent_model_config,
-    )
-
     model_config = get_agent_model_config(agent_id)
 
     if not model_config:

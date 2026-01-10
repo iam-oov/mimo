@@ -1,3 +1,4 @@
+import json
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -184,8 +185,6 @@ async def generate_recommendations_stream(
 
         async def event_generator():
             """Generate Server-Sent Events"""
-            import json
-
             accumulated_text: list[str] = []
 
             try:

@@ -5,7 +5,11 @@ DeepSeek recommendation provider adapter.
 from collections.abc import Generator
 from typing import Any
 
-from src.recommendations.domain.ports.recommendation_provider import RecommendationProvider
+from openai import OpenAI
+
+from src.recommendations.domain.ports.recommendation_provider import (
+    RecommendationProvider,
+)
 from src.recommendations.infrastructure.providers._shared import (
     build_recommendation_prompt,
 )
@@ -34,8 +38,6 @@ class DeepSeekRecommendationAdapter(RecommendationProvider):
         Generate recommendations using DeepSeek with streaming.
         """
         try:
-            from openai import OpenAI
-
             logger.info(
                 "Starting DeepSeek recommendation generation",
                 model=self.model,
@@ -44,7 +46,9 @@ class DeepSeekRecommendationAdapter(RecommendationProvider):
             )
 
             client = OpenAI(api_key=self.api_key, base_url=self.base_url)
-            prompt = build_recommendation_prompt(calculation_result, user_data, fiscal_year)
+            prompt = build_recommendation_prompt(
+                calculation_result, user_data, fiscal_year
+            )
 
             stream = client.chat.completions.create(
                 model=self.model,

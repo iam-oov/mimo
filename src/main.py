@@ -88,10 +88,6 @@ def create_app() -> FastAPI:
     return app
 
 
-app = create_app()
-templates = Jinja2Templates(directory="templates")
-
-
 async def get_current_user(request: Request) -> dict[str, Any] | None:
     """Get current user from session"""
     user = request.session.get("user")
@@ -100,10 +96,13 @@ async def get_current_user(request: Request) -> dict[str, Any] | None:
     return None
 
 
+app = create_app()
+templates = Jinja2Templates(directory="templates")
+
+
 @app.get("/calculator", response_class=HTMLResponse)
 async def calculator_page(request: Request):
     """Render calculator page"""
-    from src.shared.infrastructure.config.settings import get_settings
 
     user = await get_current_user(request)
     settings = get_settings()

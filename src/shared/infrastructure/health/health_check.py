@@ -46,28 +46,43 @@ class HealthCheckService:
         }
 
     def _check_database(self) -> dict[str, Any]:
-        """Check database connectivity (PostgreSQL or SQLite)"""
+        """Check database connectivity (PostgreSQL or SQLite with fallback)"""
         try:
             if self.settings.is_postgres:
-                # PostgreSQL check (lazy import)
+                # Try PostgreSQL first (lazy import)
                 try:
                     import psycopg2
-                except ImportError:
+                    
+                    conn = psycopg2.connect(self.settings.database_url)
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT COUNT(*) FROM recommendation_usage")
+                    count = cursor.fetchone()[0]
+                    conn.close()
+
                     return {
-                        "healthy": False,
-                        "message": "PostgreSQL driver (psycopg2) not installed",
+                        "healthy": True,
+                        "message": f"PostgreSQL OK ({count} usage records)",
                     }
+                except ImportError:
+                    # Fallback to SQLite when psycopg2 not available
+                    db_path = Path("/tmp/recommendations.db")
+                    
+                    if not db_path.exists():
+                        return {
+                            "healthy": False,
+                            "message": "SQLite fallback file does not exist",
+                        }
+                    
+                    conn = sqlite3.connect(str(db_path), timeout=5.0)
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT COUNT(*) FROM recommendation_usage")
+                    count = cursor.fetchone()[0]
+                    conn.close()
 
-                conn = psycopg2.connect(self.settings.database_url)
-                cursor = conn.cursor()
-                cursor.execute("SELECT COUNT(*) FROM recommendation_usage")
-                count = cursor.fetchone()[0]
-                conn.close()
-
-                return {
-                    "healthy": True,
-                    "message": f"PostgreSQL OK ({count} usage records)",
-                }
+                    return {
+                        "healthy": True,
+                        "message": f"SQLite OK (fallback, {count} usage records)",
+                    }
             else:
                 # SQLite check
                 db_path = Path(self.settings.database_url.replace("sqlite:///", ""))

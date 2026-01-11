@@ -7,10 +7,6 @@ import threading
 from contextlib import contextmanager
 from datetime import date
 from typing import Generator
-from urllib.parse import urlparse
-
-import psycopg2
-import psycopg2.extras
 
 from src.shared.domain.ports.repositories import UsageRepository
 
@@ -28,6 +24,18 @@ class PostgresUsageRepository(UsageRepository):
         Args:
             database_url: PostgreSQL connection URL (e.g., postgresql://user:pass@host:port/dbname)
         """
+        # Lazy import psycopg2 only when PostgreSQL is actually used
+        try:
+            import psycopg2
+            import psycopg2.extras
+
+            self._psycopg2 = psycopg2
+        except ImportError as e:
+            raise ImportError(
+                "psycopg2-binary is required for PostgreSQL support. "
+                "Install it with: uv add psycopg2-binary"
+            ) from e
+
         self._database_url = database_url
         self._lock = threading.Lock()
         self._initialize_database()
@@ -52,10 +60,10 @@ class PostgresUsageRepository(UsageRepository):
             conn.commit()
 
     @contextmanager
-    def _get_connection(self) -> Generator[psycopg2.extensions.connection, None, None]:
+    def _get_connection(self) -> Generator:
         """Get thread-safe database connection with locking"""
         with self._lock:
-            conn = psycopg2.connect(self._database_url)
+            conn = self._psycopg2.connect(self._database_url)
             try:
                 yield conn
             finally:

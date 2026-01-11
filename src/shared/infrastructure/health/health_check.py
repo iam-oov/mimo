@@ -49,8 +49,14 @@ class HealthCheckService:
         """Check database connectivity (PostgreSQL or SQLite)"""
         try:
             if self.settings.is_postgres:
-                # PostgreSQL check
-                import psycopg2
+                # PostgreSQL check (lazy import)
+                try:
+                    import psycopg2
+                except ImportError:
+                    return {
+                        "healthy": False,
+                        "message": "PostgreSQL driver (psycopg2) not installed",
+                    }
 
                 conn = psycopg2.connect(self.settings.database_url)
                 cursor = conn.cursor()

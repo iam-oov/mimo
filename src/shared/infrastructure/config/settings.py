@@ -82,7 +82,8 @@ class Settings(BaseSettings):
 
     # Database Configuration
     database_url: str = Field(
-        default="recommendations.db", description="SQLite database path"
+        default="/tmp/recommendations.db",
+        description="SQLite database path (use /tmp for Railway compatibility)",
     )
 
     # Application Settings

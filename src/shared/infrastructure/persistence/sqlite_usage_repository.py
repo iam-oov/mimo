@@ -19,6 +19,8 @@ class SqliteUsageRepository(UsageRepository):
     def __init__(self, db_path: str = "recommendations.db"):
         self._db_path = Path(db_path)
         self._lock = threading.Lock()
+        # Ensure parent directory exists
+        self._db_path.parent.mkdir(parents=True, exist_ok=True)
         self._initialize_database()
 
     def _initialize_database(self) -> None:

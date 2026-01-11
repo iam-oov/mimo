@@ -7,6 +7,7 @@ datasources:
   - name: Prometheus
     type: prometheus
     access: proxy
+    uid: prometheus
     # Use Railway internal DNS: <service-name>.railway.internal:9090
     # Or set via environment variable
     url: ${PROMETHEUS_URL:-http://prometheus:9090}

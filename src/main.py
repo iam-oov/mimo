@@ -35,9 +35,6 @@ from src.shared.infrastructure.logging.structured_logger import get_logger
 from src.shared.infrastructure.persistence.postgres_usage_repository import (
     PostgresUsageRepository,
 )
-from src.shared.infrastructure.persistence.sqlite_usage_repository import (
-    SqliteUsageRepository,
-)
 from src.tax_calculation.infrastructure.api.tax_router import router as tax_router
 
 logger = get_logger(__name__)
@@ -53,22 +50,15 @@ async def lifespan(app: FastAPI):
 
     logger.info("🚀 Starting Mimo Tax Calculator...")
 
-    # Initialize database (PostgreSQL or SQLite with fallback)
-    if settings.is_postgres:
-        try:
-            _ = PostgresUsageRepository(settings.database_url)
-            logger.info("✅ PostgreSQL database initialized")
-        except ImportError as e:
-            logger.warning(
-                "⚠️  PostgreSQL URL detected but psycopg2 not available. Falling back to SQLite.",
-                error=str(e),
-            )
-            # Fallback to SQLite when psycopg2 not installed
-            _ = SqliteUsageRepository("/tmp/recommendations.db")
-            logger.info("✅ SQLite database initialized (fallback)")
-    else:
-        _ = SqliteUsageRepository(settings.database_url)
-        logger.info("✅ SQLite database initialized")
+    # Initialize PostgreSQL database (required)
+    if not settings.is_postgres:
+        raise RuntimeError(
+            "DATABASE_URL must be a PostgreSQL connection string. "
+            "SQLite is no longer supported."
+        )
+
+    _ = PostgresUsageRepository(settings.database_url)
+    logger.info("✅ PostgreSQL database initialized")
 
     # Validate API keys (fail fast if invalid)
     try:

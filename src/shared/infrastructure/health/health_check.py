@@ -4,9 +4,7 @@ Provides detailed health checks for all system components.
 """
 
 # Standard library
-import sqlite3
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any
 
 # Local application
@@ -47,63 +45,20 @@ class HealthCheckService:
         }
 
     def _check_database(self) -> dict[str, Any]:
-        """Check database connectivity (PostgreSQL or SQLite with fallback)"""
+        """Check PostgreSQL database connectivity"""
         try:
-            if self.settings.is_postgres:
-                # Try PostgreSQL first (lazy import)
-                try:
-                    import psycopg2
+            import psycopg2
 
-                    conn = psycopg2.connect(self.settings.database_url)
-                    cursor = conn.cursor()
-                    cursor.execute("SELECT COUNT(*) FROM recommendation_usage")
-                    count = cursor.fetchone()[0]
-                    conn.close()
+            conn = psycopg2.connect(self.settings.database_url)
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM recommendation_usage")
+            count = cursor.fetchone()[0]
+            conn.close()
 
-                    return {
-                        "healthy": True,
-                        "message": f"PostgreSQL OK ({count} usage records)",
-                    }
-                except ImportError:
-                    # Fallback to SQLite when psycopg2 not available
-                    db_path = Path("/tmp/recommendations.db")
-
-                    if not db_path.exists():
-                        return {
-                            "healthy": False,
-                            "message": "SQLite fallback file does not exist",
-                        }
-
-                    conn = sqlite3.connect(str(db_path), timeout=5.0)
-                    cursor = conn.cursor()
-                    cursor.execute("SELECT COUNT(*) FROM recommendation_usage")
-                    count = cursor.fetchone()[0]
-                    conn.close()
-
-                    return {
-                        "healthy": True,
-                        "message": f"SQLite OK (fallback, {count} usage records)",
-                    }
-            else:
-                # SQLite check
-                db_path = Path(self.settings.database_url.replace("sqlite:///", ""))
-
-                if not db_path.exists():
-                    return {
-                        "healthy": False,
-                        "message": "Database file does not exist",
-                    }
-
-                conn = sqlite3.connect(str(db_path), timeout=5.0)
-                cursor = conn.cursor()
-                cursor.execute("SELECT COUNT(*) FROM recommendation_usage")
-                count = cursor.fetchone()[0]
-                conn.close()
-
-                return {
-                    "healthy": True,
-                    "message": f"SQLite OK ({count} usage records)",
-                }
+            return {
+                "healthy": True,
+                "message": f"PostgreSQL OK ({count} usage records)",
+            }
         except Exception as e:
             logger.error("Database health check failed", error=str(e))
             return {

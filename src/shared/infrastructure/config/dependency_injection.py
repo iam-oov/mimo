@@ -30,9 +30,6 @@ from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.persistence.postgres_usage_repository import (
     PostgresUsageRepository,
 )
-from src.shared.infrastructure.persistence.sqlite_usage_repository import (
-    SqliteUsageRepository,
-)
 
 
 class DependencyContainer:
@@ -52,22 +49,16 @@ class DependencyContainer:
         self._memory_store: MemoryStore | None = None
 
     def get_usage_repository(self) -> UsageRepository:
-        """Get or create usage repository instance (PostgreSQL or SQLite with fallback)"""
+        """Get or create usage repository instance (PostgreSQL only)"""
         if self._usage_repository is None:
-            if self._settings.is_postgres:
-                try:
-                    self._usage_repository = PostgresUsageRepository(
-                        database_url=self._settings.database_url
-                    )
-                except ImportError:
-                    # Fallback to SQLite if psycopg2 not available
-                    self._usage_repository = SqliteUsageRepository(
-                        db_path="/tmp/recommendations.db"
-                    )
-            else:
-                self._usage_repository = SqliteUsageRepository(
-                    db_path=self._settings.database_url
+            if not self._settings.is_postgres:
+                raise RuntimeError(
+                    "DATABASE_URL must be a PostgreSQL connection string. "
+                    "SQLite is no longer supported."
                 )
+            self._usage_repository = PostgresUsageRepository(
+                database_url=self._settings.database_url
+            )
         return self._usage_repository
 
     def get_recommendation_providers(self) -> list[RecommendationProvider]:

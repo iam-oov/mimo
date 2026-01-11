@@ -177,8 +177,8 @@ poetry.toml
 # LSP config files
 pyrightconfig.json
 
-# User memory data (FAISS indices)
-memory/
+# User memory data (FAISS indices) - only root directory
+/memory/
 !memory/.gitkeep
 
 # SQLite databases

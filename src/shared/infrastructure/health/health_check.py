@@ -32,14 +32,15 @@ class HealthCheckService:
         checks = {
             "database": self._check_database(),
             "ai_providers": await self._check_ai_providers(),
-            "disk_space": self._check_disk_space(),
-            "memory_store": self._check_memory_store(),
         }
 
-        all_healthy = all(check["healthy"] for check in checks.values())
+        # Critical checks: database and at least one AI provider must work
+        critical_healthy = (
+            checks["database"]["healthy"] and checks["ai_providers"]["healthy"]
+        )
 
         return {
-            "status": "healthy" if all_healthy else "degraded",
+            "status": "healthy" if critical_healthy else "degraded",
             "service": "mimo",
             "timestamp": datetime.now(UTC).isoformat(),
             "checks": checks,

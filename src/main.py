@@ -188,7 +188,7 @@ async def calculator_page(request: Request):
     """Render calculator page"""
 
     user = await get_current_user(request)
-    app_version = "1.3.9"
+    app_version = "1.3.10"
 
     return templates.TemplateResponse(
         "calculator.html",

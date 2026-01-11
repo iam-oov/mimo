@@ -61,7 +61,7 @@ async def lifespan(app: FastAPI):
         except ImportError as e:
             logger.warning(
                 "⚠️  PostgreSQL URL detected but psycopg2 not available. Falling back to SQLite.",
-                error=str(e)
+                error=str(e),
             )
             # Fallback to SQLite when psycopg2 not installed
             _ = SqliteUsageRepository("/tmp/recommendations.db")

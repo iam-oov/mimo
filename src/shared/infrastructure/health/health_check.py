@@ -52,7 +52,7 @@ class HealthCheckService:
                 # Try PostgreSQL first (lazy import)
                 try:
                     import psycopg2
-                    
+
                     conn = psycopg2.connect(self.settings.database_url)
                     cursor = conn.cursor()
                     cursor.execute("SELECT COUNT(*) FROM recommendation_usage")
@@ -66,13 +66,13 @@ class HealthCheckService:
                 except ImportError:
                     # Fallback to SQLite when psycopg2 not available
                     db_path = Path("/tmp/recommendations.db")
-                    
+
                     if not db_path.exists():
                         return {
                             "healthy": False,
                             "message": "SQLite fallback file does not exist",
                         }
-                    
+
                     conn = sqlite3.connect(str(db_path), timeout=5.0)
                     cursor = conn.cursor()
                     cursor.execute("SELECT COUNT(*) FROM recommendation_usage")

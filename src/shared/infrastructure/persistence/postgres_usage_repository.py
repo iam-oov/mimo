@@ -117,6 +117,13 @@ class PostgresUsageRepository(UsageRepository):
             )
             conn.commit()
 
+    def get_remaining_usage(
+        self, user_id: str, usage_date: date, daily_limit: int
+    ) -> int:
+        """Calculate remaining usage for user"""
+        current_usage = self.get_usage_count(user_id, usage_date)
+        return max(0, daily_limit - current_usage)
+
     def get_total_usage_count(self) -> int:
         """Get total usage count across all users and dates"""
         with self._get_connection() as conn:

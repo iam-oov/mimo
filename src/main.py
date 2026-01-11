@@ -53,10 +53,19 @@ async def lifespan(app: FastAPI):
 
     logger.info("🚀 Starting Mimo Tax Calculator...")
 
-    # Initialize database (PostgreSQL or SQLite)
+    # Initialize database (PostgreSQL or SQLite with fallback)
     if settings.is_postgres:
-        _ = PostgresUsageRepository(settings.database_url)
-        logger.info("✅ PostgreSQL database initialized")
+        try:
+            _ = PostgresUsageRepository(settings.database_url)
+            logger.info("✅ PostgreSQL database initialized")
+        except ImportError as e:
+            logger.warning(
+                "⚠️  PostgreSQL URL detected but psycopg2 not available. Falling back to SQLite.",
+                error=str(e)
+            )
+            # Fallback to SQLite when psycopg2 not installed
+            _ = SqliteUsageRepository("/tmp/recommendations.db")
+            logger.info("✅ SQLite database initialized (fallback)")
     else:
         _ = SqliteUsageRepository(settings.database_url)
         logger.info("✅ SQLite database initialized")

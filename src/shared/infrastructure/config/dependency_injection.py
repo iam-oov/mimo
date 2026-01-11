@@ -52,12 +52,18 @@ class DependencyContainer:
         self._memory_store: MemoryStore | None = None
 
     def get_usage_repository(self) -> UsageRepository:
-        """Get or create usage repository instance (PostgreSQL or SQLite)"""
+        """Get or create usage repository instance (PostgreSQL or SQLite with fallback)"""
         if self._usage_repository is None:
             if self._settings.is_postgres:
-                self._usage_repository = PostgresUsageRepository(
-                    database_url=self._settings.database_url
-                )
+                try:
+                    self._usage_repository = PostgresUsageRepository(
+                        database_url=self._settings.database_url
+                    )
+                except ImportError:
+                    # Fallback to SQLite if psycopg2 not available
+                    self._usage_repository = SqliteUsageRepository(
+                        db_path="/tmp/recommendations.db"
+                    )
             else:
                 self._usage_repository = SqliteUsageRepository(
                     db_path=self._settings.database_url

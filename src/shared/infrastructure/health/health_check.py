@@ -46,27 +46,42 @@ class HealthCheckService:
         }
 
     def _check_database(self) -> dict[str, Any]:
-        """Check SQLite database connectivity"""
+        """Check database connectivity (PostgreSQL or SQLite)"""
         try:
-            db_path = Path(self.settings.database_url.replace("sqlite:///", ""))
+            if self.settings.is_postgres:
+                # PostgreSQL check
+                import psycopg2
 
-            if not db_path.exists():
+                conn = psycopg2.connect(self.settings.database_url)
+                cursor = conn.cursor()
+                cursor.execute("SELECT COUNT(*) FROM recommendation_usage")
+                count = cursor.fetchone()[0]
+                conn.close()
+
                 return {
-                    "healthy": False,
-                    "message": "Database file does not exist",
+                    "healthy": True,
+                    "message": f"PostgreSQL OK ({count} usage records)",
                 }
+            else:
+                # SQLite check
+                db_path = Path(self.settings.database_url.replace("sqlite:///", ""))
 
-            # Try to connect and query
-            conn = sqlite3.connect(str(db_path), timeout=5.0)
-            cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) FROM recommendation_usage")
-            count = cursor.fetchone()[0]
-            conn.close()
+                if not db_path.exists():
+                    return {
+                        "healthy": False,
+                        "message": "Database file does not exist",
+                    }
 
-            return {
-                "healthy": True,
-                "message": f"Database OK ({count} usage records)",
-            }
+                conn = sqlite3.connect(str(db_path), timeout=5.0)
+                cursor = conn.cursor()
+                cursor.execute("SELECT COUNT(*) FROM recommendation_usage")
+                count = cursor.fetchone()[0]
+                conn.close()
+
+                return {
+                    "healthy": True,
+                    "message": f"SQLite OK ({count} usage records)",
+                }
         except Exception as e:
             logger.error("Database health check failed", error=str(e))
             return {

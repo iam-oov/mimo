@@ -27,6 +27,9 @@ from src.recommendations.infrastructure.providers.gemini_adapter import (
 )
 from src.shared.domain.ports.repositories import UsageRepository
 from src.shared.infrastructure.config.settings import get_settings
+from src.shared.infrastructure.persistence.postgres_usage_repository import (
+    PostgresUsageRepository,
+)
 from src.shared.infrastructure.persistence.sqlite_usage_repository import (
     SqliteUsageRepository,
 )
@@ -49,11 +52,16 @@ class DependencyContainer:
         self._memory_store: MemoryStore | None = None
 
     def get_usage_repository(self) -> UsageRepository:
-        """Get or create usage repository instance"""
+        """Get or create usage repository instance (PostgreSQL or SQLite)"""
         if self._usage_repository is None:
-            self._usage_repository = SqliteUsageRepository(
-                db_path=self._settings.database_url
-            )
+            if self._settings.is_postgres:
+                self._usage_repository = PostgresUsageRepository(
+                    database_url=self._settings.database_url
+                )
+            else:
+                self._usage_repository = SqliteUsageRepository(
+                    db_path=self._settings.database_url
+                )
         return self._usage_repository
 
     def get_recommendation_providers(self) -> list[RecommendationProvider]:

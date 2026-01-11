@@ -83,8 +83,13 @@ class Settings(BaseSettings):
     # Database Configuration
     database_url: str = Field(
         default="/tmp/recommendations.db",
-        description="SQLite database path (use /tmp for Railway compatibility)",
+        description="Database URL (SQLite path or PostgreSQL connection string)",
     )
+
+    @property
+    def is_postgres(self) -> bool:
+        """Check if using PostgreSQL database"""
+        return self.database_url.startswith(("postgresql://", "postgres://"))
 
     # Application Settings
     environment: str = Field(

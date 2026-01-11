@@ -6,6 +6,7 @@
 - el endpoint de /calcular debe estar en el modulo tax_calculation, no ?
 - bolsas fiscales
 - si ya llene algo en los inpus no borrarlos al iniciar session
+- mandar la version de la app a una archivo de constantes
 
 ⬜ Memory cleanup automatizado ~1 hr
 ⬜ Monitoring y alertas ~2-3 hrs

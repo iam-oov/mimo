@@ -32,6 +32,9 @@ from src.shared.infrastructure.config.api_key_validator import validate_api_keys
 from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.health.health_check import HealthCheckService
 from src.shared.infrastructure.logging.structured_logger import get_logger
+from src.shared.infrastructure.persistence.postgres_usage_repository import (
+    PostgresUsageRepository,
+)
 from src.shared.infrastructure.persistence.sqlite_usage_repository import (
     SqliteUsageRepository,
 )
@@ -50,9 +53,13 @@ async def lifespan(app: FastAPI):
 
     logger.info("🚀 Starting Mimo Tax Calculator...")
 
-    # Initialize database
-    _ = SqliteUsageRepository(settings.database_url)
-    logger.info("✅ Database initialized")
+    # Initialize database (PostgreSQL or SQLite)
+    if settings.is_postgres:
+        _ = PostgresUsageRepository(settings.database_url)
+        logger.info("✅ PostgreSQL database initialized")
+    else:
+        _ = SqliteUsageRepository(settings.database_url)
+        logger.info("✅ SQLite database initialized")
 
     # Validate API keys (fail fast if invalid)
     try:

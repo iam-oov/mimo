@@ -12,16 +12,10 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.sessions import SessionMiddleware
 
 from src.auth.infrastructure.api.auth_router import router as auth_router
-from src.multi_agent.infrastructure.api.multi_agent_chat_router import (
-    router as multi_agent_chat_router,
-)
-from src.multi_agent.infrastructure.api.multi_agent_router import (
-    router as multi_agent_router,
-)
-from src.multi_agent.infrastructure.memory.cleanup import periodic_cleanup
 from src.recommendations.infrastructure.api.recommendations_router import (
     router as recommendations_router,
 )
+from src.shared.domain.constants.app_version import API_VERSION, APP_VERSION
 from src.shared.infrastructure.api.middleware.error_handler import (
     generic_exception_handler,
     http_exception_handler,
@@ -72,26 +66,9 @@ async def lifespan(app: FastAPI):
         )
         raise
 
-    # Start background cleanup task
-    cleanup_task = asyncio.create_task(
-        periodic_cleanup(
-            memory_dir="memory",
-            max_age_days=7,
-            interval_hours=24,
-        )
-    )
-    logger.info("✅ Memory cleanup task started")
-
     logger.info("✅ Mimo Tax Calculator started successfully")
 
     yield
-
-    # Shutdown: cancel background tasks
-    cleanup_task.cancel()
-    try:
-        await cleanup_task
-    except asyncio.CancelledError:
-        pass
 
     logger.info("👋 Shutting down Mimo Tax Calculator...")
 
@@ -106,7 +83,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="Mimo - Calculadora Fiscal",
         description="Mexican Tax Calculator for Individuals",
-        version="0.2.0",
+        version=API_VERSION,
         lifespan=lifespan,
     )
 
@@ -124,8 +101,6 @@ def create_app() -> FastAPI:
     app.include_router(auth_router)
     app.include_router(tax_router)
     app.include_router(recommendations_router)
-    app.include_router(multi_agent_router)
-    app.include_router(multi_agent_chat_router)
 
     # Prometheus metrics endpoint
     @app.get("/metrics")
@@ -179,11 +154,10 @@ async def calculator_page(request: Request):
     """Render calculator page"""
 
     user = await get_current_user(request)
-    app_version = "1.3.11"
 
     return templates.TemplateResponse(
         "calculator.html",
-        {"request": request, "user": user, "version": app_version},
+        {"request": request, "user": user, "version": APP_VERSION},
     )
 
 

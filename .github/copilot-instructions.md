@@ -4,7 +4,7 @@
 
 Mimo is a **Mexican tax calculator** for individuals (personas físicas) that computes annual tax balance (saldo a favor/a pagar) and generates AI-powered personalized fiscal recommendations through "Mimo el Gatito Fiscal" 🐱 - a cat-themed tax advisor.
 
-**Tech Stack:** FastAPI + Jinja2 templates + Google OAuth + SQLite + AI providers (Gemini/DeepSeek)
+**Tech Stack:** FastAPI + Jinja2 templates + Google OAuth + PostgreSQL + AI providers (Gemini/DeepSeek)
 
 ## Critical Instructions
 
@@ -30,14 +30,6 @@ src/
 │       ├── api/              # REST adapter (recommendations_router.py)
 │       ├── providers/        # AI provider adapters (driven ports)
 │       └── prompts/          # Prompt templates
-├── multi_agent/              # Multi-agent analysis bounded context
-│   ├── domain/               # Multi-agent domain logic
-│   ├── application/          # Multi-agent use cases, debate service
-│   └── infrastructure/
-│       ├── api/              # REST adapters (multi_agent_router.py, chat_router.py)
-│       ├── providers/        # Multi-agent AI adapters
-│       ├── litellm/          # LiteLLM integration
-│       └── memory/           # Memory/vector store adapters
 ├── auth/                     # Authentication bounded context (infrastructure-only)
 │   └── infrastructure/
 │       ├── api/              # REST adapter (auth_router.py)
@@ -51,7 +43,7 @@ src/
         ├── api/              # Middleware, schemas
         ├── config/           # Settings, dependency injection
         ├── logging/          # Structured logger
-        └── persistence/      # SQLite repositories
+        └── persistence/      # Database repositories (PostgreSQL in prod, SQLite in tests)
 ```
 
 **Key Principles:**
@@ -96,7 +88,7 @@ src/
 - **Middleware** (`shared/infrastructure/api/middleware/`): Error handlers, logging middleware
 - **Config** (`shared/infrastructure/config/`): Settings, dependency injection container
 - **Logging** (`shared/infrastructure/logging/`): Structured logger (JSON in prod, readable in dev)
-- **Persistence** (`shared/infrastructure/persistence/`): SQLite repositories for usage tracking
+- **Persistence** (`shared/infrastructure/persistence/`): Database repositories for usage tracking (PostgreSQL in production, SQLite for tests)
 
 ### 3. Recommendations Module (`src/recommendations/`)
 
@@ -113,53 +105,17 @@ src/
 - **Application Layer:**
   - `GenerateRecommendationsUseCase`: Orchestrates recommendation generation with rate limiting
 - **Infrastructure Layer:**
-
   - `recommendations_router.py`: REST API adapter
   - `providers/`: AI provider implementations (driven adapters)
 
   - `providers/`: AI provider implementations (driven adapters)
 
-### 4. Multi-Agent Module (`src/multi_agent/`)
-
-- **Architecture:** 3 AI agents (configurable) with distinct personalities and professions debate tax optimization strategies
-- **Personality Types:** Conservative, Aggressive, Analytical, Pragmatic, Innovative (see `Personality` enum)
-- **Professions:** Auditor, Tax Planner, Accountant, Financial Advisor, Fiscal Lawyer, Business Consultant (see `Profession` enum)
-- **Prompt System:**
-  - Each agent gets unique system prompt via `build_agent_system_prompt()` (combines personality, profession, agent name)
-  - Debate context built with `build_debate_context()` (fiscal data, deduction space, etc.)
-  - Each round uses `build_round_prompt()` (initial, response, consensus)
-  - Synthesis/final summary uses `build_synthesis_prompt()`
-  - All prompt templates in `infrastructure/prompts/multi_agent_prompts.py`
-- **Model Routing:**
-  - Each agent can use different model/provider (DeepSeek, Claude, Gemini, OpenAI, etc.) via `AgentModelConfig` and `LiteLLMAdapter`
-  - Default: All agents use Claude Sonnet 4.5 (Anthropic) for best reasoning and compliance
-  - Fallback: DeepSeek or GPT-4.1 for cost-sensitive scenarios
-  - Model config per agent in `DEFAULT_AGENT_MODELS`
-- **Debate Flow:**
-  1. Round 1: Each agent proposes strategy (150-250 chars, enforced by prompt)
-  2. Round 2: Agents respond to others' proposals (no repetition, unique perspective)
-  3. Round 3: Consensus & prioritization with voting
-  4. Final synthesis with implementation roadmap (moderator agent)
-- **Streaming:** All agent responses and synthesis streamed via SSE
-- **Language Style:** Simple, everyday language ("lo que pagas" not "base gravable"); avoid technical jargon
-- **Application Layer:**
-  - `MultiAgentDebateService`: Orchestrates debate flow
-  - `MultiAgentChatUseCase`: Interactive chat with agent selection
-  - `GenerateMultiAgentAnalysisUseCase`: Main entry point for analysis
-- **Infrastructure Layer:**
-  - `multi_agent_router.py`, `multi_agent_chat_router.py`: REST API adapters
-  - `litellm/`: LiteLLM integration for model routing
-  - `memory/`: FAISS vector store for conversation memory
-
-### 5. Auth Module (`src/auth/`)
-
-### 5. Auth Module (`src/auth/`)
+### 4. Auth Module (`src/auth/`)
 
 - **Infrastructure-only module** (no domain/application layers - pure infrastructure concern)
 - **Google OAuth 2.0:** `/auth/google` → `/auth/callback` stores user in session
 - **Railway/Proxy-aware:** `get_effective_redirect_uri()` uses `X-Forwarded-Proto` and `X-Forwarded-Host` headers
-- **Daily limits:** SQLite tracks `recommendation_usage` per user_id per date (default: 3/day, configurable via `DAILY_RECOMMENDATIONS_LIMIT`)
-- Rate limiting applies to BOTH `/api/recommendations` and `/api/multi-agent-analysis` endpoints
+- **Daily limits:** PostgreSQL tracks `recommendation_usage` per user_id per date (default: 3/day, configurable via `DAILY_RECOMMENDATIONS_LIMIT`)
 - User ID: `user["sub"]` (Google's unique identifier) or falls back to email
 - Usage tracking: Increment AFTER successful generation, not before (prevents charging for failures)
 - **Infrastructure Layer:**
@@ -202,9 +158,10 @@ DEEPSEEK_TEMPERATURE=0.6
 
 ### Database
 
-- **SQLite** (`recommendations.db`) auto-initializes on startup via `initialize_database()`
+- **PostgreSQL** (production) - Requires `DATABASE_URL` environment variable
+- **SQLite** (tests only) - Used in integration tests for repository testing
 - Single table: `recommendation_usage (user_id TEXT, date TEXT, count INTEGER)`
-- No migrations - schema created if not exists
+- Schema auto-initializes via `initialize_database()` on startup
 
 ### Project-Specific Conventions
 
@@ -227,7 +184,6 @@ DEEPSEEK_TEMPERATURE=0.6
 - **Tax calculation:** Standard JSON with all fields from `TaxCalculationResult`
 - **Recommendations:**
   - `/api/recommendations/stream` - Server-Sent Events (SSE) with chunks: `{"type":"chunk","content":"..."}` then `{"type":"complete","markdown":"..."}`
-  - `/api/multi-agent-analysis/stream` - SSE with events: `agent_intro`, `round_start`, `agent_turn`, `synthesis`, `complete`
 - **Usage tracking:** Always increment AFTER successful generation, not before
 - **Model info:** Each response includes which model/provider was used (for auditability)
 
@@ -287,10 +243,6 @@ DEEPSEEK_TEMPERATURE=0.6
   - `/api/calculate` endpoint for tax calculations
 - `src/recommendations/infrastructure/api/recommendations_router.py` - Recommendations API
   - `/api/recommendations/stream` for AI recommendations
-- `src/multi_agent/infrastructure/api/multi_agent_router.py` - Multi-agent API
-  - `/api/multi-agent-analysis/stream` for agent debates
-- `src/multi_agent/infrastructure/api/multi_agent_chat_router.py` - Interactive chat API
-  - `/api/chat/agents` and `/api/chat/message` for agent selection and chat
 - `src/auth/infrastructure/api/auth_router.py` - OAuth endpoints
   - `/auth/google`, `/auth/callback`, `/auth/logout`, `/auth/status`
 - `src/shared/domain/constants/isr_tables.py` - Tax tables and constants
@@ -305,10 +257,14 @@ DEEPSEEK_TEMPERATURE=0.6
 
 ## Testing & Debugging
 
-- No tests currently exist
+- **Comprehensive test suite** exists in `tests/` (300+ tests)
+  - `tests/integration/`: Full API request/response cycle tests (tax router, rate limiting)
+  - `tests/unit/`: Domain logic tests (tax calculation, prompts, providers)
+  - Run all: `uv run pytest tests/ -v`
+  - Run specific: `uv run pytest tests/integration/test_tax_router.py -v`
 - Manual testing via web UI at `/calculator`
 - Check AI recommendations with test user data: monthly income $12,600 → annual ~$151,200
-- Debug rate limiting: Query `recommendations.db` directly or use `/api/recommendations/usage` endpoint
+- Debug rate limiting: Query PostgreSQL directly or use `/api/recommendations/usage` endpoint
 - Railway deployment: Verify `X-Forwarded-*` headers in OAuth redirects
 
 ## Common Tasks
@@ -321,8 +277,7 @@ DEEPSEEK_TEMPERATURE=0.6
 
 **Modify AI prompt behavior:**
 
-- Edit prompt builders in `src/recommendations/infrastructure/prompts/recommendation_prompts.py` (single-agent)
-- Or `src/multi_agent/infrastructure/prompts/multi_agent_prompts.py` (multi-agent)
+- Edit prompt builders in `src/recommendations/infrastructure/prompts/recommendation_prompts.py`
 - Test with streaming endpoint to see real-time output
 - Remember: Must include cat personality and time-based greetings
 
@@ -346,19 +301,3 @@ DEEPSEEK_TEMPERATURE=0.6
 3. Update provider factory in dependency injection
 4. Add required API key to environment variables
 5. Follow existing patterns: DeepSeek/Gemini/Claude implementations as reference
-
-**Add new AI provider (for multi-agent analysis):**
-
-1. Create new adapter in `src/multi_agent/infrastructure/providers/`
-2. Update `LiteLLMAdapter` or create new provider adapter
-3. Update `AgentModelConfig` in `src/multi_agent/infrastructure/prompts/multi_agent_prompts.py`
-4. Add required API key to environment variables
-5. Follow existing patterns: DeepSeek/Claude providers as reference
-
-**Modify multi-agent debate structure:**
-
-- Change number of agents: Modify `MultiAgentDebateService._create_agents()` in `src/multi_agent/application/multi_agent_debate_service.py`
-- Add new personality types: Update `Personality` enum and `PERSONALITY_CONFIGS` in prompts file
-- Add new professions: Update `Profession` enum and `PROFESSION_CONFIGS` in prompts file
-- Adjust debate rounds: Modify `_run_debate_rounds()` method in debate service
-- Change character limits: Set `DEBATE_MIN_CHARACTER` and `DEBATE_MAX_CHARACTER` env vars

@@ -27,7 +27,16 @@ class GeminiRecommendationAdapter(RecommendationProvider):
     def __init__(self):
         settings = get_settings()
         self.api_key = settings.gemini_api_key
-        self.client = genai.Client(api_key=self.api_key)
+        self._client = None  # Lazy initialization
+
+    @property
+    def client(self) -> genai.Client:
+        """Lazy initialization of Gemini client."""
+        if self._client is None:
+            if not self.api_key:
+                raise ValueError("Gemini API key is required but not configured")
+            self._client = genai.Client(api_key=self.api_key)
+        return self._client
 
     def generate_recommendations_stream(
         self, calculation_result: Any, user_data: dict[str, Any], fiscal_year: int

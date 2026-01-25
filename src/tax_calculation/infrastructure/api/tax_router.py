@@ -1,10 +1,11 @@
 import logging
 from dataclasses import asdict
-from typing import Any
+from typing import Annotated, Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 from src.shared.domain.exceptions import TaxCalculationError, ValidationError
+from src.shared.infrastructure.config.dependency_injection import get_container
 from src.shared.infrastructure.api.schemas.tax_schemas import (
     TaxCalculationRequest,
     TaxCalculationResponse,
@@ -22,7 +23,13 @@ router = APIRouter(prefix="/api", tags=["tax"])
 
 
 @router.post("/calculate", response_model=TaxCalculationResponse)
-def calculate_tax(request: TaxCalculationRequest) -> dict[str, Any]:
+def calculate_tax(
+    request: TaxCalculationRequest,
+    use_case: Annotated[
+        CalculateTaxUseCase,
+        Depends(lambda: get_container().get_calculate_tax_use_case()),
+    ],
+) -> dict[str, Any]:
     """
     Calculate annual tax balance (saldo a favor/a pagar) for Mexican individuals.
 
@@ -92,8 +99,7 @@ def calculate_tax(request: TaxCalculationRequest) -> dict[str, Any]:
             use_case_request=asdict(use_case_request),
         )
 
-        # Execute use case
-        use_case = CalculateTaxUseCase()
+        # Execute use case (injected via DI)
         response = use_case.execute(use_case_request)
 
         logger.info(

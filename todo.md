@@ -1,16 +1,22 @@
-- los agentes deben ser inteligentes para detectar los cambios en los inputs
-- agregar perfil de usuario para guardar preferencias
-- una opcion para subir facturas (carpeta de documentos)
-- mejorar el responsivo del sitio web
-- hacer el feeling mas agentico y no tanto de calculadora
-- el endpoint de /calcular debe estar en el modulo tax_calculation, no ?
-- bolsas fiscales
-- si ya llene algo en los inpus no borrarlos al iniciar session
-- mandar la version de la app a una archivo de constantes
+# TODO - Mimo Tax Calculator
 
-⬜ Memory cleanup automatizado ~1 hr
-⬜ Monitoring y alertas ~2-3 hrs
-⬜ CI/CD pipeline ~1-2 hrs
-⬜ Health check completo ~30 min
-⬜ Documentación API ~1 hr
-⬜ Staging environment Config Railway
+## High Priority
+
+- [ ] **User Profile**: Agregar perfil de usuario para guardar preferencias
+- [ ] **Session Persistence**: Si ya llené algo en los inputs no borrarlos al iniciar sesión
+- [ ] **Responsive UI**: Mejorar el responsivo del sitio web (mobile-first)
+
+## Medium Priority
+
+- [ ] **Document Upload**: Opción para subir facturas (carpeta de documentos)
+- [ ] **Bolsas Fiscales**: Implementar sistema de bolsas fiscales
+- [ ] **App Version**: Mandar la versión de la app a un archivo de constantes
+
+## Low Priority / Ideas
+
+- [ ] **Agent Intelligence**: Los agentes deben ser inteligentes para detectar los cambios en los inputs
+- [ ] **UX Enhancement**: Hacer el feeling más agéntico y no tanto de calculadora
+
+## Completed ✅
+
+- [x] **Tax Router Location**: El endpoint de `/calcular` debe estar en el módulo `tax_calculation` (DONE: `src/tax_calculation/infrastructure/api/tax_router.py`)

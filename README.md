@@ -21,8 +21,6 @@ Mimo busca empoderar a las personas físicas para que tomen control de su situac
 
 - **Cálculo preciso de ISR**: Aplica las tablas ISR oficiales 2024-2025 con exenciones de UMA
 - **Recomendaciones personalizadas**: IA con personalidad de gato que genera consejos fiscales con juegos de palabras felinos
-- **Análisis multi-agente**: 3 agentes de IA con diferentes personalidades (Conservador, Agresivo, Analítico) debaten estrategias de optimización fiscal
-- **Chat interactivo**: Conversa con agentes fiscales especializados (Auditor, Planeador Fiscal, Contador, etc.)
 
 ## ✨ Características Principales
 
@@ -39,15 +37,6 @@ Mimo busca empoderar a las personas físicas para que tomen control de su situac
 - Streaming en tiempo real (Server-Sent Events)
 - Saludos personalizados según la hora del día
 - Análisis de espacio disponible para deducciones
-
-### 👥 Sistema Multi-Agente
-
-- **3 agentes de IA** con personalidades y profesiones distintas
-- **Debate estructurado en 3 rondas**: propuestas iniciales → respuestas → consenso
-- **Moderador inteligente**: Sintetiza las conclusiones con roadmap de implementación
-- **Personalidades disponibles**: Conservador, Agresivo, Analítico, Pragmático, Innovador
-- **Profesiones**: Auditor, Planeador Fiscal, Contador, Asesor Financiero, Abogado Fiscal, Consultor de Negocios
-- **Modelo configurable por agente**: Claude, DeepSeek, Gemini, GPT-4.1 (vía LiteLLM)
 - Límites de caracteres por respuesta (150-250 chars) para mantener debates concisos
 
 ### 🔒 Autenticación y Límites
@@ -55,7 +44,7 @@ Mimo busca empoderar a las personas físicas para que tomen control de su situac
 - Google OAuth 2.0 para acceso seguro
 - Límite diario de recomendaciones: 3 por usuario (configurable)
 - Sesiones persistentes con SessionMiddleware
-- Seguimiento de uso en SQLite
+- Seguimiento de uso en PostgreSQL (SQLite solo en tests)
 
 ### 💬 Chat Interactivo con Agentes
 

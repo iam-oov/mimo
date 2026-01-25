@@ -6,29 +6,9 @@ Reusable prompts that can be shared across projects.
 from datetime import datetime
 from typing import Any
 
-# Re-export multi-agent prompts for convenience
-from src.multi_agent.infrastructure.prompts.multi_agent_prompts import (
-    AgentModelConfig,
-    Personality,
-    Profession,
-    build_agent_system_prompt,
-    build_debate_context,
-    build_round_prompt,
-    build_synthesis_prompt,
-    get_agent_model_config,
-)
-
 __all__ = [
     "build_fiscal_recommendation_prompt",
     "build_fallback_recommendations_prompt",
-    "Personality",
-    "Profession",
-    "AgentModelConfig",
-    "build_agent_system_prompt",
-    "build_debate_context",
-    "build_round_prompt",
-    "build_synthesis_prompt",
-    "get_agent_model_config",
 ]
 
 

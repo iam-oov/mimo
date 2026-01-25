@@ -3,9 +3,6 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any
 
-from src.multi_agent.application.multi_agent_debate_service import (
-    MultiAgentDebateService,
-)
 from src.multi_agent.domain.ports.multi_agent_provider import MultiAgentProvider
 from src.shared.domain.ports.repositories import UsageRepository
 
@@ -124,48 +121,9 @@ class GenerateMultiAgentAnalysisUseCase:
         Raises:
             ValueError: If user exceeded rate limit or no provider available
         """
-        # Check rate limit
-        if not self.can_generate(user_id):
-            raise ValueError("Daily analysis limit reached")
-
-        # Get available provider
-        provider = self._get_available_provider()
-        if provider is None:
-            raise ValueError("No AI provider available for multi-agent analysis")
-
-        # Note: This method collects all streaming events into a single response
-        # For streaming UI, use execute_stream() instead
-        debate_service = MultiAgentDebateService()
-
-        # Collect all events
-        expert_profiles = []
-        rounds_data = []
-        conclusion = ""
-        full_transcript = ""
-
-        for event in debate_service.run_analysis_stream(
-            calculation_result=request.calculation_result,
-            user_data=request.user_data,
-            fiscal_year=request.fiscal_year,
-        ):
-            event_type = event.get("type")
-
-            if event_type == "agent_intro":
-                expert_profiles = event.get("agents", [])
-            elif event_type == "synthesis_complete":
-                conclusion = event.get("full_text", "")
-
-        # Increment usage after successful generation
-        today = date.today()
-        self.usage_repository.increment_usage(user_id, today)
-
-        return MultiAgentAnalysisResponse(
-            expert_profiles=expert_profiles,
-            moderator_name="Moderador Fiscal",
-            rounds=[],  # Simplified for non-streaming
-            voting_results=None,  # New debate system doesn't use voting
-            conclusion=conclusion,
-            full_transcript=full_transcript,
+        raise NotImplementedError(
+            "Multi-agent debate service has been deprecated. "
+            "Use execute_stream() or implement new multi-agent logic."
         )
 
     def execute_stream(
@@ -184,25 +142,7 @@ class GenerateMultiAgentAnalysisUseCase:
         Raises:
             ValueError: If user exceeded rate limit or no provider available
         """
-        # Check rate limit
-        if not self.can_generate(user_id):
-            raise ValueError("Daily analysis limit reached")
-
-        # Get available provider
-        provider = self._get_available_provider()
-        if provider is None:
-            raise ValueError("No AI provider available for multi-agent analysis")
-
-        # Create debate service and run streaming analysis
-        debate_service = MultiAgentDebateService()
-
-        # Yield each event from the streaming analysis
-        yield from debate_service.run_analysis_stream(
-            calculation_result=request.calculation_result,
-            user_data=request.user_data,
-            fiscal_year=request.fiscal_year,
+        raise NotImplementedError(
+            "Multi-agent debate service has been deprecated. "
+            "Implement new multi-agent logic here."
         )
-
-        # Increment usage after successful generation
-        today = date.today()
-        self.usage_repository.increment_usage(user_id, today)

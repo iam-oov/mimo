@@ -10,6 +10,10 @@ __pycache__/
 # C extensions
 *.so
 
+# ai files
+.playwright-mcp/
+docs-ai/
+
 # Distribution / packaging
 .Python
 build/
@@ -173,6 +177,12 @@ poetry.toml
 # LSP config files
 pyrightconfig.json
 
+# User memory data (FAISS indices) - only root directory
+/memory/
+!memory/.gitkeep
+
+# SQLite databases
 *.db
+*.db-journal
 
 # End of https://www.toptal.com/developers/gitignore/api/python

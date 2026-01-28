@@ -1,0 +1,56 @@
+# Docker Compose for local testing
+# Run: docker-compose up
+
+version: "3.8"
+
+services:
+  # Mimo application (replace with your actual app)
+  # mimo-app:
+  #   build: ..
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     - DATABASE_URL=sqlite:///recommendations.db
+  #   networks:
+  #     - monitoring
+
+  prometheus:
+    build:
+      context: .
+      dockerfile: Dockerfile.prometheus
+    ports:
+      - "9090:9090"
+    environment:
+      - MIMO_APP_URL=host.docker.internal:8000
+    volumes:
+      - prometheus-data:/prometheus
+    networks:
+      - monitoring
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  grafana:
+    build:
+      context: .
+      dockerfile: Dockerfile.grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - PROMETHEUS_URL=http://prometheus:9090
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - monitoring
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+
+volumes:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  monitoring:
+    driver: bridge

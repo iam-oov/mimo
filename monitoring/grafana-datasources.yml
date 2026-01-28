@@ -1,0 +1,18 @@
+# Grafana Datasources Configuration
+# Auto-provision Prometheus as datasource
+
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    uid: prometheus
+    # Use Railway internal DNS: <service-name>.railway.internal:9090
+    # Or set via environment variable
+    url: ${PROMETHEUS_URL:-http://prometheus:9090}
+    isDefault: true
+    editable: true
+    jsonData:
+      timeInterval: 15s
+      httpMethod: POST

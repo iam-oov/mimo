@@ -1,0 +1,73 @@
+# Alert Rules for Mimo Tax Calculator
+# Define alerting thresholds for critical metrics
+
+groups:
+  - name: mimo_alerts
+    interval: 30s
+    rules:
+      # High error rate alert
+      - alert: HighErrorRate
+        expr: |
+          rate(http_requests_total{status_code=~"5.."}[5m]) / 
+          rate(http_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+
+      # High latency alert
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95, 
+            rate(http_request_duration_seconds_bucket[5m])
+          ) > 2.0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High request latency detected"
+          description: "P95 latency is {{ $value }}s (threshold: 2s)"
+
+      # Rate limit abuse alert
+      - alert: HighRateLimitHits
+        expr: rate(mimo_rate_limit_hits_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High rate of rate limit hits"
+          description: "{{ $value }} rate limit hits per second"
+
+      # Database errors alert
+      - alert: DatabaseErrors
+        expr: rate(mimo_database_errors_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database errors detected"
+          description: "{{ $value }} database errors per second"
+
+      # Application down alert
+      - alert: ApplicationDown
+        expr: up{job="mimo-app"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Mimo application is down"
+          description: "Mimo application has been down for more than 2 minutes"
+
+      # Low disk space alert
+      - alert: LowDiskSpace
+        expr: |
+          (node_filesystem_avail_bytes{mountpoint="/"} / 
+           node_filesystem_size_bytes{mountpoint="/"}) < 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low disk space"
+          description: "Disk usage is {{ $value | humanizePercentage }} (threshold: 90%)"

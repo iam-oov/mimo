@@ -1,168 +1,198 @@
-# 🐱 Mimo - Calculadora de Saldo a Favor ISR
+# Mimo 🐱 - Calculadora de Saldo a Favor ISR
 
-**Mimo el Gatito Fiscal** es una calculadora de impuestos mexicana para personas físicas que calcula el saldo a favor/a pagar anual y genera recomendaciones fiscales personalizadas con IA.
+**Mimo el Gatito Fiscal** es una calculadora de impuestos inteligente para personas físicas en México que calcula tu saldo a favor o a pagar del ISR (Impuesto Sobre la Renta) y genera recomendaciones fiscales personalizadas con IA.
 
-## 🚀 Inicio Rápido
+## 🎯 Descripción General
 
-### Requisitos
+Mimo es una aplicación web que simplifica el cálculo de impuestos anuales para contribuyentes mexicanos, aplicando las reglas oficiales del SAT y proporcionando análisis fiscal inteligente mediante múltiples agentes de IA con personalidades únicas.
 
-- Python 3.12+
-- [uv](https://github.com/astral-sh/uv) (gestor de paquetes Python)
+### 💡 Origen del Nombre
 
-### Instalación
+**Mimo** proviene del juego de palabras en spanglish **"MI MO"ney** (Mi Dinero), simbolizando que tus recursos financieros te pertenecen, no al SAT. El proyecto nace de la necesidad de democratizar el conocimiento fiscal en México, donde la falta de información accesible lleva a muchos contribuyentes a perder beneficios legítimos al no solicitar facturas o realizar su declaración anual.
+
+Mimo busca empoderar a las personas físicas para que tomen control de su situación fiscal mediante:
+
+- **Transparencia**: Cálculos claros y explicados paso a paso
+- **Educación**: Recomendaciones personalizadas que enseñan optimización fiscal legal
+- **Accesibilidad**: Herramientas profesionales sin necesidad de conocimiento contable previo
+- **Autonomía**: Información que permite tomar decisiones financieras informadas
+
+### ¿Qué hace Mimo?
+
+- **Cálculo preciso de ISR**: Aplica las tablas ISR oficiales 2024-2025 con exenciones de UMA
+- **Recomendaciones personalizadas**: IA con personalidad de gato que genera consejos fiscales con juegos de palabras felinos
+
+## ✨ Características Principales
+
+### 📊 Cálculo de Impuestos
+
+- Cálculo automático de ISR anual con deducciones personales
+- Exenciones oficiales para aguinaldo y prima vacacional basadas en UMA
+- Límites de deducción inteligentes: 5 UMAs o 15% del ingreso bruto (el menor)
+- Deducciones autorizadas: personales, PPR (retiro), educación (colegiatura)
+- Validación de límites oficiales por nivel educativo (preescolar, primaria, secundaria, preparatoria, universidad)
+
+### 🤖 Recomendaciones con IA
+
+- Streaming en tiempo real (Server-Sent Events)
+- Saludos personalizados según la hora del día
+- Análisis de espacio disponible para deducciones
+- Límites de caracteres por respuesta (150-250 chars) para mantener debates concisos
+
+### 🔒 Autenticación y Límites
+
+- Google OAuth 2.0 para acceso seguro
+- Límite diario de recomendaciones: 3 por usuario (configurable)
+- Sesiones persistentes con SessionMiddleware
+- Seguimiento de uso en PostgreSQL (SQLite solo en tests)
+
+### 💬 Chat Interactivo con Agentes
+
+- Selección de agente por personalidad y profesión
+- Memoria conversacional con FAISS (vector store)
+- Historial de mensajes con contexto fiscal
+- Respuestas streaming en tiempo real
+
+## 🚀 Instalación
+
+### Prerequisitos
+
+- Python 3.11+
+- [uv](https://github.com/astral-sh/uv)
+
+### 1. Clonar el repositorio
 
 ```bash
-# Clonar el repositorio
 git clone https://github.com/iam-oov/mimo.git
 cd mimo
+```
 
-# Instalar dependencias
+### 2. Instalar dependencias con uv
+
+```bash
+# Instalar uv si no lo tienes
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Instalar dependencias del proyecto
 uv sync
-
-# Configurar variables de entorno
-cp .env.example .env
-# Editar .env con tus API keys
 ```
 
-### Ejecutar el Servidor
+### 3. Configurar variables de entorno
+
+Duplica el archivo `.env.example` a `.env` y completa las variables necesarias:
+
+### 4. Ejecutar la aplicación
 
 ```bash
-uv run uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
+uv run uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-El servidor estará disponible en:
+### 5. Acceder a la aplicación
 
-- **Web UI**: http://localhost:8000/calculator
-- **API Docs**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
+Abre tu navegador y ve a `http://localhost:8000`
 
-## 🏗️ Arquitectura
+## ⚙️ Configuración
 
-Mimo sigue una **arquitectura hexagonal híbrida** con separación clara de concerns:
+### Google OAuth
 
-```
-src/
-├── domain/          # Lógica de negocio pura (entidades, servicios)
-├── application/     # Casos de uso (orquestación)
-├── infrastructure/  # Adaptadores (DB, AI, OAuth)
-└── api/            # Capa de presentación (FastAPI)
-```
+1. Ve a [Google Cloud Console](https://console.cloud.google.com/)
+2. Crea un proyecto nuevo o selecciona uno existente
+3. Habilita la API de Google+ (Google People API)
+4. En "Credenciales" → "Crear credenciales" → "ID de cliente de OAuth 2.0"
+5. Tipo de aplicación: "Aplicación web"
+6. URIs de redireccionamiento autorizados:
+   - Desarrollo: `http://localhost:8000/auth/callback`
+   - Producción: `https://tu-dominio.com/auth/callback`
+7. Copia el Client ID y Client Secret al `.env`
 
-Ver [ARCHITECTURE.md](./ARCHITECTURE.md) para detalles completos.
+## 🛠️ Tecnologías Usadas
 
-## 🔑 Variables de Entorno
+### Backend
 
-```bash
-# OAuth (requerido para recomendaciones AI)
-GOOGLE_CLIENT_ID=your_client_id
-GOOGLE_CLIENT_SECRET=your_client_secret
-
-# Session security
-SECRET_KEY=your_secret_key
-
-# AI Providers (al menos uno requerido)
-DEEPSEEK_API_KEY=your_deepseek_key  # Preferido
-GEMINI_API_KEY=your_gemini_key      # Fallback
-
-# Configuración opcional
-DAILY_RECOMMENDATIONS_LIMIT=3  # Límite diario de recomendaciones por usuario
-```
-
-## 📡 API Endpoints
+- **[FastAPI](https://fastapi.tiangolo.com/)** - Framework web moderno y rápido
+- **[Jinja2](https://jinja.palletsprojects.com/)** - Motor de templates para HTML
 
 ### Autenticación
 
-- `GET /auth/google` - Iniciar OAuth con Google
-- `GET /auth/callback` - Callback de OAuth
-- `GET /auth/logout` - Cerrar sesión
-- `GET /auth/status` - Estado de autenticación
+- **[Authlib](https://authlib.org/)** - Cliente OAuth 2.0
+- **[Starlette SessionMiddleware](https://www.starlette.io/)** - Manejo de sesiones
 
-### Cálculo de Impuestos
+### IA y LLMs
 
-- `POST /api/calculate` - Calcular ISR anual
+- **[Anthropic SDK](https://github.com/anthropics/anthropic-sdk-python)** - Claude Sonnet 4.5 (principal)
+- **[LiteLLM](https://github.com/BerriAI/litellm)** - Router unificado para múltiples LLMs
+- **[OpenAI-compatible API](https://platform.openai.com/docs/api-reference)** - DeepSeek
+- **[Google Gemini API](https://ai.google.dev/)** - Fallback
+- **[FAISS](https://github.com/facebookresearch/faiss)** - Vector store para memoria conversacional
+- **[Sentence Transformers](https://www.sbert.net/)** - Embeddings para búsqueda semántica
 
-### Recomendaciones AI (requiere autenticación)
+### Frontend
 
-- `POST /api/recommendations` - Generar recomendaciones
-- `POST /api/recommendations/stream` - Streaming SSE
-- `GET /api/recommendations/usage` - Consultar uso diario
+- **[HTMX](https://htmx.org/)** - Interactividad sin escribir JavaScript
+- **[Tailwind CSS](https://tailwindcss.com/)** - Framework CSS utility-first
 
-### Análisis Multi-Agente (requiere autenticación)
+### DevOps
 
-- `POST /api/multi-agent-analysis` - Debate de 3 agentes fiscales
-- `POST /api/multi-agent-analysis/stream` - Streaming SSE
-- `GET /api/multi-agent-analysis/usage` - Consultar uso diario
+- **[Railway](https://railway.app/)** - Hosting y deployment
+- **[Nixpacks](https://nixpacks.com/)** - Build system
+- **[Uvicorn](https://www.uvicorn.org/)** - Servidor ASGI
 
-## 🧪 Ejemplo de Uso
+### Arquitectura
 
-```python
-import requests
-
-# Calcular impuestos
-response = requests.post('http://localhost:8000/api/calculate', json={
-    "fiscal_year": 2024,
-    "taxpayer_info": {
-        "rfc": "XAXX010101000",
-        "name": "Juan Pérez"
-    },
-    "income_data": {
-        "monthly_income": 12600,
-        "bonus_days": 15,
-        "vacation_days": 12,
-        "vacation_premium_percentage": 0.25
-    },
-    "deduction_data": {
-        "general_deductions": 71000,
-        "ppr_deductions": 15000,
-        "education_deductions": 25000
-    }
-})
-
-print(response.json())
-```
-
-## 🎯 Características
-
-- ✅ **Cálculo ISR mexicano**: Implementa tablas ISR 2024-2025 con UMAs
-- ✅ **Deducciones autorizadas**: Personales, PPR, educación con límites oficiales
-- ✅ **Recomendaciones AI**: Generadas por DeepSeek/Gemini con personalidad gatuna
-- ✅ **Análisis multi-agente**: 3 agentes debaten estrategias fiscales
-- ✅ **OAuth Google**: Autenticación segura
-- ✅ **Rate limiting**: 3 consultas AI por día (configurable)
-- ✅ **Error handling**: Respuestas JSON consistentes
-- ✅ **Streaming**: SSE para respuestas AI en tiempo real
-
-## 🛠️ Tecnologías
-
-- **Backend**: FastAPI + Uvicorn
-- **Auth**: Google OAuth 2.0
-- **AI**: Google Gemini + DeepSeek
-- **Database**: SQLite (usage tracking)
-- **Package Manager**: uv
-- **Validation**: Pydantic v2
-
-## 📚 Documentación
-
-- [ARCHITECTURE.md](./ARCHITECTURE.md) - Guía completa de arquitectura
-- [.github/copilot-instructions.md](./.github/copilot-instructions.md) - Instrucciones para desarrollo
-- [.github/RECOMMENDATIONS_MIGRATION.md](./.github/RECOMMENDATIONS_MIGRATION.md) - Migración de recomendaciones
-
-## 🤝 Contribuir
-
-1. Todo el código debe estar en **inglés** (variables, funciones, comentarios)
-2. Seguir **principios SOLID**
-3. Usar **type hints** en todas las funciones
-4. Código auto-documentado, comentarios solo para lógica compleja
-5. Nuevas features en `src/`, no modificar archivos legacy
+- **Hexagonal Architecture (Ports & Adapters)** - Separación de capas
+- **Domain-Driven Design** - Modelado del dominio fiscal
+- **Module-First Architecture** - Bounded contexts independientes
+- **SOLID Principles** - Código mantenible y extensible
 
 ## 📝 Licencia
 
-MIT License - Ver [LICENSE](./LICENSE) para detalles.
+MIT License - Ver [LICENSE](LICENSE) para más detalles.
 
-## 🙋 Soporte
+## 🤝 Contribuir
 
-Para preguntas o issues, abre un [issue en GitHub](https://github.com/iam-oov/mimo/issues).
+¡Las contribuciones son bienvenidas! Por favor:
+
+1. Fork el proyecto
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+### Convenciones de código:
+
+- Todo el código en **inglés** (variables, funciones, clases, comentarios)
+- Seguir **SOLID principles**
+- Type hints obligatorios
+- Imports explícitos (nunca usar `__init__.py` para exportar)
+- Comentarios mínimos (código auto-documentado)
+
+## ⚠️ Disclaimer
+
+Mimo es una herramienta educativa y de apoyo. **No sustituye el asesoramiento profesional de un contador o asesor fiscal certificado**. Siempre consulta con un profesional antes de tomar decisiones fiscales importantes.
+
+## 🚧 Roadmap y Mejoras Planificadas
+
+### Experiencia de Usuario
+
+- **Diseño responsivo**: Optimización de la interfaz para dispositivos móviles y tablets
+- **Formato de moneda**: Implementación de separadores de miles con coma (,) y símbolo de peso ($) en campos numéricos
+- **Gestión de perfiles**: Sistema de preferencias de usuario con almacenamiento persistente
+
+### Inteligencia Artificial
+
+- **Detección contextual**: Capacidad de los agentes para identificar y reaccionar automáticamente a cambios en los datos de entrada
+- **Análisis predictivo**: Sugerencias proactivas basadas en patrones de modificación de datos
+
+### Gestión Documental
+
+- **Repositorio de facturas**: Módulo de carga y almacenamiento de documentos fiscales (XML/PDF)
+- **Extracción automatizada**: OCR y parsing de facturas para prellenado de campos
+- **Biblioteca de documentos**: Organización categórica de comprobantes fiscales por período y tipo
+
+### Infraestructura y Despliegue
+
+- **Containerización**: Implementación de Docker para entorno de desarrollo y producción estandarizado
 
 ---
 
-Hecho con ❤️ y 🐱 por el equipo de Mimo
+**Mimo el Gatito Fiscal** 🐱 - Haciendo tus impuestos "purr-fectos" desde 2025

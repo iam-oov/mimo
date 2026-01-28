@@ -1129,9 +1129,9 @@
         /* Chat Styles */
         .agent-btn {
             padding: 12px;
-            border: 2px solid #e5e7eb;
+            border: 2px solid var(--color-border);
             border-radius: 8px;
-            background: white;
+            background: var(--color-bg-panel);
             cursor: pointer;
             transition: all 0.2s ease;
             text-align: center;
@@ -1140,7 +1140,8 @@
         
         .agent-btn:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            border-color: var(--color-accent-secondary);
         }
         
         .agent-btn:disabled {
@@ -1150,7 +1151,7 @@
         
         .agent-btn.selected {
             border-color: var(--color-accent-primary);
-            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(255, 140, 66, 0.1) 100%);
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(45, 212, 191, 0.1) 100%);
             border-width: 3px;
         }
         
@@ -1193,8 +1194,8 @@
         }
         
         .chat-message.user {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: linear-gradient(135deg, var(--color-accent-primary) 0%, #d97706 100%);
+            color: var(--color-bg-deep-space);
             margin-left: auto;
             border-bottom-right-radius: 4px;
         }
@@ -1262,13 +1263,61 @@
             }
         }
         
+        /* Banner Informativo */
+        .info-banner {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            padding: 6px 16px;
+            text-align: center;
+            font-size: 0.8rem;
+            border-bottom: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        
+        .info-banner-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            line-height: 1.4;
+        }
+        
+        .info-banner-icon {
+            font-size: 0.9rem;
+        }
+        
+        .info-banner-text {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .info-banner-text strong {
+            color: #fbbf24;
+            font-weight: 600;
+        }
+        
+        .info-banner-badge {
+            background: rgba(251, 191, 36, 0.2);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            white-space: nowrap;
+        }
+        
     </style>
 </head>
 <body>
     <nav class="navbar">
         <div class="navbar-container">
             <a href="/calculator" class="navbar-brand">MiMo • Proyección Declaración Anual <span class="ai-text">+ Ai</span></a>
-            <small>v1.3.1</small>
+            <small>v{{ version }}</small>
             <div class="navbar-nav">
                 {% if user %}
                     <span class="nav-item">Hola, {{ user.name }}!</span>
@@ -1279,6 +1328,15 @@
             </div>
         </div>
     </nav>
+
+    <!-- Banner Informativo -->
+    <div class="info-banner">
+        <div class="info-banner-content">
+            <span><strong>Herramienta de Proyección</strong> para personas físicas bajo</span>
+            <span class="info-banner-badge">🇲🇽 Sueldos y Salarios</span>
+            <span>• Cálculos estimados, no sustituyen asesoría profesional</span>
+        </div>
+    </div>
 
     <div class="main-container">
         <div class="calculator-grid">
@@ -1294,8 +1352,8 @@
                             <div class="form-group">
                                 <label for="fiscal_year">Año Fiscal:</label>
                                 <select id="fiscal_year" name="fiscal_year">
-                                    <option value="2024">2024</option>
-                                    <option value="2025" selected>2025</option>
+                                    <option value="2025">2025</option>
+                                    <option value="2026" selected>2026</option>
                                 </select>
                             </div>
                         </div>
@@ -1306,11 +1364,11 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="monthly_gross_income">Ingreso Bruto Mensual ($):</label>
-                                <input type="number" id="monthly_gross_income" name="monthly_gross_income" step="0.01" min="0" value="0">
+                                <input type="text" id="monthly_gross_income" name="monthly_gross_income" class="currency-input" value="$0.00" inputmode="decimal">
                             </div>
                             <div class="form-group">
                                 <label for="monthly_net_income">Ingreso Neto Mensual ($):</label>
-                                <input type="number" id="monthly_net_income" name="monthly_net_income" step="0.01" min="0" value="0">
+                                <input type="text" id="monthly_net_income" name="monthly_net_income" class="currency-input" value="$0.00" inputmode="decimal">
                             </div>
                         </div>
                         <div class="form-row">
@@ -1340,7 +1398,7 @@
                                     <div class="form-group">
                                         <label for="general_deductions">Total Deducciones Generales ($):</label>
                                         <small class="input-subtitle">Médico/Dental • Funeral • Donaciones • Intereses Hipotecarios • Jubilación • Primas de Seguro de Gastos Médicos • Pediatra • Ginecólogo • Psicología • Nutriología</small>
-                                        <input type="number" id="general_deductions" name="general_deductions" step="0.01" min="0" value="0">
+                                        <input type="text" id="general_deductions" name="general_deductions" class="currency-input" value="$0.00" inputmode="decimal">
                                     </div>
                                 </div>
                             </div>
@@ -1350,7 +1408,7 @@
                                     <div class="form-group">
                                         <label for="total_tuition">Total Colegiaturas ($):</label>
                                         <small class="input-subtitle">Preescolar • Primaria • Secundaria • Técnico • Preparatoria</small>
-                                        <input type="number" id="total_tuition" name="total_tuition" step="0.01" min="0" value="0">
+                                        <input type="text" id="total_tuition" name="total_tuition" class="currency-input" value="$0.00" inputmode="decimal">
                                     </div>
                                 </div>
                             </div>
@@ -1360,7 +1418,7 @@
                                     <div class="form-group">
                                         <label for="total_ppr">Total Contribuciones ($):</label>
                                         <small class="input-subtitle">Contribuciones PPR • Contribuciones Afore</small>
-                                        <input type="number" id="total_ppr" name="total_ppr" step="0.01" min="0" value="0">
+                                        <input type="text" id="total_ppr" name="total_ppr" class="currency-input" value="$0.00" inputmode="decimal">
                                     </div>
                                 </div>
                             </div>
@@ -1448,11 +1506,12 @@
                                 <strong>Detener Recomendación</strong>
                             </span>
                         </button>
-                        <button id="startChatBtn" class="btn-primary ai-powered-btn" style="width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; border-color: #9f7aea !important; color: white !important;">
+                        <!-- Chat Fiscal - Próximamente disponible -->
+                        <button id="startChatBtn" class="btn-primary ai-powered-btn" style="width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; border-color: #9f7aea !important; color: white !important; opacity: 0.6; cursor: not-allowed;" disabled>
                             <span class="btn-icon">💬</span>
                             <span class="btn-text">
                                 <strong style="color: white;">Chat Fiscal</strong>
-                                <small style="font-size: 0.75rem; font-weight: normal; color: rgba(255, 255, 255, 0.9);">Pregunta a expertos</small>
+                                <small style="font-size: 0.75rem; font-weight: normal; color: rgba(255, 255, 255, 0.9);">Próximamente disponible</small>
                             </span>
                         </button>
                         <button id="closeChatBtn" class="btn-secondary" style="width: 100%; display: none; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important; border-color: #ef4444 !important;">
@@ -1469,32 +1528,33 @@
                     </div>
                     
                     <!-- Chat Fiscal Interactivo -->
-                    <div class="recommendations-content" id="chat-content" style="display: none;">
+                    <div class="recommendations-content" id="chat-content" style="display: none; height: 100%; flex-direction: column;">
                         <!-- Perfiles de Agentes -->
-                        <div id="chat-agents" style="margin-bottom: 15px;">
+                        <div id="chat-agents" style="margin-bottom: 12px; flex-shrink: 0;">
                             <h4 style="margin: 0 0 10px 0; color: var(--color-accent-primary); font-size: 1rem;">
                                 🎭 Selecciona tu Experto Fiscal
                             </h4>
-                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px;" id="agent-buttons">
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;" id="agent-buttons">
                                 <!-- Los botones se generarán dinámicamente -->
                             </div>
                         </div>
                         
-                        <!-- Área de Mensajes -->
-                        <div id="chat-messages" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; max-height: 400px; overflow-y: auto; margin-bottom: 15px;">
-                            <div style="text-align: center; color: #9ca3af; padding: 20px;">
+                        <!-- Área de Mensajes - Ahora ocupa todo el espacio disponible -->
+                        <div id="chat-messages" style="background: var(--color-bg-panel); border: 1px solid var(--color-border); border-radius: 8px; padding: 15px; flex: 1; overflow-y: auto; margin-bottom: 12px; min-height: 300px; max-height: calc(100vh - 520px);">
+                            <div style="text-align: center; color: var(--color-text-secondary); padding: 20px;">
                                 <div style="font-size: 2rem; margin-bottom: 10px;">💬</div>
-                                <p>Selecciona un experto y haz tu pregunta fiscal</p>
+                                <p>¡Bienvenido al Chat Fiscal!</p>
+                                <p style="font-size: 0.85rem; margin-top: 5px;">Selecciona un experto arriba y haz tu pregunta.</p>
                             </div>
                         </div>
                         
-                        <!-- Input de Chat -->
-                        <div style="display: flex; gap: 8px;">
+                        <!-- Input de Chat - Fijo en la parte inferior -->
+                        <div style="display: flex; gap: 8px; flex-shrink: 0;">
                             <input 
                                 type="text" 
                                 id="chat-input" 
                                 placeholder="Escribe tu pregunta fiscal..."
-                                style="flex: 1; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 0.95rem;"
+                                style="flex: 1; padding: 12px; border: 2px solid var(--color-border); border-radius: 8px; font-size: 0.95rem; background: var(--color-bg-panel); color: var(--color-text-primary);"
                                 disabled
                             />
                             <button 
@@ -1503,7 +1563,7 @@
                                 style="padding: 12px 24px; white-space: nowrap;"
                                 disabled
                             >
-                                <span class="btn-icon">📤</span>
+                                <span class="btn-icon">🐱</span>
                                 Enviar
                             </button>
                         </div>
@@ -1848,8 +1908,21 @@
             }
         }
 
+        function parseCurrencyValue(value) {
+            if (typeof value === 'number') return value;
+            return parseFloat(value.replace(/[$,]/g, '')) || 0;
+        }
+
+        function formatCurrencyInput(value) {
+            const num = parseCurrencyValue(value);
+            return '$' + num.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
         function distributeUnifiedValues() {
-            const generalTotal = parseFloat(document.getElementById('general_deductions').value) || 0;
+            const generalTotal = parseCurrencyValue(document.getElementById('general_deductions').value) || 0;
             const generalProportion = generalTotal / 9;
             document.getElementById('medical_dental_expenses').value = generalProportion;
             document.getElementById('funeral_expenses').value = generalProportion;
@@ -1860,14 +1933,14 @@
             document.getElementById('school_transportation_expenses').value = generalProportion;
             document.getElementById('special_savings_account_deposits').value = generalProportion;
             document.getElementById('educational_services_payments').value = generalProportion;
-            const tuitionTotal = parseFloat(document.getElementById('total_tuition').value) || 0;
+            const tuitionTotal = parseCurrencyValue(document.getElementById('total_tuition').value) || 0;
             const tuitionProportion = tuitionTotal / 5;
             document.getElementById('preschool_tuition').value = tuitionProportion;
             document.getElementById('elementary_tuition').value = tuitionProportion;
             document.getElementById('middle_school_tuition').value = tuitionProportion;
             document.getElementById('technical_school_tuition').value = tuitionProportion;
             document.getElementById('high_school_tuition').value = tuitionProportion;
-            const pprTotal = parseFloat(document.getElementById('total_ppr').value) || 0;
+            const pprTotal = parseCurrencyValue(document.getElementById('total_ppr').value) || 0;
             const pprProportion = pprTotal / 3;
             document.getElementById('ppr_contributions').value = pprProportion;
             document.getElementById('ppr_additional_contributions').value = pprProportion;
@@ -1880,7 +1953,7 @@
             for (let [key, value] of formData.entries()) {
                 if (key === 'taxpayer_name') { data[key] = value; }
                 else if (key === 'fiscal_year' || key === 'bonus_days' || key === 'vacation_days') { data[key] = parseInt(value) || 0; }
-                else { data[key] = parseFloat(value) || 0; }
+                else { data[key] = parseCurrencyValue(value) || 0; }
             }
             return data;
         }
@@ -2239,7 +2312,7 @@
                 
                 // Hide recommendations, show chat
                 recommendationsContent.style.display = 'none';
-                chatContent.style.display = 'block';
+                chatContent.style.display = 'flex';
                 
                 // Get form data and calculate taxes
                 const formData = getFormData();
@@ -2474,7 +2547,8 @@
                                 
                                 if (data.type === 'chunk') {
                                     agentResponse += data.content;
-                                    contentDiv.textContent = agentResponse;
+                                    // Render markdown using marked.js
+                                    contentDiv.innerHTML = marked.parse(agentResponse);
                                     chatMessages.scrollTop = chatMessages.scrollHeight;
                                 } else if (data.type === 'complete') {
                                     // Add to conversation history
@@ -2556,12 +2630,42 @@
             return div.innerHTML;
         }
 
+        function initializeCurrencyInputs() {
+            const currencyInputs = document.querySelectorAll('.currency-input');
+            
+            currencyInputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    const value = parseCurrencyValue(this.value);
+                    if (value === 0) {
+                        this.value = '';
+                    } else {
+                        this.value = value.toString();
+                    }
+                    this.select();
+                });
+                
+                input.addEventListener('blur', function() {
+                    this.value = formatCurrencyInput(this.value);
+                });
+                
+                input.addEventListener('input', function(e) {
+                    let value = this.value.replace(/[^0-9.]/g, '');
+                    const parts = value.split('.');
+                    if (parts.length > 2) {
+                        value = parts[0] + '.' + parts.slice(1).join('');
+                    }
+                    this.value = value;
+                });
+            });
+        }
+
         const debouncedCalculateTaxes = debounce(calculateTaxes, 500);
 
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('taxForm');
             const inputs = form.querySelectorAll('input, select');
             
+            initializeCurrencyInputs();
             captureInitialFormState();
             
             inputs.forEach(input => {

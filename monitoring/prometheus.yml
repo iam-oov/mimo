@@ -1,0 +1,42 @@
+# Prometheus Configuration for Mimo Tax Calculator
+#
+# This configuration scrapes metrics from the Mimo app running on Railway.
+# Prometheus will run as a separate service in Railway.
+
+global:
+  scrape_interval: 15s  # Scrape targets every 15 seconds
+  evaluation_interval: 15s  # Evaluate rules every 15 seconds
+  external_labels:
+    monitor: 'mimo-production'
+
+# Alertmanager configuration (optional - can add later)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets: ['alertmanager:9093']
+
+# Rule files (optional - for alerting rules)
+# rule_files:
+#   - 'alerts.yml'
+
+# Scrape configurations
+scrape_configs:
+  # Scrape Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Scrape Mimo application
+  - job_name: 'mimo-app'
+    metrics_path: '/metrics'
+    static_configs:
+      # For local Docker Compose: use host.docker.internal to access host machine
+      # For Railway: use Railway's internal DNS (<service-name>.railway.internal)
+      - targets: ['host.docker.internal:8000']  # Local development
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
+  # Optional: Scrape Railway metrics (if available)
+  # - job_name: 'railway'
+  #   static_configs:
+  #     - targets: ['railway-metrics:9090']

@@ -1,0 +1,51 @@
+"""
+Fallback recommendation provider adapter.
+"""
+
+import logging
+from collections.abc import Generator
+from typing import Any
+
+from src.recommendations.domain.ports.recommendation_provider import (
+    RecommendationProvider,
+)
+from src.recommendations.infrastructure.prompts.recommendation_prompts import (
+    build_fallback_recommendations_prompt,
+)
+from src.shared.domain.constants.isr_tables import get_isr_table
+
+logger = logging.getLogger(__name__)
+
+
+class FallbackRecommendationAdapter(RecommendationProvider):
+    """
+    Adapter for fallback recommendation provider.
+    Always available with static recommendations.
+    """
+
+    def __init__(self):
+        pass
+
+    def generate_recommendations_stream(
+        self, calculation_result: Any, user_data: dict[str, Any], fiscal_year: int
+    ) -> Generator[str, None, None]:
+        """
+        Generate static fallback recommendations.
+        """
+        isr_table = get_isr_table(fiscal_year)
+        uma_annual = isr_table.constants.annual_uma_value
+        general_limit = 5 * uma_annual
+
+        recommendations = build_fallback_recommendations_prompt(
+            fiscal_year=fiscal_year, general_limit=general_limit
+        )
+
+        yield recommendations
+
+    def is_available(self) -> bool:
+        """Fallback is always available"""
+        return True
+
+    def get_provider_name(self) -> str:
+        """Get provider name for logging"""
+        return "Fallback"

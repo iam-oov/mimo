@@ -1,34 +1,22 @@
-## ✅ FASE 1: Separación de Concerns (COMPLETA)
+# TODO - Mimo Tax Calculator
 
-- ✅ Extraer configuración centralizada
-- ✅ Crear capa de repositorios
-- ✅ Separar routers del monolito
-- ✅ Implementar middleware de errores
+## High Priority
 
-## ✅ FASE 2: Domain-Driven Design (COMPLETA)
+- [ ] **User Profile**: Agregar perfil de usuario para guardar preferencias
+- [ ] **Session Persistence**: Si ya llené algo en los inputs no borrarlos al iniciar sesión
+- [ ] **Responsive UI**: Mejorar el responsivo del sitio web (mobile-first)
 
-- ✅ Mover lógica a servicios de dominio
-- ✅ Crear casos de uso
-- ✅ Implementar inyección de dependencias
+## Medium Priority
 
-## 🎉 MIGRACIÓN COMPLETA AL 100%
+- [ ] **Document Upload**: Opción para subir facturas (carpeta de documentos)
+- [ ] **Bolsas Fiscales**: Implementar sistema de bolsas fiscales
+- [ ] **App Version**: Mandar la versión de la app a un archivo de constantes
 
-### Archivos Legacy Listos para Eliminar:
+## Low Priority / Ideas
 
-- `server.py` (986 líneas) - Toda la funcionalidad migrada a `src/`
+- [ ] **Agent Intelligence**: Los agentes deben ser inteligentes para detectar los cambios en los inputs
+- [ ] **UX Enhancement**: Hacer el feeling más agéntico y no tanto de calculadora
 
-### Funcionalidad Migrada:
+## Completed ✅
 
-1. **Cálculo de impuestos** → `src/api/v1/routers/tax_router.py`
-2. **Recomendaciones AI** → `src/api/v1/routers/recommendations_router.py`
-3. **Análisis multi-agente** → `src/api/v1/routers/multi_agent_router.py`
-4. **OAuth Google** → `src/api/v1/routers/auth_router.py`
-5. **Manejo de errores** → `src/api/middleware/error_handler.py`
-
-### Próximos Pasos Opcionales:
-
-- Tests unitarios (domain services, use cases)
-- Tests de integración (API endpoints)
-- Documentación OpenAPI mejorada
-- Optimización con caching (Redis)
-- Logging estructurado JSON
+- [x] **Tax Router Location**: El endpoint de `/calcular` debe estar en el módulo `tax_calculation` (DONE: `src/tax_calculation/infrastructure/api/tax_router.py`)

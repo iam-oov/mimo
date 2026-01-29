@@ -15,6 +15,7 @@ __pycache__/
 docs-ai/
 
 # Distribution / packaging
+node_modules/
 .Python
 build/
 develop-eggs/

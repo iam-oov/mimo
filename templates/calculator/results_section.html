@@ -1,0 +1,67 @@
+<div class="lg:sticky top-20 space-y-3 sm:space-y-4">
+    <!-- Loading Skeleton -->
+    <div id="loading" class="hidden space-y-3 sm:space-y-4">
+        <!-- Skeleton KPI Principal -->
+        <div class="rounded-xl bg-slate-900 p-3 sm:p-4 animate-fade-in">
+            <div class="skeleton h-3 w-24 mb-2"></div>
+            <div class="skeleton-shimmer h-10 w-32 mb-1"></div>
+            <div class="skeleton h-2 w-20"></div>
+        </div>
+        
+        <!-- Skeleton KPI Secundario -->
+        <div class="rounded-xl bg-slate-900 p-2 sm:p-3 animate-fade-in [animation-delay:100ms]">
+            <div class="skeleton h-3 w-28 mb-1"></div>
+            <div class="skeleton-shimmer h-8 w-28"></div>
+        </div>
+        
+        <!-- Skeleton Desglose -->
+        <div class="rounded-xl bg-slate-900 p-2 sm:p-3 animate-fade-in [animation-delay:200ms]">
+            <div class="skeleton h-4 w-40 mb-3"></div>
+            <div class="space-y-2">
+                <div class="skeleton h-3 w-full"></div>
+                <div class="skeleton h-3 w-full"></div>
+                <div class="skeleton h-3 w-3/4"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Message -->
+    <div id="error-message" class="hidden rounded-xl bg-red-500/10 border border-red-500/30 p-3 sm:p-4 text-red-400 text-xs sm:text-sm animate-fade-in"></div>
+
+    <!-- Results -->
+    <div id="results" style="display: none;">
+        <!-- Saldo a Favor/Pagar (KPI Principal) -->
+        <div id="kpi-balance" class="rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/30 p-3 sm:p-4 animate-slide-in-right transition-smooth hover:scale-[1.02] hover:shadow-lg hover:shadow-emerald-500/20">
+            <div class="text-xs sm:text-sm text-emerald-300 mb-1">Saldo estimado</div>
+            <div class="text-xl sm:text-3xl font-bold text-emerald-400" id="balance-amount">$0.00</div>
+            <div class="text-xs text-emerald-300/70 mt-1" id="balance-label"></div>
+        </div>
+
+        <!-- Impuesto Determinado (KPI Secundario) -->
+        <div id="kpi-tax" class="rounded-xl bg-slate-900 p-2 sm:p-3 animate-slide-in-right [animation-delay:100ms] transition-smooth hover:bg-slate-800/80">
+            <div class="text-xs sm:text-sm text-slate-400 mb-1">Impuesto determinado</div>
+            <div class="text-lg sm:text-xl font-semibold text-slate-200" id="tax-amount">$0.00</div>
+        </div>
+
+        <!-- Desglose Colapsable -->
+        <details class="rounded-xl bg-slate-900 p-2 sm:p-3 group animate-slide-in-right [animation-delay:200ms] transition-smooth hover:bg-slate-800/80">
+            <summary class="summary cursor-pointer text-xs sm:text-sm font-medium text-slate-300 flex items-center justify-between transition-fast">
+                <span>📊 Ver desglose completo</span>
+            </summary>
+            
+            <div class="mt-2 sm:mt-3 overflow-x-auto">
+                <table class="w-full text-xs sm:text-sm">
+                    <thead class="border-b border-slate-700">
+                        <tr class="text-left">
+                            <th class="py-1.5 text-slate-400 font-medium">Concepto</th>
+                            <th class="py-1.5 text-slate-400 font-medium text-right">Importe</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-tbody" class="divide-y divide-slate-800">
+                        <!-- Rows populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </details>
+    </div>
+</div>

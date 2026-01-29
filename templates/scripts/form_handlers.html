@@ -1,0 +1,134 @@
+// ============================================
+// FORM HANDLERS & CALCULATIONS
+// ============================================
+
+function captureInitialFormState() {
+    const form = document.getElementById('taxForm');
+    if (!form) return;
+    
+    const formData = new FormData(form);
+    const state = {};
+    for (let [key, value] of formData.entries()) {
+        state[key] = value;
+    }
+    initialFormState = state;
+}
+
+function checkFormModified() {
+    const form = document.getElementById('taxForm');
+    if (!form) return false;
+    
+    const formData = new FormData(form);
+    for (let [key, value] of formData.entries()) {
+        if (initialFormState[key] !== value) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function markUserModification() {
+    if (!userHasModifiedInputs && checkFormModified()) {
+        userHasModifiedInputs = true;
+    }
+}
+
+function parseCurrencyValue(value) {
+    if (typeof value === 'number') return value;
+    return parseFloat(value.replace(/[$,]/g, '')) || 0;
+}
+
+function formatCurrencyInput(value) {
+    const num = parseCurrencyValue(value);
+    return '$' + num.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+function distributeUnifiedValues() {
+    const generalTotal = parseCurrencyValue(document.getElementById('general_deductions').value) || 0;
+    const generalProportion = generalTotal / 9;
+    document.getElementById('medical_dental_expenses').value = generalProportion;
+    document.getElementById('funeral_expenses').value = generalProportion;
+    document.getElementById('donations').value = generalProportion;
+    document.getElementById('mortgage_interest').value = generalProportion;
+    document.getElementById('voluntary_retirement_contributions').value = generalProportion;
+    document.getElementById('medical_insurance_premiums').value = generalProportion;
+    document.getElementById('school_transportation_expenses').value = generalProportion;
+    document.getElementById('special_savings_account_deposits').value = generalProportion;
+    document.getElementById('educational_services_payments').value = generalProportion;
+    
+    const tuitionTotal = parseCurrencyValue(document.getElementById('total_tuition').value) || 0;
+    const tuitionProportion = tuitionTotal / 5;
+    document.getElementById('preschool_tuition').value = tuitionProportion;
+    document.getElementById('elementary_tuition').value = tuitionProportion;
+    document.getElementById('middle_school_tuition').value = tuitionProportion;
+    document.getElementById('technical_school_tuition').value = tuitionProportion;
+    document.getElementById('high_school_tuition').value = tuitionProportion;
+    
+    const pprTotal = parseCurrencyValue(document.getElementById('total_ppr').value) || 0;
+    const pprProportion = pprTotal / 3;
+    document.getElementById('ppr_contributions').value = pprProportion;
+    document.getElementById('ppr_additional_contributions').value = pprProportion;
+    document.getElementById('ppr_employer_match').value = pprProportion;
+}
+
+function getFormData() {
+    distributeUnifiedValues();
+    const formData = new FormData(document.getElementById('taxForm'));
+    const data = {};
+    for (let [key, value] of formData.entries()) {
+        if (key === 'bonus_days' || key === 'vacation_days') { 
+            data[key] = parseInt(value) || 0; 
+        } else { 
+            data[key] = parseCurrencyValue(value) || 0; 
+        }
+    }
+    // Add default fiscal year and user name from config
+    data.fiscal_year = DEFAULT_FISCAL_YEAR;
+    data.taxpayer_name = USER_NAME;
+    return data;
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2
+    }).format(amount);
+}
+
+async function calculateTaxes() {
+    const loadingElement = document.getElementById('loading');
+    const resultsElement = document.getElementById('results');
+    const errorElement = document.getElementById('error-message');
+    
+    try {
+        loadingElement.style.display = 'block';
+        resultsElement.style.display = 'none';
+        errorElement.style.display = 'none';
+        
+        const formData = getFormData();
+        const response = await fetch('/api/calculate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+        });
+        
+        if (!response.ok) { 
+            throw new Error(`HTTP error! status: ${response.status}`); 
+        }
+        
+        const result = await response.json();
+        updateResults(result); 
+        
+        loadingElement.style.display = 'none';
+        resultsElement.style.display = 'block';
+    } catch (error) {
+        console.error('Error calculating taxes:', error);
+        loadingElement.style.display = 'none';
+        errorElement.textContent = `Error calculating taxes: ${error.message}`;
+        errorElement.style.display = 'block';
+    }
+}

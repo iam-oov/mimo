@@ -1,0 +1,68 @@
+// ============================================
+// FOCUS MODE & PIN TOGGLE
+// ============================================
+
+function initializePinToggle() {
+    const pinIcon = document.getElementById('pin-icon');
+    const calcForm = document.getElementById('calc-form');
+    const resultsPanel = document.getElementById('results-panel');
+
+    if (pinIcon) {
+        pinIcon.addEventListener('click', function(e) {
+            e.stopPropagation();
+            isPinned = !isPinned;
+            pinIcon.classList.toggle('rotate-45', isPinned);
+            pinIcon.classList.toggle('opacity-50', !isPinned);
+            pinIcon.classList.toggle('opacity-100', isPinned);
+            
+            if (isPinned) {
+                calcForm.classList.add('lg:w-7/12');
+                resultsPanel.classList.add('lg:w-5/12', 'lg:block');
+                resultsPanel.classList.remove('hidden');
+            } else {
+                calcForm.classList.remove('lg:w-7/12');
+                resultsPanel.classList.remove('lg:w-5/12', 'lg:block');
+            }
+        });
+    }
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}
+
+function applyLayoutTransition() {
+    const calcForm = document.getElementById('calc-form');
+    const resultsPanel = document.getElementById('results-panel');
+    
+    [calcForm, resultsPanel].forEach(el => {
+        if (el) {
+            el.style.transition = 'all 0.3s ease-in-out';
+        }
+    });
+}
+
+function enterFocusMode() {
+    const calcForm = document.getElementById('calc-form');
+    const resultsPanel = document.getElementById('results-panel');
+    
+    if (isPinned || window.innerWidth < 1024) return;
+    
+    calcForm.classList.add('lg:w-7/12');
+    resultsPanel.classList.add('lg:w-5/12', 'lg:block');
+    resultsPanel.classList.remove('hidden');
+}
+
+function exitFocusMode() {
+    const calcForm = document.getElementById('calc-form');
+    const resultsPanel = document.getElementById('results-panel');
+    
+    if (isPinned || window.innerWidth < 1024) return;
+    
+    calcForm.classList.remove('lg:w-7/12');
+    resultsPanel.classList.remove('lg:w-5/12', 'lg:block');
+}

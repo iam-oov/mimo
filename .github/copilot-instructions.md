@@ -8,7 +8,12 @@ Mimo is a **Mexican tax calculator** for individuals (personas físicas) that co
 
 ## Critical Instructions
 
-**⚠️ NEVER CREATE SUMMARY MARKDOWN FILES**: Do not create `.md` files documenting changes, summaries, or work completed unless explicitly requested by the user. This wastes tokens and clutters the workspace.
+**⚠️ NEVER CREATE MARKDOWN DOCUMENTATION FILES**: Do not create `.md` files documenting changes, summaries, work completed, or any kind of documentation unless **explicitly and specifically requested** by the user. This wastes tokens and clutters the workspace. Instead:
+
+- Provide summaries directly in chat responses
+- Use code comments for technical documentation
+- Update existing documentation only if necessary
+- Ask user before creating any new `.md` file
 
 ## Architecture & Key Components
 

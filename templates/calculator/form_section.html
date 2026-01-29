@@ -1,0 +1,147 @@
+<form id="taxForm" class="space-y-3 sm:space-y-4">
+    <!-- Información de Ingresos -->
+    <div class="rounded-xl bg-slate-900/70 p-2 sm:p-3 animate-fade-in transition-smooth hover:bg-slate-900/80">
+        <h3 class="text-sm font-semibold text-slate-300 mb-2 sm:mb-3">💰 Información de Ingresos</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+            <div>
+                <label for="monthly_gross_income" class="label">Ingreso Bruto Mensual</label>
+                <input type="text" 
+                       id="monthly_gross_income" 
+                       name="monthly_gross_income" 
+                       class="currency-input"
+                       value="$0.00"
+                       inputmode="decimal"
+                       placeholder="$0.00">
+            </div>
+            <div>
+                <label for="monthly_net_income" class="label">Ingreso Neto Mensual</label>
+                <input type="text" 
+                       id="monthly_net_income" 
+                       name="monthly_net_income" 
+                       class="currency-input"
+                       value="$0.00"
+                       inputmode="decimal"
+                       placeholder="$0.00">
+            </div>
+            <div>
+                <label for="bonus_days" class="label">Días de Aguinaldo</label>
+                <input type="number" 
+                       id="bonus_days" 
+                       name="bonus_days" 
+                       class="input"
+                       min="0" 
+                       max="365" 
+                       value="15">
+            </div>
+            <div>
+                <label for="vacation_days" class="label">Días de Vacaciones</label>
+                <input type="number" 
+                       id="vacation_days" 
+                       name="vacation_days" 
+                       class="input"
+                       min="0" 
+                       max="365" 
+                       value="12">
+            </div>
+            <div class="md:col-span-2">
+                <label for="vacation_premium_percentage" class="label">Prima Vacacional (%)</label>
+                <input type="number" 
+                       id="vacation_premium_percentage" 
+                       name="vacation_premium_percentage" 
+                       class="input"
+                       step="0.01" 
+                       min="0" 
+                       max="1" 
+                       value="0.25"
+                       placeholder="0.25">
+            </div>
+        </div>
+    </div>
+
+    <!-- Deducciones (Accordions) -->
+    <div class="rounded-xl bg-slate-900/70 p-3 space-y-3 animate-fade-in [animation-delay:100ms] transition-smooth hover:bg-slate-900/80">
+        <h3 class="text-sm font-semibold text-accent-primary mb-3 pb-2 border-b border-border">
+            📋 Deducciones Personales
+        </h3>
+        
+        <!-- General Deductions -->
+        <details open class="group">
+            <summary class="summary py-1.5 px-2.5 rounded-lg hover:bg-slate-800/50 transition-fast">
+                🏥 General
+            </summary>
+            <div class="mt-2 pl-2">
+                <label for="general_deductions" class="label">Total Deducciones Generales</label>
+                <small class="block text-xs text-slate-500 italic mb-2">
+                    Médico/Dental • Funeral • Donaciones • Intereses Hipotecarios • Jubilación • Primas de Seguro de Gastos Médicos • Pediatra • Ginecólogo • Psicología • Nutriología
+                </small>
+                <input type="text" 
+                       id="general_deductions" 
+                       name="general_deductions" 
+                       class="currency-input"
+                       value="$0.00"
+                       inputmode="decimal"
+                       placeholder="$0.00">
+            </div>
+        </details>
+
+        <!-- Colegiaturas -->
+        <details class="group">
+            <summary class="summary py-1.5 px-2.5 rounded-lg hover:bg-slate-800/50 transition-fast">
+                🎓 Colegiaturas
+            </summary>
+            <div class="mt-2 pl-2">
+                <label for="total_tuition" class="label">Total Colegiaturas</label>
+                <small class="block text-xs text-slate-500 italic mb-2">
+                    Preescolar • Primaria • Secundaria • Técnico • Preparatoria
+                </small>
+                <input type="text" 
+                       id="total_tuition" 
+                       name="total_tuition" 
+                       class="currency-input"
+                       value="$0.00"
+                       inputmode="decimal"
+                       placeholder="$0.00">
+            </div>
+        </details>
+
+        <!-- PPR & AFORE -->
+        <details class="group">
+            <summary class="summary py-1.5 px-2.5 rounded-lg hover:bg-slate-800/50 transition-fast">
+                💰 PPR & AFORE
+            </summary>
+            <div class="mt-2 pl-2">
+                <label for="total_ppr" class="label">Total Contribuciones</label>
+                <small class="block text-xs text-slate-500 italic mb-2">
+                    Contribuciones PPR • Contribuciones Afore
+                </small>
+                <input type="text" 
+                       id="total_ppr" 
+                       name="total_ppr" 
+                       class="currency-input"
+                       value="$0.00"
+                       inputmode="decimal"
+                       placeholder="$0.00">
+            </div>
+        </details>
+    </div>
+
+    <!-- Hidden inputs (para compatibilidad con backend) -->
+    <input type="hidden" id="medical_dental_expenses" name="medical_dental_expenses" value="0">
+    <input type="hidden" id="funeral_expenses" name="funeral_expenses" value="0">
+    <input type="hidden" id="donations" name="donations" value="0">
+    <input type="hidden" id="mortgage_interest" name="mortgage_interest" value="0">
+    <input type="hidden" id="voluntary_retirement_contributions" name="voluntary_retirement_contributions" value="0">
+    <input type="hidden" id="medical_insurance_premiums" name="medical_insurance_premiums" value="0">
+    <input type="hidden" id="school_transportation_expenses" name="school_transportation_expenses" value="0">
+    <input type="hidden" id="special_savings_account_deposits" name="special_savings_account_deposits" value="0">
+    <input type="hidden" id="educational_services_payments" name="educational_services_payments" value="0">
+    <input type="hidden" id="preschool_tuition" name="preschool_tuition" value="0">
+    <input type="hidden" id="elementary_tuition" name="elementary_tuition" value="0">
+    <input type="hidden" id="middle_school_tuition" name="middle_school_tuition" value="0">
+    <input type="hidden" id="technical_school_tuition" name="technical_school_tuition" value="0">
+    <input type="hidden" id="high_school_tuition" name="high_school_tuition" value="0">
+    <input type="hidden" id="ppr_contributions" name="ppr_contributions" value="0">
+    <input type="hidden" id="ppr_additional_contributions" name="ppr_additional_contributions" value="0">
+    <input type="hidden" id="ppr_employer_match" name="ppr_employer_match" value="0">
+</form>

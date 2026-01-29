@@ -1,0 +1,33 @@
+// ============================================
+// GLOBAL CONFIGURATION & VARIABLES
+// ============================================
+
+// Application configuration
+const DEFAULT_FISCAL_YEAR = {{ default_fiscal_year }};
+const USER_NAME = "{{ user_name }}";
+
+// Configure marked.js options
+marked.setOptions({
+    breaks: true,
+    gfm: true
+});
+
+// Global state variables
+let isPinned = false;
+let debateReader = null;
+let isDebateActive = false;
+let debateAbortController = null;
+let recommendationsReader = null;
+let isRecommendationsActive = false;
+let recommendationsAbortController = null;
+let userHasModifiedInputs = false;
+let initialFormState = {};
+
+// Chat state
+let chatAgents = [];
+let selectedAgentId = null;
+let conversationHistory = [];
+let currentCalculationResult = null;
+let currentUserData = null;
+let isChatActive = false;
+let chatAbortController = null;

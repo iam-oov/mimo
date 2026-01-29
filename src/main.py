@@ -6,6 +6,7 @@ from typing import Any
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -97,6 +98,9 @@ def create_app() -> FastAPI:
     app.middleware("http")(log_requests_middleware)
     app.add_middleware(SessionMiddleware, secret_key=settings.secret_key)
 
+    # Mount static files
+    app.mount("/static", StaticFiles(directory="static"), name="static")
+
     # Include routers
     app.include_router(auth_router)
     app.include_router(tax_router)
@@ -154,10 +158,22 @@ async def calculator_page(request: Request):
     """Render calculator page"""
 
     user = await get_current_user(request)
+    settings = get_settings()
+
+    # Extract user name from session if authenticated
+    user_name = ""
+    if user:
+        user_name = user.get("name", user.get("email", ""))
 
     return templates.TemplateResponse(
         "calculator.html",
-        {"request": request, "user": user, "version": APP_VERSION},
+        {
+            "request": request,
+            "user": user,
+            "user_name": user_name,
+            "version": APP_VERSION,
+            "default_fiscal_year": settings.default_fiscal_year,
+        },
     )
 
 

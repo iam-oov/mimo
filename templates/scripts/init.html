@@ -1,0 +1,118 @@
+// ============================================
+// INITIALIZATION & EVENT LISTENERS
+// ============================================
+
+function initializeCurrencyInputs() {
+    const currencyInputs = document.querySelectorAll('.currency-input');
+    
+    currencyInputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            const value = parseCurrencyValue(this.value);
+            if (value === 0) {
+                this.value = '';
+            } else {
+                this.value = value.toString();
+            }
+            this.select();
+        });
+        
+        input.addEventListener('blur', function() {
+            this.value = formatCurrencyInput(this.value);
+        });
+        
+        input.addEventListener('input', function(e) {
+            let value = this.value.replace(/[^0-9.]/g, '');
+            const parts = value.split('.');
+            if (parts.length > 2) {
+                value = parts[0] + '.' + parts.slice(1).join('');
+            }
+            this.value = value;
+        });
+    });
+}
+
+const debouncedCalculateTaxes = debounce(calculateTaxes, 500);
+
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('taxForm');
+    const inputs = form.querySelectorAll('input, select');
+    
+    initializeCurrencyInputs();
+    captureInitialFormState();
+    
+    inputs.forEach(input => {
+        if (input.type === 'hidden') return;
+        input.addEventListener('input', debouncedCalculateTaxes);
+        input.addEventListener('input', markUserModification);
+        input.addEventListener('change', markUserModification);
+    });
+    
+    const generateBtn = document.getElementById('generateRecommendationsBtn');
+    if (generateBtn) {
+        generateBtn.addEventListener('click', generateRecommendations);
+    }
+    
+    const stopRecommendationsBtn = document.getElementById('stopRecommendationsBtn');
+    if (stopRecommendationsBtn) {
+        stopRecommendationsBtn.addEventListener('click', stopRecommendations);
+    }
+    
+    const startChatBtn = document.getElementById('startChatBtn');
+    if (startChatBtn) {
+        startChatBtn.addEventListener('click', initializeFiscalChat);
+    }
+    
+    const closeChatBtn = document.getElementById('closeChatBtn');
+    if (closeChatBtn) {
+        closeChatBtn.addEventListener('click', closeFiscalChat);
+    }
+    
+    const chatSendBtn = document.getElementById('chat-send-btn');
+    const chatInput = document.getElementById('chat-input');
+    if (chatSendBtn && chatInput) {
+        chatSendBtn.addEventListener('click', sendChatMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !chatSendBtn.disabled) {
+                sendChatMessage();
+            }
+        });
+    }
+    
+    initializePinToggle();
+    applyLayoutTransition();
+    
+    const pinBtn = document.getElementById('pin-toggle');
+    if (pinBtn && pinBtn.textContent.trim() !== '📍') {
+        pinBtn.textContent = '📍';
+    }
+    
+    calculateTaxes();
+    getRecommendationUsage();
+    
+    const floatingCat = document.getElementById('floatingCat');
+    const catExpressions = ['😺', '😸', '😹', '😻', '🙀', '😿', '😾', '🐱'];
+    let currentCatIndex = 0;
+    if (floatingCat) {
+        floatingCat.addEventListener('click', function() {
+            currentCatIndex = (currentCatIndex + 1) % catExpressions.length;
+            floatingCat.textContent = catExpressions[currentCatIndex];
+            const catPhrases = [
+                '¡Miau! ¡Purr-fecto cálculo!', 
+                '¡Gat-rantizo buenos resultados!', 
+                '¡Es-paw-cialmente bueno!', 
+                '¡Feli-nanzas en orden!', 
+                '¡Ronroneo de aprobación!', 
+                '¡Miau-ravilloso trabajo!'
+            ];
+            const randomPhrase = catPhrases[Math.floor(Math.random() * catPhrases.length)];
+            floatingCat.title = randomPhrase;
+        });
+        
+        setInterval(() => {
+            if (Math.random() < 0.3) {
+                currentCatIndex = (currentCatIndex + 1) % catExpressions.length;
+                floatingCat.textContent = catExpressions[currentCatIndex];
+            }
+        }, 5000);
+    }
+});

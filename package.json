@@ -1,0 +1,12 @@
+{
+  "name": "mimo",
+  "version": "0.1.0",
+  "description": "Calculadora de Saldo a Favor - Declaración Anual",
+  "scripts": {
+    "dev:css": "tailwindcss -i ./static/input.css -o ./static/output.css --watch",
+    "build:css": "tailwindcss -i ./static/input.css -o ./static/output.css --minify"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.1"
+  }
+}

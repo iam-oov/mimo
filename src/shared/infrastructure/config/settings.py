@@ -97,6 +97,14 @@ class Settings(BaseSettings):
     )
     debug: bool = Field(default=False, description="Debug mode")
 
+    # Tax Calculation Settings
+    default_fiscal_year: int = Field(
+        default=2026,
+        ge=2024,
+        le=2030,
+        description="Default fiscal year for calculations",
+    )
+
     @property
     def is_production(self) -> bool:
         """Check if running in production environment"""

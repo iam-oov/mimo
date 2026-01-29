@@ -31,6 +31,7 @@ COPY --from=builder /app/.venv /app/.venv
 # Copy application code
 COPY --chown=mimo:mimo src/ ./src/
 COPY --chown=mimo:mimo templates/ ./templates/
+COPY --chown=mimo:mimo static/ ./static/
 
 # Set environment variables
 ENV PATH="/app/.venv/bin:$PATH" \

@@ -1,0 +1,65 @@
+// ============================================
+// RESULTS RENDERING
+// ============================================
+
+function updateResults(data) {
+    const tbody = document.getElementById('results-tbody');
+    const balanceKpi = document.getElementById('kpi-balance');
+    const taxKpi = document.getElementById('kpi-tax');
+    
+    tbody.innerHTML = '';
+    
+    const rows = [
+        ['Contribuyente', data.taxpayer_name],
+        ['Año Fiscal', data.fiscal_year],
+        ['Ingreso Bruto Anual', formatCurrency(data.gross_annual_income)],
+        ['Bono Gravable', formatCurrency(data.taxable_bonus)],
+        ['Prima Vacacional Gravable', formatCurrency(data.taxable_vacation_premium)],
+        ['Ingreso Total Gravable', formatCurrency(data.total_taxable_income)],
+        ['Deducciones Autorizadas', formatCurrency(data.authorized_deductions)],
+        ['Deducciones Personales', formatCurrency(data.personal_deductions)],
+        ['Deducciones PPR', formatCurrency(data.ppr_deductions)],
+        ['Deducciones Educativas', formatCurrency(data.education_deductions)],
+        ['Base Gravable', formatCurrency(data.taxable_base)],
+        ['Impuesto Determinado', formatCurrency(data.determined_tax)],
+        ['Impuesto Retenido', formatCurrency(data.withheld_tax)]
+    ];
+    
+    rows.forEach(([concept, amount]) => {
+        const row = tbody.insertRow();
+        const cellConcept = row.insertCell(0);
+        const cellAmount = row.insertCell(1);
+        cellConcept.textContent = concept;
+        cellAmount.textContent = amount;
+        cellAmount.className = 'amount';
+        if (concept === 'Ingreso Total Gravable' || concept === 'Base Gravable') {
+            row.className = 'highlight';
+        }
+    });
+    
+    taxKpi.innerHTML = `
+        <h3>Impuesto Determinado</h3>
+        <div style="font-size: 24px; font-weight: bold;">${formatCurrency(data.determined_tax)}</div>
+    `;
+    taxKpi.className = 'balance-result kpi-secondary'; 
+    
+    if (data.balance_in_favor > 0) {
+        balanceKpi.innerHTML = `
+            <h3>💰 Balance a Favor</h3>
+            <div style="font-size: 24px; font-weight: bold;">${formatCurrency(data.balance_in_favor)}</div>
+        `;
+        balanceKpi.className = 'balance-result balance-favor'; 
+    } else if (data.balance_to_pay > 0) {
+        balanceKpi.innerHTML = `
+            <h3>⚠️ Balance a Pagar</h3>
+            <div style="font-size: 24px; font-weight: bold;">${formatCurrency(data.balance_to_pay)}</div>
+        `;
+        balanceKpi.className = 'balance-result balance-pay'; 
+    } else {
+        balanceKpi.innerHTML = `
+            <h3>⚖️ Sin Balance</h3>
+            <div style="font-size: 24px; font-weight: bold;">$0.00</div>
+        `;
+        balanceKpi.className = 'balance-result balance-favor'; 
+    }
+}

@@ -1,0 +1,1145 @@
+        // Oneko.js - Desktop Pet Cat
+        (function oneko() {
+            const nekoEl = document.createElement("div");
+            let nekoPosX = 32;
+            let nekoPosY = 32;
+            let mousePosX = 0;
+            let mousePosY = 0;
+            let frameCount = 0;
+            let idleTime = 0;
+            let idleAnimation = null;
+            let idleAnimationFrame = 0;
+            const nekoSpeed = 10;
+            const spriteSets = {
+                idle: [[-3, -3]],
+                alert: [[-7, -3]],
+                scratchSelf: [[-5, 0], [-6, 0], [-7, 0]],
+                scratchWallN: [[0, 0], [0, -1]],
+                scratchWallS: [[-7, -1], [-6, -2]],
+                scratchWallE: [[-2, -2], [-2, -3]],
+                scratchWallW: [[-4, 0], [-4, -1]],
+                tired: [[-3, -2]],
+                sleeping: [[-2, 0], [-2, -1]],
+                N: [[-1, -2], [-1, -3]],
+                NE: [[0, -2], [0, -3]],
+                E: [[-3, 0], [-3, -1]],
+                SE: [[-5, -1], [-5, -2]],
+                S: [[-6, -3], [-7, -2]],
+                SW: [[-5, -3], [-6, -1]],
+                W: [[-4, -2], [-4, -3]],
+                NW: [[-1, 0], [-1, -1]]
+            };
+
+            function create() {
+                nekoEl.id = "oneko";
+                nekoEl.style.width = "32px";
+                nekoEl.style.height = "32px";
+                nekoEl.style.position = "fixed";
+                nekoEl.style.pointerEvents = "none";
+                nekoEl.style.backgroundImage = "url('https://raw.githubusercontent.com/adryd325/oneko.js/main/oneko.gif')";
+                nekoEl.style.imageRendering = "pixelated";
+                nekoEl.style.left = "16px";
+                nekoEl.style.top = "16px";
+                nekoEl.style.zIndex = "999";
+
+                document.body.appendChild(nekoEl);
+
+                document.onmousemove = (event) => {
+                    mousePosX = event.clientX;
+                    mousePosY = event.clientY;
+                };
+
+                window.onekoInterval = setInterval(frame, 100);
+            }
+
+            function setSprite(name, frame) {
+                const sprite = spriteSets[name][frame % spriteSets[name].length];
+                nekoEl.style.backgroundPosition = `${sprite[0] * 32}px ${sprite[1] * 32}px`;
+            }
+
+            function resetIdleAnimation() {
+                idleAnimation = null;
+                idleAnimationFrame = 0;
+            }
+
+            function idle() {
+                idleTime += 1;
+                if (idleTime > 10 && Math.floor(Math.random() * 200) === 0 && idleAnimation == null) {
+                    const avalibleIdleAnimations = ["sleeping", "scratchSelf"];
+                    if (nekoPosX < 32) avalibleIdleAnimations.push("scratchWallW");
+                    if (nekoPosY < 32) avalibleIdleAnimations.push("scratchWallN");
+                    if (nekoPosX > window.innerWidth - 32) avalibleIdleAnimations.push("scratchWallE");
+                    if (nekoPosY > window.innerHeight - 32) avalibleIdleAnimations.push("scratchWallS");
+                    idleAnimation = avalibleIdleAnimations[Math.floor(Math.random() * avalibleIdleAnimations.length)];
+                }
+
+                switch (idleAnimation) {
+                    case "sleeping":
+                        if (idleAnimationFrame < 8) {
+                            setSprite("tired", 0);
+                            break;
+                        }
+                        setSprite("sleeping", Math.floor(idleAnimationFrame / 4));
+                        if (idleAnimationFrame > 192) resetIdleAnimation();
+                        break;
+                    case "scratchWallN":
+                    case "scratchWallS":
+                    case "scratchWallE":
+                    case "scratchWallW":
+                    case "scratchSelf":
+                        setSprite(idleAnimation, idleAnimationFrame);
+                        if (idleAnimationFrame > 9) resetIdleAnimation();
+                        break;
+                    default:
+                        setSprite("idle", 0);
+                        return;
+                }
+                idleAnimationFrame += 1;
+            }
+
+            function frame() {
+                frameCount += 1;
+                const diffX = nekoPosX - mousePosX;
+                const diffY = nekoPosY - mousePosY;
+                const distance = Math.sqrt(diffX ** 2 + diffY ** 2);
+
+                if (distance < nekoSpeed || distance < 48) {
+                    idle();
+                    return;
+                }
+
+                idleAnimation = null;
+                idleAnimationFrame = 0;
+
+                if (idleTime > 1) {
+                    setSprite("alert", 0);
+                    idleTime = Math.min(idleTime, 7);
+                    idleTime -= 1;
+                    return;
+                }
+
+                let direction = diffY / distance > 0.5 ? "N" : "";
+                direction += diffY / distance < -0.5 ? "S" : "";
+                direction += diffX / distance > 0.5 ? "W" : "";
+                direction += diffX / distance < -0.5 ? "E" : "";
+                setSprite(direction, frameCount);
+
+                nekoPosX -= (diffX / distance) * nekoSpeed;
+                nekoPosY -= (diffY / distance) * nekoSpeed;
+
+                nekoPosX = Math.min(Math.max(16, nekoPosX), window.innerWidth - 16);
+                nekoPosY = Math.min(Math.max(16, nekoPosY), window.innerHeight - 16);
+
+                nekoEl.style.left = `${nekoPosX - 16}px`;
+                nekoEl.style.top = `${nekoPosY - 16}px`;
+            }
+
+            create();
+        })();
+        
+        // Configure marked.js options
+        marked.setOptions({
+            breaks: true,
+            gfm: true
+        });
+        
+        let isPinned = false;
+        let debateReader = null;
+        let isDebateActive = false;
+        let debateAbortController = null;
+        let recommendationsReader = null;
+        let isRecommendationsActive = false;
+        let recommendationsAbortController = null;
+        
+        function initializePinToggle() {
+            const pinButton = document.getElementById('pin-toggle');
+            if (pinButton) {
+                pinButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    isPinned = !isPinned;
+                    this.textContent = isPinned ? '📌' : '📍';
+                    this.classList.toggle('pinned', isPinned);
+                    
+                    const pinStatusIndicator = document.getElementById('pin-status-indicator');
+                    const focusIndicator = document.getElementById('focus-indicator');
+                    
+                    if (isPinned) {
+                        // Enter pinned mode
+                        if (pinStatusIndicator) pinStatusIndicator.style.display = 'block';
+                        if (focusIndicator) focusIndicator.style.display = 'none';
+                        
+                        applyLayoutTransition('add', 'pinned');
+                        applyLayoutTransition('remove', 'generating-recommendations');
+                        
+                        this.style.transform = 'scale(0.95)';
+                        setTimeout(() => { this.style.transform = ''; }, 150);
+                    } else {
+                        // Exit pinned mode
+                        if (pinStatusIndicator) pinStatusIndicator.style.display = 'none';
+                        
+                        applyLayoutTransition('remove', 'pinned');
+                        applyLayoutTransition('remove', 'generating-recommendations');
+                        
+                        this.style.transform = 'scale(1.1)';
+                        setTimeout(() => { this.style.transform = ''; }, 150);
+                    }
+                });
+            }
+        }
+        let userHasModifiedInputs = false;
+        let initialFormState = {};
+        function captureInitialFormState() {
+            const form = document.getElementById('taxForm');
+            const inputs = form.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                if (input.type === 'hidden') return;
+                initialFormState[input.id] = input.value;
+            });
+        }
+        function checkFormModified() {
+            const form = document.getElementById('taxForm');
+            const inputs = form.querySelectorAll('input, select');
+            for (let input of inputs) {
+                if (input.type === 'hidden') continue;
+                if (initialFormState[input.id] !== input.value) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        function markUserModification() {
+            userHasModifiedInputs = true;
+            const calculatorGrid = document.querySelector('.calculator-grid');
+            const focusIndicator = document.getElementById('focus-indicator');
+            // Solo remover si NO está pinned
+            if (calculatorGrid && calculatorGrid.classList.contains('generating-recommendations') && !isPinned) {
+                calculatorGrid.classList.remove('generating-recommendations');
+                if (focusIndicator) focusIndicator.style.display = 'none';
+                captureInitialFormState();
+                userHasModifiedInputs = false;
+            }
+        }
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // ============================================
+        // VISUAL TRANSITIONS - Centralized Functions
+        // ============================================
+        
+        /**
+         * Applies smooth fade-in/out transition to column-3 with layout change
+         * @param {string} action - 'add' or 'remove' class
+         * @param {string} className - Class name to add/remove (e.g., 'generating-recommendations', 'pinned')
+         */
+        function applyLayoutTransition(action, className) {
+            if (isPinned && className === 'generating-recommendations') {
+                // Don't apply generating-recommendations transition if pinned
+                return;
+            }
+
+            const calculatorGrid = document.querySelector('.calculator-grid');
+            const column3 = document.querySelector('.column-3');
+            
+            if (!calculatorGrid) return;
+
+            // Fade out
+            if (column3) {
+                column3.style.opacity = '0.3';
+            }
+            
+            setTimeout(() => {
+                // Apply layout change
+                if (action === 'add') {
+                    calculatorGrid.classList.add(className);
+                } else if (action === 'remove') {
+                    calculatorGrid.classList.remove(className);
+                }
+                
+                // Fade in
+                setTimeout(() => {
+                    if (column3) {
+                        column3.style.opacity = '1';
+                    }
+                }, 100);
+            }, 50);
+        }
+
+        /**
+         * Enters focus mode (generating recommendations/debate)
+         * Shows column-3 in full width if not pinned
+         */
+        function enterFocusMode() {
+            if (!isPinned) {
+                applyLayoutTransition('add', 'generating-recommendations');
+            }
+        }
+
+        /**
+         * Exits focus mode (back to normal layout)
+         * Returns to regular 3-column layout if not pinned
+         */
+        function exitFocusMode() {
+            if (!isPinned) {
+                applyLayoutTransition('remove', 'generating-recommendations');
+                
+                const focusIndicator = document.getElementById('focus-indicator');
+                if (focusIndicator) {
+                    focusIndicator.style.display = 'none';
+                }
+                
+                userHasModifiedInputs = false;
+                captureInitialFormState();
+            }
+        }
+
+        /**
+         * Shows focus indicator if appropriate
+         * Only shows if not pinned and form hasn't been modified
+         */
+        function updateFocusIndicator() {
+            const focusIndicator = document.getElementById('focus-indicator');
+            if (focusIndicator && !isPinned && !userHasModifiedInputs && !checkFormModified()) {
+                focusIndicator.style.display = 'block';
+            }
+        }
+
+        function parseCurrencyValue(value) {
+            if (typeof value === 'number') return value;
+            return parseFloat(value.replace(/[$,]/g, '')) || 0;
+        }
+
+        function formatCurrencyInput(value) {
+            const num = parseCurrencyValue(value);
+            return '$' + num.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function distributeUnifiedValues() {
+            const generalTotal = parseCurrencyValue(document.getElementById('general_deductions').value) || 0;
+            const generalProportion = generalTotal / 9;
+            document.getElementById('medical_dental_expenses').value = generalProportion;
+            document.getElementById('funeral_expenses').value = generalProportion;
+            document.getElementById('donations').value = generalProportion;
+            document.getElementById('mortgage_interest').value = generalProportion;
+            document.getElementById('voluntary_retirement_contributions').value = generalProportion;
+            document.getElementById('medical_insurance_premiums').value = generalProportion;
+            document.getElementById('school_transportation_expenses').value = generalProportion;
+            document.getElementById('special_savings_account_deposits').value = generalProportion;
+            document.getElementById('educational_services_payments').value = generalProportion;
+            const tuitionTotal = parseCurrencyValue(document.getElementById('total_tuition').value) || 0;
+            const tuitionProportion = tuitionTotal / 5;
+            document.getElementById('preschool_tuition').value = tuitionProportion;
+            document.getElementById('elementary_tuition').value = tuitionProportion;
+            document.getElementById('middle_school_tuition').value = tuitionProportion;
+            document.getElementById('technical_school_tuition').value = tuitionProportion;
+            document.getElementById('high_school_tuition').value = tuitionProportion;
+            const pprTotal = parseCurrencyValue(document.getElementById('total_ppr').value) || 0;
+            const pprProportion = pprTotal / 3;
+            document.getElementById('ppr_contributions').value = pprProportion;
+            document.getElementById('ppr_additional_contributions').value = pprProportion;
+            document.getElementById('ppr_employer_match').value = pprProportion;
+        }
+        function getFormData() {
+            distributeUnifiedValues();
+            const formData = new FormData(document.getElementById('taxForm'));
+            const data = {};
+            for (let [key, value] of formData.entries()) {
+                if (key === 'taxpayer_name') { data[key] = value; }
+                else if (key === 'fiscal_year' || key === 'bonus_days' || key === 'vacation_days') { data[key] = parseInt(value) || 0; }
+                else { data[key] = parseCurrencyValue(value) || 0; }
+            }
+            return data;
+        }
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2
+            }).format(amount);
+        }
+
+        async function calculateTaxes() {
+            const loadingElement = document.getElementById('loading');
+            const resultsElement = document.getElementById('results');
+            const errorElement = document.getElementById('error-message');
+            try {
+                loadingElement.style.display = 'block';
+                resultsElement.style.display = 'none';
+                errorElement.style.display = 'none';
+                const formData = getFormData();
+                const response = await fetch('/api/calculate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', },
+                    body: JSON.stringify(formData)
+                });
+                if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
+                const result = await response.json();
+                updateResults(result); 
+                loadingElement.style.display = 'none';
+                resultsElement.style.display = 'block';
+            } catch (error) {
+                console.error('Error calculating taxes:', error);
+                loadingElement.style.display = 'none';
+                errorElement.textContent = `Error calculating taxes: ${error.message}`;
+                errorElement.style.display = 'block';
+            }
+        }
+
+        function updateResults(data) {
+            const tbody = document.getElementById('results-tbody');
+            const balanceKpi = document.getElementById('kpi-balance');
+            const taxKpi = document.getElementById('kpi-tax');
+            
+            tbody.innerHTML = '';
+            
+            const rows = [
+                ['Contribuyente', data.taxpayer_name],
+                ['Año Fiscal', data.fiscal_year],
+                ['Ingreso Bruto Anual', formatCurrency(data.gross_annual_income)],
+                ['Bono Gravable', formatCurrency(data.taxable_bonus)],
+                ['Prima Vacacional Gravable', formatCurrency(data.taxable_vacation_premium)],
+                ['Ingreso Total Gravable', formatCurrency(data.total_taxable_income)],
+                ['Deducciones Autorizadas', formatCurrency(data.authorized_deductions)],
+                ['Deducciones Personales', formatCurrency(data.personal_deductions)],
+                ['Deducciones PPR', formatCurrency(data.ppr_deductions)],
+                ['Deducciones Educativas', formatCurrency(data.education_deductions)],
+                ['Base Gravable', formatCurrency(data.taxable_base)],
+                ['Impuesto Determinado', formatCurrency(data.determined_tax)],
+                ['Impuesto Retenido', formatCurrency(data.withheld_tax)]
+            ];
+            
+            rows.forEach(([concept, amount], index) => {
+                const row = tbody.insertRow();
+                const cellConcept = row.insertCell(0);
+                const cellAmount = row.insertCell(1);
+                cellConcept.textContent = concept;
+                cellAmount.textContent = amount;
+                cellAmount.className = 'amount';
+                if (concept === 'Ingreso Total Gravable' || concept === 'Base Gravable') {
+                    row.className = 'highlight';
+                }
+            });
+            
+            taxKpi.innerHTML = `
+                <h3>Impuesto Determinado</h3>
+                <div style="font-size: 24px; font-weight: bold;">${formatCurrency(data.determined_tax)}</div>
+            `;
+            taxKpi.className = 'balance-result kpi-secondary'; 
+            
+            if (data.balance_in_favor > 0) {
+                balanceKpi.innerHTML = `
+                    <h3>💰 Balance a Favor</h3>
+                    <div style="font-size: 24px; font-weight: bold;">${formatCurrency(data.balance_in_favor)}</div>
+                `;
+                balanceKpi.className = 'balance-result balance-favor'; 
+            } else if (data.balance_to_pay > 0) {
+                balanceKpi.innerHTML = `
+                    <h3>⚠️ Balance a Pagar</h3>
+                    <div style="font-size: 24px; font-weight: bold;">${formatCurrency(data.balance_to_pay)}</div>
+                `;
+                balanceKpi.className = 'balance-result balance-pay'; 
+            } else {
+                balanceKpi.innerHTML = `
+                    <h3>⚖️ Sin Balance</h3>
+                    <div style="font-size: 24px; font-weight: bold;">$0.00</div>
+                `;
+                balanceKpi.className = 'balance-result balance-favor'; 
+            }
+        }
+
+        async function getRecommendationUsage() {
+            try {
+                const response = await fetch('/api/recommendations/usage');
+                if (response.ok) {
+                    const data = await response.json();
+                    updateUsageCounter(data.usage_count, data.daily_limit);
+                    const generateBtn = document.getElementById('generateRecommendationsBtn');
+                    if (generateBtn) { generateBtn.disabled = data.usage_count >= data.daily_limit; }
+                } else {
+                    const generateBtn = document.getElementById('generateRecommendationsBtn');
+                    if (generateBtn) { generateBtn.disabled = true; }
+                    updateUsageCounter(0, 0, 'Login required');
+                }
+            } catch (error) {
+                console.error('Error getting recommendation usage:', error);
+                const generateBtn = document.getElementById('generateRecommendationsBtn');
+                if (generateBtn) { generateBtn.disabled = true; }
+            }
+        }
+        function updateUsageCounter(used, limit, message = null) {
+            const usageCounter = document.getElementById('usage-counter');
+            if (usageCounter) {
+                if (message) { usageCounter.innerHTML = message; }
+                else { usageCounter.innerHTML = `Recomendaciones hoy: ${used}/${limit} usadas`; }
+            }
+        }
+        async function generateRecommendations() {
+            const generateBtn = document.getElementById('generateRecommendationsBtn');
+            const stopBtn = document.getElementById('stopRecommendationsBtn');
+            const recommendationsContent = document.getElementById('recommendations-content');
+            const debateContent = document.getElementById('debate-content');
+
+            if (!generateBtn || !stopBtn || !recommendationsContent) return;
+
+            try {
+                generateBtn.style.display = 'none';
+                stopBtn.style.display = 'block';
+                stopBtn.disabled = false;
+                isRecommendationsActive = true;
+
+                enterFocusMode();
+
+                if (debateContent) debateContent.style.display = 'none';
+                recommendationsContent.style.display = 'block';
+
+                recommendationsContent.innerHTML = `<div class="streaming-indicator"><div class="streaming-dots"><span></span><span></span><span></span></div><p>Analizando tu situación fiscal...</p></div><div id="streaming-text" style="display: none;"></div>`;
+
+                const formData = getFormData();
+
+                try {
+                    await generateWithStreaming(formData, recommendationsContent);
+                } catch (streamError) {
+                    console.error('Stream error:', streamError);
+                    if (streamError.message !== 'RECOMMENDATIONS_STOPPED') {
+                        await generateWithRegularRequest(formData, recommendationsContent);
+                    }
+                }
+
+                await getRecommendationUsage();
+            } catch (error) {
+                console.error('Error generating recommendations:', error);
+                if (error.message === 'RECOMMENDATIONS_STOPPED') {
+                    recommendationsContent.innerHTML += `<div style="padding: 15px; background: var(--color-bg-panel); border-radius: 8px; margin-top: 10px;">
+                        <h4>⏹️ Análisis Detenido</h4>
+                        <p>La generación de recomendaciones fue detenida.</p>
+                    </div>`;
+                } else {
+                    recommendationsContent.innerHTML = `<h4>⚠️ Error</h4><p>Error generando recomendaciones. Por favor, intenta nuevamente.</p>`;
+                }
+            } finally {
+                isRecommendationsActive = false;
+                recommendationsReader = null;
+                recommendationsAbortController = null;
+                generateBtn.style.display = 'block';
+                stopBtn.style.display = 'none';
+
+                setTimeout(() => {
+                    // Exit focus mode if form was modified
+                    if (userHasModifiedInputs || checkFormModified()) {
+                        exitFocusMode();
+                    } else {
+                        updateFocusIndicator();
+                    }
+                }, 1200);
+            }
+        }
+
+        function stopRecommendations() {
+            const generateBtn = document.getElementById('generateRecommendationsBtn');
+            const stopBtn = document.getElementById('stopRecommendationsBtn');
+            
+            if (isRecommendationsActive) {
+                // Abort the fetch request
+                if (recommendationsAbortController) {
+                    recommendationsAbortController.abort();
+                    recommendationsAbortController = null;
+                }
+                
+                // Cancel the reader
+                if (recommendationsReader) {
+                    try {
+                        recommendationsReader.cancel();
+                    } catch (error) {
+                        console.log('Reader already cancelled or closed');
+                    }
+                    recommendationsReader = null;
+                }
+                
+                isRecommendationsActive = false;
+                
+                // Update button visibility immediately
+                if (generateBtn && stopBtn) {
+                    generateBtn.style.display = 'block';
+                    stopBtn.style.display = 'none';
+                }
+            }
+        }
+
+        async function generateWithStreaming(formData, recommendationsContent) {
+            recommendationsAbortController = new AbortController();
+            
+            const response = await fetch('/api/recommendations/stream', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', },
+                body: JSON.stringify(formData),
+                signal: recommendationsAbortController.signal
+            });
+            if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
+            const reader = response.body.getReader();
+            recommendationsReader = reader;
+            const decoder = new TextDecoder();
+            let streamingText = '';
+            const streamingTextEl = document.getElementById('streaming-text');
+            const streamingIndicator = document.querySelector('.streaming-indicator');
+            streamingTextEl.style.display = 'block';
+            streamingIndicator.style.display = 'none';
+            let catCounter = 0;
+            let streamingStartTime = Date.now();
+            const catMessages = ["¡Hemos agregado otro gatito para acelerar tu recomendación! 🐱", "¡Un gatito más se unió al equipo de análisis fiscal! 😸", "¡Otro experto felino está revisando tus números! 🐾", "¡Gatito adicional activado para mayor velocidad! 😻", "¡El escuadrón gatuno sigue creciendo! 🙀", "¡Más ronroneos = mejores recomendaciones! 😺"];
+            const catGifs = ["https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif", "https://media.giphy.com/media/VbnUQpnihPSIgIXuZv/giphy.gif", "https://media.giphy.com/media/3oriO0OEd9QIDdllqo/giphy.gif", "https://media.giphy.com/media/BzyTuYCmvSORqs1ABM/giphy.gif", "https://media.giphy.com/media/ICOgUNjpvO0PC/giphy.gif"];
+            const catEnhancer = setInterval(() => {
+                const elapsed = Date.now() - streamingStartTime;
+                if (elapsed >= (catCounter + 1) * 10000) {
+                    catCounter++;
+                    const currentCats = Math.min(catCounter + 1, catGifs.length);
+                    const message = catMessages[Math.min(catCounter - 1, catMessages.length - 1)];
+                    let catsHtml = '';
+                    for (let i = 0; i < currentCats; i++) {
+                        const gif = catGifs[i % catGifs.length];
+                        catsHtml += '<img src="' + gif + '" alt="Gatito ' + (i + 1) + '" style="width: ' + (120 - i * 10) + 'px; height: auto; border-radius: 8px; margin: 5px;">';
+                    }
+                    streamingTextEl.innerHTML = '<div style="text-align: center; padding: 20px;"><div style="margin-bottom: 15px;">' + catsHtml + '</div><p style="color: var(--color-accent-primary); font-weight: bold; margin: 10px 0;">' + message + '</p><p style="color: var(--color-text-secondary); font-style: italic; margin: 0;">Analizando tu situación fiscal con ' + currentCats + ' gatito' + (currentCats > 1 ? 's' : '') + '...</p></div>';
+                }
+            }, 1000);
+            try {
+                while (isRecommendationsActive) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
+                    for (let line of lines) {
+                        if (!isRecommendationsActive) {
+                            throw new Error('RECOMMENDATIONS_STOPPED');
+                        }
+                        
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                if (data.type === 'start') {
+                                    streamingTextEl.innerHTML = `<div style="text-align: center; padding: 20px;"><img src="https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif" alt="Generando recomendaciones" style="width: 120px; height: auto; border-radius: 8px; margin-bottom: 10px;"><p style="color: var(--color-text-secondary); font-style: italic; margin: 0;">Analizando tu situación fiscal...</p></div>`;
+                                } else if (data.type === 'chunk') {
+                                    streamingText += data.content;
+                                    streamingTextEl.innerHTML = `<div style="white-space: pre-wrap; color: var(--color-text-primary);">${streamingText}</div>`;
+                                } else if (data.type === 'complete') {
+                                    const markdownContent = data.markdown || '';
+                                    const htmlContent = marked.parse(markdownContent);
+                                    recommendationsContent.innerHTML = `<div class="markdown-content">${htmlContent}</div>`;
+                                    clearInterval(catEnhancer);
+                                    break;
+                                } else if (data.type === 'error') {
+                                    const errorMarkdown = data.markdown || '**Error:** Problema durante la generación';
+                                    const errorHtml = marked.parse(errorMarkdown);
+                                    recommendationsContent.innerHTML = `<h4>⚠️ Error</h4><div class="markdown-content">${errorHtml}</div>`;
+                                    clearInterval(catEnhancer);
+                                    break;
+                                }
+                            } catch (parseError) {}
+                        }
+                    }
+                }
+            } catch (error) {
+                clearInterval(catEnhancer);
+                if (error.name === 'AbortError' || error.message === 'RECOMMENDATIONS_STOPPED') {
+                    console.log('Recommendations stopped by user');
+                    throw new Error('RECOMMENDATIONS_STOPPED');
+                }
+                if (error.name === 'TypeError' && !isRecommendationsActive) {
+                    console.log('Recommendations cancelled, reader closed');
+                    throw new Error('RECOMMENDATIONS_STOPPED');
+                }
+                throw error;
+            } finally {
+                try {
+                    if (reader && reader.locked) {
+                        reader.releaseLock();
+                    }
+                } catch (e) {
+                    console.log('Reader cleanup: ', e.message);
+                }
+                recommendationsReader = null;
+                recommendationsAbortController = null;
+                clearInterval(catEnhancer);
+            }
+        }
+        async function generateWithRegularRequest(formData, recommendationsContent) {
+            const response = await fetch('/api/recommendations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', },
+                body: JSON.stringify(formData)
+            });
+            if (response.ok) {
+                const data = await response.json();
+                const markdownContent = data.recommendations_markdown || '';
+                const htmlContent = marked.parse(markdownContent);
+                recommendationsContent.innerHTML = `<h4>🎯 Recomendaciones Generadas con IA</h4><div class="markdown-content">${htmlContent}</div>`;
+            } else {
+                const error = await response.json();
+                throw new Error(error.detail || 'Failed to generate recommendations');
+            }
+        }
+
+                // Multi-Agent Chat Functions
+        let chatAgents = [];
+        let selectedAgentId = null;
+        let conversationHistory = [];
+        let currentCalculationResult = null;
+        let currentUserData = null;
+        let isChatActive = false;
+        let chatAbortController = null;
+
+        async function initializeFiscalChat() {
+            const startChatBtn = document.getElementById('startChatBtn');
+            const closeChatBtn = document.getElementById('closeChatBtn');
+            const chatContent = document.getElementById('chat-content');
+            const recommendationsContent = document.getElementById('recommendations-content');
+            const chatInput = document.getElementById('chat-input');
+            const chatSendBtn = document.getElementById('chat-send-btn');
+            const chatMessages = document.getElementById('chat-messages');
+            
+            if (!chatContent) return;
+
+            try {
+                startChatBtn.style.display = 'none';
+                closeChatBtn.style.display = 'block';
+                isChatActive = true;
+                
+                // Hide recommendations, show chat
+                recommendationsContent.style.display = 'none';
+                chatContent.style.display = 'flex';
+                
+                // Get form data and calculate taxes
+                const formData = getFormData();
+                currentUserData = formData;
+                
+                chatMessages.innerHTML = '<div class="chat-typing"><span></span><span></span><span></span></div><p style="text-align:center; color: var(--color-text-secondary); font-size: 0.9rem;">Inicializando expertos fiscales...</p>';
+                
+                // Calculate taxes first
+                const calcResponse = await fetch('/api/calculate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (!calcResponse.ok) {
+                    throw new Error('Error calculando impuestos');
+                }
+                
+                currentCalculationResult = await calcResponse.json();
+                
+                // Get available agents
+                const agentsResponse = await fetch('/api/chat/agents', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        calculation_result: currentCalculationResult,
+                        user_data: currentUserData,
+                        fiscal_year: formData.fiscal_year
+                    })
+                });
+                
+                if (!agentsResponse.ok) {
+                    throw new Error('Error obteniendo agentes');
+                }
+                
+                chatAgents = await agentsResponse.json();
+                
+                // Render agent buttons
+                renderAgentButtons();
+                
+                // Clear messages and show welcome
+                chatMessages.innerHTML = `
+                    <div style="text-align: center; color: var(--color-text-secondary); padding: 20px;">
+                        <div style="font-size: 2rem; margin-bottom: 10px;">💬</div>
+                        <p style="margin-bottom: 10px;"><strong>¡Bienvenido al Chat Fiscal!</strong></p>
+                        <p style="font-size: 0.9rem;">Selecciona un experto arriba y haz tu pregunta.</p>
+                    </div>
+                `;
+                
+                // Reset conversation
+                conversationHistory = [];
+                selectedAgentId = null;
+                chatInput.value = '';
+                chatInput.disabled = true;
+                chatSendBtn.disabled = true;
+                
+                await getRecommendationUsage();
+                
+            } catch (error) {
+                console.error('Error initializing chat:', error);
+                chatMessages.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: #ef4444;">
+                        <div style="font-size: 2rem; margin-bottom: 10px;">⚠️</div>
+                        <p><strong>Error</strong></p>
+                        <p style="font-size: 0.9rem;">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderAgentButtons() {
+            const agentButtonsContainer = document.getElementById('agent-buttons');
+            if (!agentButtonsContainer) return;
+            
+            agentButtonsContainer.innerHTML = '';
+            
+            const agentIcons = {
+                'Auditor Fiscal': '🔍',
+                'Planificador Fiscal': '📊',
+                'Contador Público': '💼',
+                'Asesor Financiero': '💰',
+                'Abogado Fiscalista': '⚖️',
+                'Consultor Empresarial': '🎯'
+            };
+            
+            chatAgents.forEach(agent => {
+                const button = document.createElement('button');
+                button.className = 'agent-btn';
+                button.dataset.agentId = agent.agent_id;
+                
+                const icon = agentIcons[agent.profession] || '👤';
+                
+                button.innerHTML = `
+                    <span class="agent-btn-icon">${icon}</span>
+                    <span class="agent-btn-name">${agent.name}</span>
+                    <span class="agent-btn-role">${agent.profession}</span>
+                `;
+                
+                button.addEventListener('click', () => selectAgent(agent.agent_id));
+                agentButtonsContainer.appendChild(button);
+            });
+        }
+
+        function selectAgent(agentId) {
+            selectedAgentId = agentId;
+            const chatInput = document.getElementById('chat-input');
+            const chatSendBtn = document.getElementById('chat-send-btn');
+            
+            // Update button styles
+            document.querySelectorAll('.agent-btn').forEach(btn => {
+                if (btn.dataset.agentId === agentId) {
+                    btn.classList.add('selected');
+                } else {
+                    btn.classList.remove('selected');
+                }
+            });
+            
+            // Enable input
+            if (chatInput && chatSendBtn) {
+                chatInput.disabled = false;
+                chatSendBtn.disabled = false;
+                chatInput.focus();
+            }
+        }
+
+        async function sendChatMessage() {
+            const chatInput = document.getElementById('chat-input');
+            const chatSendBtn = document.getElementById('chat-send-btn');
+            const chatMessages = document.getElementById('chat-messages');
+            
+            if (!chatInput || !chatSendBtn || !selectedAgentId) return;
+            
+            const message = chatInput.value.trim();
+            if (!message) return;
+            
+            try {
+                // Disable input while processing
+                chatInput.disabled = true;
+                chatSendBtn.disabled = true;
+                document.querySelectorAll('.agent-btn').forEach(btn => btn.disabled = true);
+                
+                // Clear input
+                chatInput.value = '';
+                
+                // Add user message to chat
+                const userMessageDiv = document.createElement('div');
+                userMessageDiv.className = 'chat-message user';
+                userMessageDiv.innerHTML = `
+                    <div class="chat-message-header">
+                        <span>👤</span>
+                        Tú
+                    </div>
+                    <div class="chat-message-content">${escapeHtml(message)}</div>
+                `;
+                chatMessages.appendChild(userMessageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                // Add to conversation history
+                conversationHistory.push({
+                    role: 'user',
+                    content: message
+                });
+                
+                // Get selected agent info
+                const selectedAgent = chatAgents.find(a => a.agent_id === selectedAgentId);
+                if (!selectedAgent) throw new Error('Agente no encontrado');
+                
+                // Create agent message placeholder with typing indicator
+                const agentMessageDiv = document.createElement('div');
+                agentMessageDiv.className = 'chat-message agent';
+                const agentIcon = {
+                    'Auditor Fiscal': '🔍',
+                    'Planificador Fiscal': '📊',
+                    'Contador Público': '💼',
+                    'Asesor Financiero': '💰',
+                    'Abogado Fiscalista': '⚖️',
+                    'Consultor Empresarial': '🎯'
+                }[selectedAgent.profession] || '👤';
+                
+                agentMessageDiv.innerHTML = `
+                    <div class="chat-message-header">
+                        <span>${agentIcon}</span>
+                        ${selectedAgent.name}
+                    </div>
+                    <div class="chat-message-content">
+                        <div class="chat-typing"><span></span><span></span><span></span></div>
+                    </div>
+                `;
+                chatMessages.appendChild(agentMessageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                // Send message to backend
+                chatAbortController = new AbortController();
+                
+                const response = await fetch('/api/chat/message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        agent_id: selectedAgentId,
+                        message: message,
+                        calculation_result: currentCalculationResult,
+                        user_data: currentUserData,
+                        fiscal_year: currentUserData.fiscal_year,
+                        conversation_history: conversationHistory.slice(-10) // Last 10 messages
+                    }),
+                    signal: chatAbortController.signal
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                }
+                
+                // Stream response
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let agentResponse = '';
+                
+                const contentDiv = agentMessageDiv.querySelector('.chat-message-content');
+                contentDiv.innerHTML = ''; // Remove typing indicator
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
+                    
+                    for (let line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                
+                                if (data.type === 'chunk') {
+                                    agentResponse += data.content;
+                                    // Render markdown using marked.js
+                                    contentDiv.innerHTML = marked.parse(agentResponse);
+                                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                                } else if (data.type === 'complete') {
+                                    // Add to conversation history
+                                    conversationHistory.push({
+                                        role: 'agent',
+                                        content: agentResponse
+                                    });
+                                }
+                            } catch (e) {
+                                console.error('Parse error:', e);
+                            }
+                        }
+                    }
+                }
+                
+                // Re-enable input
+                chatInput.disabled = false;
+                chatSendBtn.disabled = false;
+                document.querySelectorAll('.agent-btn').forEach(btn => btn.disabled = false);
+                chatInput.focus();
+                
+                // Update usage
+                await getRecommendationUsage();
+                
+            } catch (error) {
+                console.error('Error sending message:', error);
+                
+                // Show error message
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'chat-message agent';
+                errorDiv.innerHTML = `
+                    <div class="chat-message-header" style="color: #ef4444;">
+                        <span>⚠️</span>
+                        Error
+                    </div>
+                    <div class="chat-message-content" style="color: #ef4444;">
+                        ${error.message.includes('429') ? 'Límite diario alcanzado' : 'Error al enviar mensaje'}
+                    </div>
+                `;
+                chatMessages.appendChild(errorDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                // Re-enable input
+                chatInput.disabled = false;
+                chatSendBtn.disabled = false;
+                document.querySelectorAll('.agent-btn').forEach(btn => btn.disabled = false);
+            }
+        }
+
+        function closeFiscalChat() {
+            const startChatBtn = document.getElementById('startChatBtn');
+            const closeChatBtn = document.getElementById('closeChatBtn');
+            const chatContent = document.getElementById('chat-content');
+            
+            if (startChatBtn && closeChatBtn && chatContent) {
+                startChatBtn.style.display = 'block';
+                closeChatBtn.style.display = 'none';
+                chatContent.style.display = 'none';
+                isChatActive = false;
+                
+                // Abort any pending request
+                if (chatAbortController) {
+                    chatAbortController.abort();
+                    chatAbortController = null;
+                }
+                
+                // Reset chat state
+                chatAgents = [];
+                selectedAgentId = null;
+                conversationHistory = [];
+                currentCalculationResult = null;
+                currentUserData = null;
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function initializeCurrencyInputs() {
+            const currencyInputs = document.querySelectorAll('.currency-input');
+            
+            currencyInputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    const value = parseCurrencyValue(this.value);
+                    if (value === 0) {
+                        this.value = '';
+                    } else {
+                        this.value = value.toString();
+                    }
+                    this.select();
+                });
+                
+                input.addEventListener('blur', function() {
+                    this.value = formatCurrencyInput(this.value);
+                });
+                
+                input.addEventListener('input', function(e) {
+                    let value = this.value.replace(/[^0-9.]/g, '');
+                    const parts = value.split('.');
+                    if (parts.length > 2) {
+                        value = parts[0] + '.' + parts.slice(1).join('');
+                    }
+                    this.value = value;
+                });
+            });
+        }
+
+        const debouncedCalculateTaxes = debounce(calculateTaxes, 500);
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('taxForm');
+            const inputs = form.querySelectorAll('input, select');
+            
+            initializeCurrencyInputs();
+            captureInitialFormState();
+            
+            inputs.forEach(input => {
+                if (input.type === 'hidden') return;
+                input.addEventListener('input', debouncedCalculateTaxes);
+                input.addEventListener('input', markUserModification);
+                input.addEventListener('change', markUserModification);
+            });
+            
+            const generateBtn = document.getElementById('generateRecommendationsBtn');
+            if (generateBtn) {
+                generateBtn.addEventListener('click', generateRecommendations);
+            }
+            
+            const stopRecommendationsBtn = document.getElementById('stopRecommendationsBtn');
+            if (stopRecommendationsBtn) {
+                stopRecommendationsBtn.addEventListener('click', stopRecommendations);
+            }
+            
+            const startChatBtn = document.getElementById('startChatBtn');
+            if (startChatBtn) {
+                startChatBtn.addEventListener('click', initializeFiscalChat);
+            }
+            
+            const closeChatBtn = document.getElementById('closeChatBtn');
+            if (closeChatBtn) {
+                closeChatBtn.addEventListener('click', closeFiscalChat);
+            }
+            
+            const chatSendBtn = document.getElementById('chat-send-btn');
+            const chatInput = document.getElementById('chat-input');
+            if (chatSendBtn && chatInput) {
+                chatSendBtn.addEventListener('click', sendChatMessage);
+                chatInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !chatSendBtn.disabled) {
+                        sendChatMessage();
+                    }
+                });
+            }
+            
+            // Se eliminó initializeAccordion()
+            
+            initializePinToggle();
+            const pinBtn = document.getElementById('pin-toggle');
+            if (pinBtn && pinBtn.textContent.trim() !== '📍') {
+                pinBtn.textContent = '📍';
+            }
+            
+            calculateTaxes();
+            getRecommendationUsage();
+            
+            const floatingCat = document.getElementById('floatingCat');
+            const catExpressions = ['😺', '😸', '😹', '😻', '🙀', '😿', '😾', '🐱'];
+            let currentCatIndex = 0;
+            if (floatingCat) {
+                floatingCat.addEventListener('click', function() {
+                    currentCatIndex = (currentCatIndex + 1) % catExpressions.length;
+                    floatingCat.textContent = catExpressions[currentCatIndex];
+                    const catPhrases = ['¡Miau! ¡Purr-fecto cálculo!', '¡Gat-rantizo buenos resultados!', '¡Es-paw-cialmente bueno!', '¡Feli-nanzas en orden!', '¡Ronroneo de aprobación!', '¡Miau-ravilloso trabajo!'];
+                    const randomPhrase = catPhrases[Math.floor(Math.random() * catPhrases.length)];
+                    floatingCat.title = randomPhrase;
+                });
+                setInterval(() => {
+                    if (Math.random() < 0.3) {
+                        currentCatIndex = (currentCatIndex + 1) % catExpressions.length;
+                        floatingCat.textContent = catExpressions[currentCatIndex];
+                    }
+                }, 5000);
+            }
+        });
+    </script>
+</body>
+</html>

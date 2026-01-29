@@ -1,0 +1,304 @@
+// ============================================
+// RECOMMENDATIONS & AI STREAMING
+// ============================================
+
+async function getRecommendationUsage() {
+    try {
+        const response = await fetch('/api/recommendations/usage');
+        if (response.ok) {
+            const data = await response.json();
+            updateUsageCounter(data.usage_count, data.daily_limit);
+            const generateBtn = document.getElementById('generateRecommendationsBtn');
+            if (generateBtn) { 
+                generateBtn.disabled = data.usage_count >= data.daily_limit; 
+            }
+        } else {
+            const generateBtn = document.getElementById('generateRecommendationsBtn');
+            if (generateBtn) { 
+                generateBtn.disabled = true; 
+            }
+            updateUsageCounter(0, 0, 'Login required');
+        }
+    } catch (error) {
+        console.error('Error getting recommendation usage:', error);
+        const generateBtn = document.getElementById('generateRecommendationsBtn');
+        if (generateBtn) { 
+            generateBtn.disabled = true; 
+        }
+    }
+}
+
+function updateUsageCounter(used, limit, message = null) {
+    const usageCounter = document.getElementById('usage-counter');
+    if (usageCounter) {
+        if (message) { 
+            usageCounter.innerHTML = message; 
+        } else { 
+            usageCounter.innerHTML = `Recomendaciones hoy: ${used}/${limit} usadas`; 
+        }
+    }
+}
+
+async function generateRecommendations() {
+    const generateBtn = document.getElementById('generateRecommendationsBtn');
+    const stopBtn = document.getElementById('stopRecommendationsBtn');
+    const recommendationsContent = document.getElementById('recommendations-content');
+    const debateContent = document.getElementById('debate-content');
+
+    if (!generateBtn || !stopBtn || !recommendationsContent) return;
+
+    try {
+        generateBtn.style.display = 'none';
+        stopBtn.style.display = 'block';
+        stopBtn.disabled = false;
+        isRecommendationsActive = true;
+
+        enterFocusMode();
+
+        if (debateContent) debateContent.style.display = 'none';
+        recommendationsContent.style.display = 'block';
+        
+        const skeleton = document.getElementById('recommendations-skeleton');
+        if (skeleton) skeleton.classList.remove('hidden');
+
+        recommendationsContent.innerHTML = `<div id="streaming-text" style="display: none;"></div>`;
+
+        const formData = getFormData();
+
+        try {
+            await generateWithStreaming(formData, recommendationsContent);
+        } catch (streamError) {
+            console.error('Stream error:', streamError);
+            if (streamError.message !== 'RECOMMENDATIONS_STOPPED') {
+                await generateWithRegularRequest(formData, recommendationsContent);
+            }
+        }
+
+        await getRecommendationUsage();
+    } catch (error) {
+        console.error('Error generating recommendations:', error);
+        if (error.message === 'RECOMMENDATIONS_STOPPED') {
+            recommendationsContent.innerHTML += `<div style="padding: 15px; background: var(--color-bg-panel); border-radius: 8px; margin-top: 10px;">
+                <h4>⏹️ Análisis Detenido</h4>
+                <p>La generación de recomendaciones fue detenida.</p>
+            </div>`;
+        } else {
+            recommendationsContent.innerHTML = `<h4>⚠️ Error</h4>
+                <p>Error generando recomendaciones. Por favor, intenta nuevamente.</p>`;
+        }
+    } finally {
+        isRecommendationsActive = false;
+        recommendationsReader = null;
+        recommendationsAbortController = null;
+        generateBtn.style.display = 'block';
+        stopBtn.style.display = 'none';
+
+        setTimeout(() => {
+            if (userHasModifiedInputs || checkFormModified()) {
+                exitFocusMode();
+            } else {
+                updateFocusIndicator();
+            }
+        }, 1200);
+    }
+}
+
+function stopRecommendations() {
+    const generateBtn = document.getElementById('generateRecommendationsBtn');
+    const stopBtn = document.getElementById('stopRecommendationsBtn');
+    
+    if (isRecommendationsActive) {
+        if (recommendationsAbortController) {
+            recommendationsAbortController.abort();
+            recommendationsAbortController = null;
+        }
+        
+        if (recommendationsReader) {
+            try {
+                recommendationsReader.cancel();
+            } catch (error) {
+                console.log('Reader already cancelled or closed');
+            }
+            recommendationsReader = null;
+        }
+        
+        isRecommendationsActive = false;
+        
+        if (generateBtn && stopBtn) {
+            generateBtn.style.display = 'block';
+            stopBtn.style.display = 'none';
+        }
+    }
+}
+
+async function generateWithStreaming(formData, recommendationsContent) {
+    recommendationsAbortController = new AbortController();
+    
+    const response = await fetch('/api/recommendations/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+        signal: recommendationsAbortController.signal
+    });
+    
+    if (!response.ok) { 
+        throw new Error(`HTTP error! status: ${response.status}`); 
+    }
+    
+    const reader = response.body.getReader();
+    recommendationsReader = reader;
+    const decoder = new TextDecoder();
+    let streamingText = '';
+    const streamingTextEl = document.getElementById('streaming-text');
+    const streamingIndicator = document.querySelector('.streaming-indicator');
+    
+    streamingTextEl.style.display = 'block';
+    streamingIndicator.style.display = 'none';
+    
+    let catCounter = 0;
+    let streamingStartTime = Date.now();
+    const catMessages = [
+        "¡Hemos agregado otro gatito para acelerar tu recomendación! 🐱",
+        "¡Un gatito más se unió al equipo de análisis fiscal! 😸",
+        "¡Otro experto felino está revisando tus números! 🐾",
+        "¡Gatito adicional activado para mayor velocidad! 😻",
+        "¡El escuadrón gatuno sigue creciendo! 🙀",
+        "¡Más ronroneos = mejores recomendaciones! 😺"
+    ];
+    const catGifs = [
+        "https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif",
+        "https://media.giphy.com/media/VbnUQpnihPSIgIXuZv/giphy.gif",
+        "https://media.giphy.com/media/3oriO0OEd9QIDdllqo/giphy.gif",
+        "https://media.giphy.com/media/BzyTuYCmvSORqs1ABM/giphy.gif",
+        "https://media.giphy.com/media/ICOgUNjpvO0PC/giphy.gif"
+    ];
+    
+    const catEnhancer = setInterval(() => {
+        const elapsed = Date.now() - streamingStartTime;
+        if (elapsed >= (catCounter + 1) * 10000) {
+            catCounter++;
+            const currentCats = Math.min(catCounter + 1, catGifs.length);
+            const message = catMessages[Math.min(catCounter - 1, catMessages.length - 1)];
+            let catsHtml = '';
+            for (let i = 0; i < currentCats; i++) {
+                const gif = catGifs[i % catGifs.length];
+                catsHtml += '<img src="' + gif + '" alt="Gatito ' + (i + 1) + 
+                           '" style="width: ' + (120 - i * 10) + 
+                           'px; height: auto; border-radius: 8px; margin: 5px;">';
+            }
+            streamingTextEl.innerHTML = '<div style="text-align: center; padding: 20px;">' +
+                '<div style="margin-bottom: 15px;">' + catsHtml + '</div>' +
+                '<p style="color: var(--color-accent-primary); font-weight: bold; margin: 10px 0;">' + 
+                message + '</p>' +
+                '<p style="color: var(--color-text-secondary); font-style: italic; margin: 0;">' +
+                'Analizando tu situación fiscal con ' + currentCats + ' gatito' + 
+                (currentCats > 1 ? 's' : '') + '...</p></div>';
+        }
+    }, 1000);
+    
+    try {
+        while (isRecommendationsActive) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n');
+            
+            for (let line of lines) {
+                if (!isRecommendationsActive) {
+                    throw new Error('RECOMMENDATIONS_STOPPED');
+                }
+                
+                if (line.startsWith('data: ')) {
+                    try {
+                        const data = JSON.parse(line.slice(6));
+                        if (data.type === 'start') {
+                            const skeleton = document.getElementById('recommendations-skeleton');
+                            if (skeleton) skeleton.classList.add('hidden');
+                            streamingTextEl.style.display = 'block';
+                            streamingTextEl.innerHTML = `<div style="text-align: center; padding: 20px;">
+                                <img src="https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif" 
+                                     alt="Generando recomendaciones" 
+                                     style="width: 120px; height: auto; border-radius: 8px; margin-bottom: 10px;">
+                                <p style="color: var(--color-text-secondary); font-style: italic; margin: 0;">
+                                    Analizando tu situación fiscal...
+                                </p>
+                            </div>`;
+                        } else if (data.type === 'chunk') {
+                            const skeleton = document.getElementById('recommendations-skeleton');
+                            if (skeleton) skeleton.classList.add('hidden');
+                            streamingTextEl.style.display = 'block';
+                            streamingText += data.content;
+                            streamingTextEl.innerHTML = `<div style="white-space: pre-wrap; color: var(--color-text-primary);">
+                                ${streamingText}
+                            </div>`;
+                        } else if (data.type === 'complete') {
+                            const skeleton = document.getElementById('recommendations-skeleton');
+                            if (skeleton) skeleton.classList.add('hidden');
+                            const markdownContent = data.markdown || '';
+                            const htmlContent = marked.parse(markdownContent);
+                            recommendationsContent.innerHTML = `<div class="markdown-content">${htmlContent}</div>`;
+                            clearInterval(catEnhancer);
+                            break;
+                        } else if (data.type === 'error') {
+                            const errorMarkdown = data.markdown || '**Error:** Problema durante la generación';
+                            const errorHtml = marked.parse(errorMarkdown);
+                            recommendationsContent.innerHTML = `<h4>⚠️ Error</h4>
+                                <div class="markdown-content">${errorHtml}</div>`;
+                            clearInterval(catEnhancer);
+                            break;
+                        }
+                    } catch (parseError) {
+                        // Ignore parse errors for incomplete JSON
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        clearInterval(catEnhancer);
+        if (error.name === 'AbortError' || error.message === 'RECOMMENDATIONS_STOPPED') {
+            console.log('Recommendations stopped by user');
+            throw new Error('RECOMMENDATIONS_STOPPED');
+        }
+        if (error.name === 'TypeError' && !isRecommendationsActive) {
+            console.log('Recommendations cancelled, reader closed');
+            throw new Error('RECOMMENDATIONS_STOPPED');
+        }
+        throw error;
+    } finally {
+        try {
+            if (reader && reader.locked) {
+                reader.releaseLock();
+            }
+        } catch (e) {
+            console.log('Reader cleanup: ', e.message);
+        }
+        recommendationsReader = null;
+        recommendationsAbortController = null;
+        clearInterval(catEnhancer);
+    }
+}
+
+async function generateWithRegularRequest(formData, recommendationsContent) {
+    const response = await fetch('/api/recommendations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+    });
+    
+    if (response.ok) {
+        const data = await response.json();
+        const markdownContent = data.recommendations_markdown || '';
+        const htmlContent = marked.parse(markdownContent);
+        recommendationsContent.innerHTML = `<h4>🎯 Recomendaciones Generadas con IA</h4>
+            <div class="markdown-content">${htmlContent}</div>`;
+    } else {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to generate recommendations');
+    }
+}
+
+function updateFocusIndicator() {
+    // Placeholder for focus indicator updates
+    // Can be implemented if needed
+}

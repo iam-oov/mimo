@@ -1,0 +1,151 @@
+<div class="rounded-xl bg-slate-900/70 p-2 sm:p-3 animate-fade-in [animation-delay:300ms]">
+    <!-- AI Header -->
+    <div class="flex items-center justify-between mb-2 sm:mb-3">
+        <div class="flex items-center gap-2 sm:gap-3">
+            <span class="text-2xl sm:text-3xl">🤖</span>
+            <div>
+                <h3 class="text-sm sm:text-base font-bold text-slate-100">
+                    ¡Descubre cuánto dinero puedes recuperar!
+                </h3>
+                <span class="text-xs text-slate-400 hidden sm:inline">
+                    Motores de IA • Análisis a tus Resultados • Debate de 3 Expertos
+                </span>
+            </div>
+        </div>
+        <button id="pin-toggle" 
+                class="px-2 sm:px-3 py-1.5 sm:py-2 text-lg hover:scale-110 transition-all duration-200 hover:rotate-12 flex-shrink-0"
+                title="Fijar vista enfocada">
+            📍
+        </button>
+    </div>
+
+    <!-- Focus Indicator -->
+    <div id="focus-indicator" class="hidden mb-2 sm:mb-3 p-2 bg-purple-500/10 border border-purple-500/30 rounded-lg text-xs sm:text-sm text-purple-300">
+        💡 <em>Vista enfocada en recomendaciones - modifica cualquier campo para restaurar</em>
+    </div>
+
+    {% if user %}
+        <!-- Action Buttons -->
+        <div class="grid grid-cols-2 gap-2 mb-2 sm:mb-3">
+            <!-- Recommendations Button -->
+            <button id="generateRecommendationsBtn" 
+                    class="relative flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-accent-primary to-orange-500 border-2 border-accent-secondary rounded-lg font-semibold text-deep-space hover:scale-105 hover:shadow-lg hover:shadow-accent-primary/50 transition-all duration-300 overflow-hidden group">
+                <span class="text-lg sm:text-xl">✨</span>
+                <div class="flex flex-col items-start text-left">
+                    <strong class="text-xs sm:text-sm">Recomendaciones AI</strong>
+                    <small class="text-[10px] sm:text-xs font-normal opacity-90 hidden sm:inline">Consejos personalizados</small>
+                </div>
+                <!-- Shine effect -->
+                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+            </button>
+
+            <!-- Stop Button (hidden by default) -->
+            <button id="stopRecommendationsBtn" 
+                    class="hidden flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-red-500 to-red-600 border-2 border-red-400 rounded-lg font-semibold text-white hover:scale-105 hover:shadow-lg transition-all duration-300">
+                <span class="text-lg sm:text-xl">⏹️</span>
+                <strong class="text-xs sm:text-sm">Detener</strong>
+            </button>
+
+            <!-- Chat Button (disabled for now) -->
+            <button id="startChatBtn" 
+                    class="flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-purple-500 to-purple-600 border-2 border-purple-400 rounded-lg font-semibold text-white opacity-60 cursor-not-allowed"
+                    disabled>
+                <span class="text-lg sm:text-xl">💬</span>
+                <div class="flex flex-col items-start text-left">
+                    <strong class="text-xs sm:text-sm">Chat Fiscal</strong>
+                    <small class="text-[10px] sm:text-xs font-normal hidden sm:inline">Próximamente</small>
+                </div>
+            </button>
+
+            <!-- Close Chat Button (hidden by default) -->
+            <button id="closeChatBtn" 
+                    class="hidden flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 border-2 border-red-400 rounded-lg font-semibold text-white hover:scale-105 transition-transform">
+                <span class="text-xl">✖️</span>
+                <strong class="text-sm">Cerrar Chat</strong>
+            </button>
+        </div>
+
+        <!-- Usage Counter -->
+        <div id="usage-counter" class="mb-4 p-3 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-300 text-center transition-smooth">
+            Cargando uso de mensajes...
+        </div>
+
+        <!-- Recommendations Skeleton -->
+        <div id="recommendations-skeleton" class="hidden space-y-4 p-4 bg-slate-800/50 border border-slate-700 rounded-lg animate-fade-in">
+            <div class="flex items-center gap-3">
+                <div class="skeleton-shimmer h-12 w-12 rounded-full"></div>
+                <div class="flex-1 space-y-2">
+                    <div class="skeleton h-4 w-48"></div>
+                    <div class="skeleton h-3 w-32"></div>
+                </div>
+            </div>
+            <div class="space-y-3">
+                <div class="skeleton-shimmer h-4 w-full"></div>
+                <div class="skeleton-shimmer h-4 w-full"></div>
+                <div class="skeleton-shimmer h-4 w-5/6"></div>
+                <div class="skeleton-shimmer h-4 w-full"></div>
+                <div class="skeleton-shimmer h-4 w-4/5"></div>
+            </div>
+            <div class="skeleton h-24 w-full rounded-lg"></div>
+        </div>
+
+        <!-- Recommendations Content -->
+        <div id="recommendations-content" 
+             class="hidden prose prose-invert prose-sm max-w-none p-4 bg-slate-800/50 border border-slate-700 rounded-lg animate-fade-in">
+        </div>
+
+        <!-- Chat Content -->
+        <div id="chat-content" 
+             class="hidden flex flex-col h-full">
+            <!-- Agent Selection -->
+            <div id="chat-agents" class="mb-3 flex-shrink-0">
+                <h4 class="text-sm font-semibold text-accent-primary mb-2">
+                    🎭 Selecciona tu Experto Fiscal
+                </h4>
+                <div id="agent-buttons" class="grid grid-cols-3 gap-2">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Chat Messages -->
+            <div id="chat-messages" 
+                 class="flex-1 bg-panel border border-border rounded-lg p-4 overflow-y-auto mb-3 min-h-[300px] max-h-[calc(100vh-520px)]">
+                <div class="text-center text-slate-400 py-8">
+                    <div class="text-4xl mb-3">💬</div>
+                    <p class="font-medium">¡Bienvenido al Chat Fiscal!</p>
+                    <p class="text-sm mt-2 opacity-75">Selecciona un experto arriba y haz tu pregunta.</p>
+                </div>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="flex gap-2 flex-shrink-0">
+                <input type="text" 
+                       id="chat-input" 
+                       class="flex-1 px-4 py-3 bg-panel border-2 border-border rounded-lg text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-accent-primary focus:scale-[1.01] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                       placeholder="Escribe tu pregunta fiscal..."
+                       disabled>
+                <button id="chat-send-btn" 
+                        class="px-6 py-3 bg-accent-primary hover:bg-accent-primary-hover hover:scale-105 hover:shadow-lg text-deep-space font-semibold rounded-lg transition-all duration-300 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled>
+                    <span>🐱</span>
+                    <span>Enviar</span>
+                </button>
+            </div>
+        </div>
+
+    {% else %}
+        <!-- Login Prompt -->
+        <div class="text-center py-8 px-4">
+            <div class="text-5xl mb-4">🔐</div>
+            <p class="text-slate-300 mb-6">
+                Obtén recomendaciones fiscales personalizadas generadas con 
+                <strong class="text-accent-primary">inteligencia artificial avanzada</strong> 
+                para maximizar tu saldo a favor.
+            </p>
+            <a href="/auth/google" 
+               class="inline-block px-6 py-3 bg-accent-primary hover:bg-accent-primary-hover hover:scale-105 hover:shadow-lg hover:shadow-accent-primary/50 text-deep-space font-semibold rounded-lg transition-all duration-300">
+                Iniciar Sesión con Google
+            </a>
+        </div>
+    {% endif %}
+</div>

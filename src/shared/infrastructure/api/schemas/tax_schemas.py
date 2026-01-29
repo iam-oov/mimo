@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -10,13 +11,16 @@ from src.tax_calculation.domain.services.fiscal_year_validator import (
 class TaxCalculationRequest(BaseModel):
     """API schema for tax calculation request"""
 
-    taxpayer_name: str = Field(
-        default="", description="Full name of the taxpayer", max_length=100
+    taxpayer_name: Optional[str] = Field(
+        default="",
+        description="Taxpayer name (optional, from session if authenticated)",
+        max_length=200,
     )
     fiscal_year: int = Field(
-        default_factory=lambda: datetime.now().year,
+        default=2026,
         description="Tax fiscal year",
         ge=2024,
+        le=2030,
     )
     monthly_gross_income: float = Field(
         default=0.0, description="Monthly gross income", ge=0.0, le=1000000.0

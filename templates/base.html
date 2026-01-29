@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    
+    <title>{% block title %}MiMo Fiscal{% endblock %}</title>
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐱</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <link href="/static/output.css" rel="stylesheet">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="min-h-screen bg-deep-space text-slate-100 flex flex-col">
+    <!-- Background gradients -->
+    <div class="fixed inset-0 pointer-events-none -z-10">
+        <div class="absolute top-0 right-0 w-1/2 h-1/2 bg-purple-500/15 blur-[120px]"></div>
+        <div class="absolute bottom-0 left-0 w-1/2 h-1/2 bg-accent-secondary/10 blur-[120px]"></div>
+    </div>
+
+    <!-- Navbar -->
+    {% include 'components/navbar.html' %}
+
+    <!-- Info Banner -->
+    {% include 'components/info_banner.html' %}
+
+    <!-- Main Content -->
+    <main class="relative z-10 flex-1">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    {% include 'components/footer.html' %}
+
+    <!-- Floating Cat -->
+    <div id="floatingCat" 
+         class="fixed bottom-6 right-6 text-5xl cursor-pointer hover:scale-110 transition-transform z-50 select-none"
+         title="¡Miau! Soy tu asistente fiscal felino 🐱">
+        😺
+    </div>
+
+    <!-- External Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

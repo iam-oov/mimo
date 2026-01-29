@@ -1,4 +1,22 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mimo-postgres
+    environment:
+      POSTGRES_DB: mimo
+      POSTGRES_USER: mimo
+      POSTGRES_PASSWORD: mimo_local_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mimo -d mimo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   mimo:
     build:
       context: .
@@ -7,6 +25,9 @@ services:
     ports:
       - "8000:8000"
     environment:
+      # Database
+      - DATABASE_URL=postgresql://mimo:mimo_local_dev@postgres:5432/mimo
+
       # OAuth (required for AI recommendations)
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
@@ -24,9 +45,9 @@ services:
       # Optional settings
       - DAILY_RECOMMENDATIONS_LIMIT=${DAILY_RECOMMENDATIONS_LIMIT:-3}
       - ENVIRONMENT=${ENVIRONMENT:-production}
-    volumes:
-      # Persist SQLite database
-      - mimo-data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test:
@@ -42,5 +63,5 @@ services:
       start_period: 10s
 
 volumes:
-  mimo-data:
+  postgres-data:
     driver: local

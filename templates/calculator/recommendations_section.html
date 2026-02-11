@@ -1,38 +1,17 @@
-<div class="rounded-xl bg-slate-900/70 p-2 sm:p-3 animate-fade-in [animation-delay:300ms]">
-    <!-- AI Header -->
-    <div class="flex items-center justify-between mb-2 sm:mb-3">
-        <div class="flex items-center gap-2 sm:gap-3">
-            <span class="text-2xl sm:text-3xl">🤖</span>
-            <div>
-                <h3 class="text-sm sm:text-base font-bold text-slate-100">
-                    ¡Descubre cuánto dinero puedes recuperar!
-                </h3>
-                <span class="text-xs text-slate-400 hidden sm:inline">
-                    Motores de IA • Análisis a tus Resultados • Debate de 3 Expertos
-                </span>
-            </div>
-        </div>
-        <button id="pin-toggle" 
-                class="px-2 sm:px-3 py-1.5 sm:py-2 text-lg hover:scale-110 transition-all duration-200 hover:rotate-12 flex-shrink-0"
-                title="Fijar vista enfocada">
-            📍
-        </button>
-    </div>
-
-    <!-- Focus Indicator -->
-    <div id="focus-indicator" class="hidden mb-2 sm:mb-3 p-2 bg-purple-500/10 border border-purple-500/30 rounded-lg text-xs sm:text-sm text-purple-300">
-        💡 <em>Vista enfocada en recomendaciones - modifica cualquier campo para restaurar</em>
-    </div>
+<div class="rounded-xl bg-slate-900/70 p-2 sm:p-3 animate-fade-in [animation-delay:300ms] drop-shadow-2xl shadow-purple-500/10">
 
     {% if user %}
         <!-- Action Buttons -->
-        <div class="grid grid-cols-2 gap-2 mb-2 sm:mb-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-2 mb-3 sm:mb-3">
             <!-- Recommendations Button -->
             <button id="generateRecommendationsBtn" 
                     class="relative flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-accent-primary to-orange-500 border-2 border-accent-secondary rounded-lg font-semibold text-deep-space hover:scale-105 hover:shadow-lg hover:shadow-accent-primary/50 transition-all duration-300 overflow-hidden group">
                 <span class="text-lg sm:text-xl">✨</span>
                 <div class="flex flex-col items-start text-left">
-                    <strong class="text-xs sm:text-sm">Recomendaciones AI</strong>
+                    <div class="flex items-center gap-1">
+                        <strong class="text-xs sm:text-sm">Recomendaciones AI</strong>
+                        <span class="px-1.5 py-0.5 text-[8px] sm:text-[9px] font-bold rounded bg-purple-600 text-white">PREMIUM</span>
+                    </div>
                     <small class="text-[10px] sm:text-xs font-normal opacity-90 hidden sm:inline">Consejos personalizados</small>
                 </div>
                 <!-- Shine effect -->
@@ -65,33 +44,188 @@
             </button>
         </div>
 
-        <!-- Usage Counter -->
-        <div id="usage-counter" class="mb-4 p-3 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-300 text-center transition-smooth">
-            Cargando uso de mensajes...
-        </div>
-
-        <!-- Recommendations Skeleton -->
-        <div id="recommendations-skeleton" class="hidden space-y-4 p-4 bg-slate-800/50 border border-slate-700 rounded-lg animate-fade-in">
-            <div class="flex items-center gap-3">
-                <div class="skeleton-shimmer h-12 w-12 rounded-full"></div>
-                <div class="flex-1 space-y-2">
-                    <div class="skeleton h-4 w-48"></div>
-                    <div class="skeleton h-3 w-32"></div>
+        <!-- Usage Counter - Enhanced with Urgency -->
+        <div id="usage-counter" class="mb-3 sm:mb-4 p-3 sm:p-4 rounded-xl border transition-smooth overflow-hidden
+                    bg-gradient-to-br from-amber-500/10 via-slate-800 to-orange-500/10 border-amber-500/30">
+            <!-- Main Counter Display -->
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl sm:text-2xl" id="usage-icon">🔥</span>
+                    <div>
+                        <span class="text-xs sm:text-sm font-bold text-amber-400" id="usage-label">TE QUEDAN</span>
+                        <div class="flex items-baseline gap-1">
+                            <span id="usage-remaining" class="text-2xl sm:text-3xl font-black text-white">3</span>
+                            <span class="text-xs sm:text-sm text-slate-400">análisis hoy</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Timer countdown -->
+                <div class="text-right">
+                    <div class="flex items-center gap-1 text-xs text-slate-400">
+                        <span>⏰</span>
+                        <span>Se resetean en</span>
+                    </div>
+                    <div id="usage-countdown" class="text-sm sm:text-base font-mono font-bold text-amber-400">--:--:--</div>
                 </div>
             </div>
-            <div class="space-y-3">
-                <div class="skeleton-shimmer h-4 w-full"></div>
-                <div class="skeleton-shimmer h-4 w-full"></div>
-                <div class="skeleton-shimmer h-4 w-5/6"></div>
-                <div class="skeleton-shimmer h-4 w-full"></div>
-                <div class="skeleton-shimmer h-4 w-4/5"></div>
+            
+            <!-- Progress Bar -->
+            <div class="h-2 bg-slate-700 rounded-full overflow-hidden mb-2">
+                <div id="usage-progress-bar" class="h-full bg-gradient-to-r from-green-500 via-amber-500 to-red-500 transition-all duration-500" style="width: 100%"></div>
             </div>
-            <div class="skeleton h-24 w-full rounded-lg"></div>
+            
+            <!-- Value Proposition -->
+            <div class="flex items-center justify-between text-xs">
+                <div class="text-slate-400">
+                    💎 <span class="text-slate-300">Valor equivalente:</span> 
+                    <span class="text-green-400 font-semibold">$500 MXN</span> en asesoría
+                </div>
+                <div id="usage-status" class="text-amber-400 font-medium animate-pulse">
+                    ✨ Premium activo
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Row -->
+        <div class="mb-3">
+            <!-- Desktop: features horizontales -->
+            <div class="hidden sm:block text-xs text-slate-400 text-center">
+                🤖 Motores de IA • 📊 Análisis a tus Resultados • 💬 Debate de 3 Expertos
+            </div>
+            
+            <!-- Mobile: carousel horizontal -->
+            <div class="sm:hidden overflow-x-auto pb-2 scrollbar-hide -mx-2 px-2">
+                <div class="flex gap-2">
+                    <div class="flex-shrink-0 px-3 py-2 bg-slate-800 rounded-lg text-xs text-slate-300 border border-slate-700">
+                        🤖 Motores IA
+                    </div>
+                    <div class="flex-shrink-0 px-3 py-2 bg-slate-800 rounded-lg text-xs text-slate-300 border border-slate-700">
+                        📊 Análisis Experto
+                    </div>
+                    <div class="flex-shrink-0 px-3 py-2 bg-slate-800 rounded-lg text-xs text-slate-300 border border-slate-700">
+                        💬 3 Especialistas
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recommendations Skeleton → Progress Steps -->
+        <div id="recommendations-skeleton" class="hidden space-y-3 p-3 sm:p-4 bg-slate-800/50 border border-slate-700 rounded-lg animate-fade-in">
+            <!-- Header with Cat Animation -->
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div id="thinking-cat" class="text-3xl sm:text-4xl animate-bounce">🐱</div>
+                    <div class="flex gap-1">
+                        <span class="w-2 h-2 bg-accent-primary rounded-full animate-bounce" style="animation-delay: 0ms"></span>
+                        <span class="w-2 h-2 bg-accent-primary rounded-full animate-bounce" style="animation-delay: 150ms"></span>
+                        <span class="w-2 h-2 bg-accent-primary rounded-full animate-bounce" style="animation-delay: 300ms"></span>
+                    </div>
+                </div>
+                <h4 class="font-semibold text-slate-300 text-sm sm:text-base">
+                    Generando Análisis AI...
+                </h4>
+            </div>
+
+            <!-- Progress Steps -->
+            <div id="generation-steps" class="space-y-2">
+                <!-- Step 1 -->
+                <div id="step-1" class="generation-step flex items-center gap-2 sm:gap-3 p-2 bg-slate-900/50 rounded-lg transition-all duration-300">
+                    <span class="step-icon text-base sm:text-lg">⏳</span>
+                    <span class="step-text text-xs sm:text-sm text-slate-400">Analizando tus ingresos...</span>
+                    <div class="ml-auto step-status text-[10px] sm:text-xs text-slate-500"></div>
+                </div>
+
+                <!-- Step 2 -->
+                <div id="step-2" class="generation-step flex items-center gap-2 sm:gap-3 p-2 bg-slate-900/50 rounded-lg opacity-50 transition-all duration-300">
+                    <span class="step-icon text-base sm:text-lg">⏳</span>
+                    <span class="step-text text-xs sm:text-sm text-slate-400">Revisando deducciones...</span>
+                    <div class="ml-auto step-status text-[10px] sm:text-xs text-slate-500"></div>
+                </div>
+
+                <!-- Step 3 -->
+                <div id="step-3" class="generation-step flex items-center gap-2 sm:gap-3 p-2 bg-slate-900/50 rounded-lg opacity-50 transition-all duration-300">
+                    <span class="step-icon text-base sm:text-lg">⏳</span>
+                    <span class="step-text text-xs sm:text-sm text-slate-400">Consultando con 3 expertos AI...</span>
+                    <div class="ml-auto step-status text-[10px] sm:text-xs text-slate-500"></div>
+                </div>
+
+                <!-- Step 4 -->
+                <div id="step-4" class="generation-step flex items-center gap-2 sm:gap-3 p-2 bg-slate-900/50 rounded-lg opacity-50 transition-all duration-300">
+                    <span class="step-icon text-base sm:text-lg">⏳</span>
+                    <span class="step-text text-xs sm:text-sm text-slate-400">Generando estrategias personalizadas...</span>
+                    <div class="ml-auto step-status text-[10px] sm:text-xs text-slate-500"></div>
+                </div>
+            </div>
+
+            <!-- Insights Counter -->
+            <div id="insights-counter" class="mt-3 p-2 sm:p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg hidden">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2 text-xs sm:text-sm text-purple-300">
+                        <span class="text-base sm:text-lg">💡</span>
+                        <span>Insights encontrados:</span>
+                    </div>
+                    <span id="insights-count" class="text-lg sm:text-xl font-bold text-purple-400">0</span>
+                </div>
+            </div>
         </div>
 
         <!-- Recommendations Content -->
-        <div id="recommendations-content" 
-             class="hidden prose prose-invert prose-sm max-w-none p-4 bg-slate-800/50 border border-slate-700 rounded-lg animate-fade-in">
+        <div id="recommendations-wrapper" class="hidden animate-fade-in">
+            <!-- Summary Header with Score -->
+            <div id="recommendations-summary" class="rounded-xl bg-gradient-to-r from-purple-500/20 via-slate-800 to-orange-500/20 border border-purple-500/30 p-3 sm:p-4 mb-3">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2 sm:gap-3">
+                        <span class="text-3xl sm:text-4xl">🎯</span>
+                        <div>
+                            <h3 class="font-bold text-base sm:text-lg text-slate-100">Análisis Completado</h3>
+                            <p class="text-xs text-slate-400">Por 3 expertos fiscales AI</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xs text-slate-400">Tu Score Fiscal</div>
+                        <div class="flex items-baseline gap-1">
+                            <span id="fiscal-score" class="text-2xl sm:text-3xl font-black text-amber-400">--</span>
+                            <span class="text-xs text-slate-500">/100</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Score Progress Bar -->
+                <div class="h-2 bg-slate-700 rounded-full overflow-hidden mb-3">
+                    <div id="fiscal-score-bar" class="h-full bg-gradient-to-r from-red-500 via-amber-500 to-green-500 transition-all duration-1000" style="width: 0%"></div>
+                </div>
+                
+                <!-- Quick Stats -->
+                <div class="grid grid-cols-3 gap-2 text-center text-xs">
+                    <div class="p-2 bg-slate-900/50 rounded-lg">
+                        <div class="text-slate-400">Insights</div>
+                        <div id="summary-insights" class="font-bold text-purple-400">0</div>
+                    </div>
+                    <div class="p-2 bg-slate-900/50 rounded-lg">
+                        <div class="text-slate-400">Ahorro Potencial</div>
+                        <div id="summary-savings" class="font-bold text-green-400">$0</div>
+                    </div>
+                    <div class="p-2 bg-slate-900/50 rounded-lg">
+                        <div class="text-slate-400">Prioridad</div>
+                        <div id="summary-priority" class="font-bold text-amber-400">--</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main Recommendations Content -->
+            <div id="recommendations-content" 
+                 class="prose prose-invert prose-sm max-w-none p-3 sm:p-4 bg-slate-800/50 border border-slate-700 rounded-lg">
+            </div>
+            
+            <!-- Action Footer -->
+            <div id="recommendations-footer" class="mt-3 p-3 bg-gradient-to-r from-teal-500/10 to-emerald-500/10 border border-teal-500/30 rounded-lg text-center">
+                <p class="text-xs sm:text-sm text-teal-300 mb-2">
+                    💡 <strong>¿Quieres implementar estas recomendaciones?</strong>
+                </p>
+                <p class="text-[10px] sm:text-xs text-slate-400">
+                    Guarda este análisis o consulta con un contador para aplicar las estrategias
+                </p>
+            </div>
         </div>
 
         <!-- Chat Content -->
@@ -134,18 +268,65 @@
         </div>
 
     {% else %}
-        <!-- Login Prompt -->
-        <div class="text-center py-8 px-4">
-            <div class="text-5xl mb-4">🔐</div>
-            <p class="text-slate-300 mb-6">
-                Obtén recomendaciones fiscales personalizadas generadas con 
-                <strong class="text-accent-primary">inteligencia artificial avanzada</strong> 
-                para maximizar tu saldo a favor.
-            </p>
+        <!-- Login Prompt - Enhanced with Benefits -->
+        <div class="text-center py-6 sm:py-8 px-3 sm:px-4">
+            <!-- Animated Lock Icon -->
+            <div class="relative inline-block mb-4">
+                <div id="unlock-icon" class="text-5xl sm:text-6xl transition-transform duration-500">🔐</div>
+                <div class="absolute -top-1 -right-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-deep-space animate-pulse">
+                    PREMIUM
+                </div>
+            </div>
+            
+            <!-- Main Value Proposition -->
+            <h3 class="text-lg sm:text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-accent-secondary to-accent-primary mb-3">
+                Desbloquea el Poder de la IA Fiscal
+            </h3>
+            
+            <!-- Benefits List -->
+            <div class="text-left max-w-sm mx-auto mb-4 space-y-2">
+                <div class="flex items-center gap-2 text-sm text-slate-300">
+                    <span class="text-green-400 text-lg">✓</span>
+                    <span>Análisis por <strong class="text-accent-primary">3 expertos IA</strong> debatiendo tu caso</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-slate-300">
+                    <span class="text-green-400 text-lg">✓</span>
+                    <span>Identifica <strong class="text-green-400">deducciones ocultas</strong> que podrías perder</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-slate-300">
+                    <span class="text-green-400 text-lg">✓</span>
+                    <span>Ahorro promedio de usuarios: <strong class="text-green-400">+$8,400 MXN</strong></span>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-slate-300">
+                    <span class="text-green-400 text-lg">✓</span>
+                    <span><strong class="text-amber-400">3 análisis gratis</strong> cada día</span>
+                </div>
+            </div>
+            
+            <!-- Social Proof -->
+            <div class="mb-4 p-2 bg-slate-800/50 rounded-lg border border-slate-700">
+                <div class="flex items-center justify-center gap-1 text-amber-400">
+                    <span>⭐⭐⭐⭐⭐</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-1 italic">
+                    "Encontré $12,000 MXN en deducciones que no sabía que podía aplicar" — María G.
+                </p>
+            </div>
+            
+            <!-- CTA Button -->
             <a href="/auth/google" 
-               class="inline-block px-6 py-3 bg-accent-primary hover:bg-accent-primary-hover hover:scale-105 hover:shadow-lg hover:shadow-accent-primary/50 text-deep-space font-semibold rounded-lg transition-all duration-300">
-                Iniciar Sesión con Google
+               class="group relative inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-accent-primary to-orange-500 hover:from-orange-500 hover:to-amber-400 text-deep-space font-bold rounded-xl hover:scale-105 hover:shadow-xl hover:shadow-accent-primary/40 transition-all duration-300 overflow-hidden">
+                <span class="text-xl">🚀</span>
+                <span class="text-sm sm:text-base">Desbloquear Análisis AI Gratis</span>
+                <span class="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+                <!-- Shine effect -->
+                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
             </a>
+            
+            <!-- Trust Indicator -->
+            <p class="mt-3 text-xs text-slate-500">
+                🔒 Login seguro con Google • Sin tarjeta requerida
+            </p>
         </div>
     {% endif %}
 </div>

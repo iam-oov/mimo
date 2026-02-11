@@ -1,0 +1,247 @@
+// ============================================
+// ONBOARDING & TOUR
+// ============================================
+
+// Load example data
+function loadExampleData() {
+    const exampleData = {
+        monthly_gross_income: '18000',
+        monthly_net_income: '0',
+        bonus_days: '20',
+        vacation_days: '15',
+        vacation_premium_percentage: '0.30',
+        general_deductions: '35000',
+        total_tuition: '15000',
+        total_ppr: '8000'
+    };
+    
+    // Fill form with example data
+    Object.keys(exampleData).forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.value = exampleData[fieldId];
+            
+            // Format currency inputs
+            if (field.classList.contains('currency-input')) {
+                field.value = formatCurrencyInput(field.value);
+            }
+            
+            // Trigger input event to update calculations
+            field.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    });
+    
+    // Show success message
+    showToast('✨ Datos de ejemplo cargados. Explora las funciones de Mimo', 'success');
+    
+    // Mark that user has seen example
+    localStorage.setItem('mimo-seen-example', 'true');
+}
+
+// Show toast notification
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-lg animate-slide-in-right z-50 ${
+        type === 'success' ? 'bg-emerald-500/90 text-white' :
+        type === 'error' ? 'bg-red-500/90 text-white' :
+        'bg-slate-800/90 text-slate-200 border border-slate-700'
+    }`;
+    toast.textContent = message;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.add('animate-fade-out');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Simple tour for first-time users
+function showOnboardingTour() {
+    // Check if user has seen tour
+    if (localStorage.getItem('mimo-tour-completed')) {
+        return;
+    }
+    
+    // Welcome step
+    setTimeout(() => {
+        const welcomeOverlay = document.createElement('div');
+        welcomeOverlay.id = 'tour-overlay';
+        welcomeOverlay.className = 'fixed inset-0 bg-black/70 z-[100] flex items-center justify-center animate-fade-in';
+        welcomeOverlay.innerHTML = `
+            <div class="bg-slate-900 rounded-xl p-6 max-w-md mx-4 border border-slate-700 shadow-2xl animate-scale-in">
+                <div class="text-center mb-4">
+                    <div class="text-6xl mb-3">😺</div>
+                    <h2 class="text-2xl font-bold text-slate-200 mb-2">¡Bienvenido a Mimo!</h2>
+                    <p class="text-slate-400 text-sm">Tu asistente fiscal inteligente</p>
+                </div>
+                
+                <div class="space-y-3 mb-6 text-sm">
+                    <div class="flex items-start gap-3 p-3 rounded-lg bg-slate-800/50">
+                        <span class="text-xl">💰</span>
+                        <div>
+                            <strong class="text-amber-400">Calcula tu saldo fiscal</strong>
+                            <p class="text-slate-400 text-xs mt-1">Ingresa tus datos y obtén tu proyección anual</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start gap-3 p-3 rounded-lg bg-slate-800/50">
+                        <span class="text-xl">🤖</span>
+                        <div>
+                            <strong class="text-purple-400">Análisis AI personalizado</strong>
+                            <p class="text-slate-400 text-xs mt-1">3 expertos virtuales analizan tu situación</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start gap-3 p-3 rounded-lg bg-slate-800/50">
+                        <span class="text-xl">📊</span>
+                        <div>
+                            <strong class="text-teal-400">Visualiza tu ahorro</strong>
+                            <p class="text-slate-400 text-xs mt-1">Ve el impacto de tus deducciones en tiempo real</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button id="tour-example-btn" class="flex-1 px-4 py-2 bg-purple-500/20 border border-purple-500/30 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors text-sm font-medium">
+                        ✨ Ver Ejemplo
+                    </button>
+                    <button id="tour-start-btn" class="flex-1 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:from-amber-600 hover:to-orange-600 transition-colors text-sm font-medium">
+                        Comenzar →
+                    </button>
+                </div>
+                
+                <button id="tour-skip-btn" class="mt-3 w-full text-xs text-slate-500 hover:text-slate-400 transition-colors">
+                    Saltar introducción
+                </button>
+            </div>
+        `;
+        
+        document.body.appendChild(welcomeOverlay);
+        
+        // Event listeners
+        document.getElementById('tour-example-btn').addEventListener('click', () => {
+            welcomeOverlay.remove();
+            loadExampleData();
+            completeTour();
+        });
+        
+        document.getElementById('tour-start-btn').addEventListener('click', () => {
+            welcomeOverlay.remove();
+            showQuickTips();
+            completeTour();
+        });
+        
+        document.getElementById('tour-skip-btn').addEventListener('click', () => {
+            welcomeOverlay.remove();
+            completeTour();
+        });
+    }, 1000); // Show after 1 second
+}
+
+// Show quick tips highlighting key features
+function showQuickTips() {
+    const tips = [
+        {
+            element: '#form-progress-container',
+            message: '👆 Completa el formulario y ve tu progreso en tiempo real',
+            position: 'bottom'
+        },
+        {
+            element: '#kpi-balance',
+            message: '💰 Aquí verás tu saldo estimado a favor o a pagar',
+            position: 'left'
+        },
+        {
+            element: '[href="/auth/google"]',
+            message: '🚀 Desbloquea análisis AI personalizados con tu cuenta Google',
+            position: 'left'
+        }
+    ];
+    
+    let currentTip = 0;
+    
+    function showTip(index) {
+        if (index >= tips.length) {
+            return;
+        }
+        
+        const tip = tips[index];
+        const element = document.querySelector(tip.element);
+        
+        if (!element) {
+            showTip(index + 1);
+            return;
+        }
+        
+        // Create spotlight
+        const spotlight = document.createElement('div');
+        spotlight.className = 'fixed inset-0 z-[90] pointer-events-none';
+        spotlight.style.background = 'rgba(0, 0, 0, 0.7)';
+        
+        // Create tooltip
+        const tooltip = document.createElement('div');
+        tooltip.className = 'fixed z-[95] bg-slate-900 border border-amber-500/50 rounded-lg p-4 shadow-xl max-w-xs animate-scale-in';
+        tooltip.innerHTML = `
+            <p class="text-sm text-slate-200 mb-3">${tip.message}</p>
+            <div class="flex justify-end gap-2">
+                <button class="skip-tour-btn text-xs text-slate-500 hover:text-slate-400 px-3 py-1">Saltar</button>
+                <button class="next-tip-btn text-xs bg-amber-500 text-white px-3 py-1 rounded hover:bg-amber-600 transition-colors">
+                    ${index === tips.length - 1 ? 'Finalizar' : 'Siguiente →'}
+                </button>
+            </div>
+        `;
+        
+        // Position tooltip
+        const rect = element.getBoundingClientRect();
+        if (tip.position === 'bottom') {
+            tooltip.style.top = `${rect.bottom + 10}px`;
+            tooltip.style.left = `${rect.left}px`;
+        } else if (tip.position === 'left') {
+            tooltip.style.top = `${rect.top}px`;
+            tooltip.style.right = `${window.innerWidth - rect.left + 10}px`;
+        }
+        
+        document.body.appendChild(spotlight);
+        document.body.appendChild(tooltip);
+        
+        // Highlight element
+        element.classList.add('ring-2', 'ring-amber-500', 'ring-offset-2', 'ring-offset-slate-900', 'relative', 'z-[91]');
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Event listeners
+        tooltip.querySelector('.next-tip-btn').addEventListener('click', () => {
+            spotlight.remove();
+            tooltip.remove();
+            element.classList.remove('ring-2', 'ring-amber-500', 'ring-offset-2', 'ring-offset-slate-900', 'z-[91]');
+            showTip(index + 1);
+        });
+        
+        tooltip.querySelector('.skip-tour-btn').addEventListener('click', () => {
+            spotlight.remove();
+            tooltip.remove();
+            element.classList.remove('ring-2', 'ring-amber-500', 'ring-offset-2', 'ring-offset-slate-900', 'z-[91]');
+        });
+    }
+    
+    showTip(0);
+}
+
+// Mark tour as completed
+function completeTour() {
+    localStorage.setItem('mimo-tour-completed', 'true');
+}
+
+// Initialize onboarding
+function initOnboarding() {
+    // Add event listener to "Ver Ejemplo" button
+    const loadExampleBtn = document.getElementById('load-example-btn');
+    if (loadExampleBtn) {
+        loadExampleBtn.addEventListener('click', loadExampleData);
+    }
+    
+    // Show tour for first-time users (after page load)
+    if (!localStorage.getItem('mimo-tour-completed')) {
+        showOnboardingTour();
+    }
+}

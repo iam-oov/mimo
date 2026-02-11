@@ -37,29 +37,161 @@ function updateResults(data) {
         }
     });
     
-    taxKpi.innerHTML = `
-        <h3>Impuesto Determinado</h3>
-        <div style="font-size: 24px; font-weight: bold;">${formatCurrency(data.determined_tax)}</div>
-    `;
-    taxKpi.className = 'balance-result kpi-secondary'; 
+    // Update Tax KPI
+    document.getElementById('tax-amount').textContent = formatCurrency(data.determined_tax);
+    
+    // Update Balance KPI
+    const balanceAmount = document.getElementById('balance-amount');
+    const balanceLabel = document.getElementById('balance-label');
     
     if (data.balance_in_favor > 0) {
-        balanceKpi.innerHTML = `
-            <h3>💰 Balance a Favor</h3>
-            <div style="font-size: 24px; font-weight: bold;">${formatCurrency(data.balance_in_favor)}</div>
-        `;
-        balanceKpi.className = 'balance-result balance-favor'; 
+        balanceAmount.textContent = formatCurrency(data.balance_in_favor);
+        balanceLabel.textContent = 'A favor';
+        balanceKpi.className = 'rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/30 p-3 sm:p-4 animate-slide-in-right transition-smooth hover:scale-[1.02] hover:shadow-lg hover:shadow-emerald-500/20';
+        balanceAmount.className = 'text-3xl sm:text-4xl font-bold text-emerald-400';
+        balanceLabel.className = 'text-xs text-emerald-300/70 mt-1';
+        document.querySelector('#kpi-balance .text-sm').className = 'text-sm sm:text-base text-emerald-300 mb-1 font-medium';
+        
+        // Celebrate with confetti if balance > $10,000
+        if (typeof celebrateBalance === 'function') {
+            celebrateBalance(data.balance_in_favor);
+        }
+        
+        // Animate number change
+        if (typeof animateNumberChange === 'function') {
+            animateNumberChange('balance-amount');
+        }
     } else if (data.balance_to_pay > 0) {
-        balanceKpi.innerHTML = `
-            <h3>⚠️ Balance a Pagar</h3>
-            <div style="font-size: 24px; font-weight: bold;">${formatCurrency(data.balance_to_pay)}</div>
-        `;
-        balanceKpi.className = 'balance-result balance-pay'; 
+        balanceAmount.textContent = formatCurrency(data.balance_to_pay);
+        balanceLabel.textContent = 'A pagar';
+        balanceKpi.className = 'rounded-xl bg-gradient-to-br from-red-500/20 to-orange-600/10 border border-red-500/30 p-3 sm:p-4 animate-slide-in-right transition-smooth hover:scale-[1.02] hover:shadow-lg hover:shadow-red-500/20';
+        balanceAmount.className = 'text-3xl sm:text-4xl font-bold text-red-400';
+        balanceLabel.className = 'text-xs text-red-300/70 mt-1';
+        document.querySelector('#kpi-balance .text-sm').className = 'text-sm sm:text-base text-red-300 mb-1 font-medium';
+        
+        // Animate number change
+        if (typeof animateNumberChange === 'function') {
+            animateNumberChange('balance-amount');
+        }
     } else {
-        balanceKpi.innerHTML = `
-            <h3>⚖️ Sin Balance</h3>
-            <div style="font-size: 24px; font-weight: bold;">$0.00</div>
-        `;
-        balanceKpi.className = 'balance-result balance-favor'; 
+        balanceAmount.textContent = '$0.00';
+        balanceLabel.textContent = 'Sin balance';
+        balanceKpi.className = 'rounded-xl bg-gradient-to-br from-slate-500/20 to-slate-600/10 border border-slate-500/30 p-3 sm:p-4 animate-slide-in-right transition-smooth';
+        balanceAmount.className = 'text-3xl sm:text-4xl font-bold text-slate-400';
+        balanceLabel.className = 'text-xs text-slate-400/70 mt-1';
+        document.querySelector('#kpi-balance .text-sm').className = 'text-sm sm:text-base text-slate-400 mb-1 font-medium';
+    }
+    
+    // Update Distribution Chart
+    updateDistributionChart(data);
+    
+    // Update KPIs
+    updateKPIs(data);
+    
+    // Update Optimization Impact (if deductions exist)
+    updateOptimizationImpact(data);
+}
+
+function updateDistributionChart(data) {
+    const determinedTax = data.determined_tax || 0;
+    const withheldTax = data.withheld_tax || 0;
+    const balance = (data.balance_in_favor || 0) - (data.balance_to_pay || 0);
+    
+    // Calculate total for percentages
+    const total = Math.abs(determinedTax) + Math.abs(withheldTax) + Math.abs(balance);
+    
+    if (total > 0) {
+        const taxPercent = Math.round((Math.abs(determinedTax) / total) * 100);
+        const withheldPercent = Math.round((Math.abs(withheldTax) / total) * 100);
+        const balancePercent = 100 - taxPercent - withheldPercent;
+        
+        // Update bars with animation
+        setTimeout(() => {
+            document.getElementById('tax-caused-bar').style.width = `${taxPercent}%`;
+            document.getElementById('tax-withheld-bar').style.width = `${withheldPercent}%`;
+            document.getElementById('balance-bar').style.width = `${balancePercent}%`;
+        }, 100);
+        
+        // Update percentages
+        document.getElementById('tax-caused-percent').textContent = `${taxPercent}%`;
+        document.getElementById('tax-withheld-percent').textContent = `${withheldPercent}%`;
+        document.getElementById('balance-percent').textContent = `${balancePercent}%`;
+        
+        // Update amounts
+        document.getElementById('tax-caused-amount').textContent = formatCurrency(determinedTax);
+        document.getElementById('tax-withheld-amount').textContent = formatCurrency(withheldTax);
+        document.getElementById('balance-chart-amount').textContent = formatCurrency(Math.abs(balance));
+        
+        // Color balance bar based on positive/negative
+        const balanceBar = document.getElementById('balance-bar');
+        if (balance > 0) {
+            balanceBar.className = 'h-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500';
+        } else if (balance < 0) {
+            balanceBar.className = 'h-full bg-gradient-to-r from-red-500 to-orange-500 transition-all duration-500';
+        } else {
+            balanceBar.className = 'h-full bg-gradient-to-r from-slate-500 to-slate-600 transition-all duration-500';
+        }
+    }
+}
+
+function updateKPIs(data) {
+    // Tasa Efectiva = (Impuesto Determinado / Ingreso Bruto) * 100
+    const effectiveRate = data.gross_annual_income > 0 
+        ? ((data.determined_tax / data.gross_annual_income) * 100).toFixed(1)
+        : 0;
+    document.getElementById('effective-rate').textContent = `${effectiveRate}%`;
+    
+    // % Ahorro vs Bruto = (Deducciones / Ingreso Bruto) * 100
+    const totalDeductions = (data.authorized_deductions || 0) + (data.personal_deductions || 0) + 
+                           (data.ppr_deductions || 0) + (data.education_deductions || 0);
+    const savingsPercent = data.gross_annual_income > 0 
+        ? ((totalDeductions / data.gross_annual_income) * 100).toFixed(1)
+        : 0;
+    document.getElementById('savings-percent').textContent = `${savingsPercent}%`;
+}
+
+function updateOptimizationImpact(data) {
+    const totalDeductions = (data.personal_deductions || 0) + (data.ppr_deductions || 0) + (data.education_deductions || 0);
+    
+    // Only show if there are personal deductions
+    if (totalDeductions > 0) {
+        const optimizationCard = document.getElementById('optimization-impact');
+        optimizationCard.classList.remove('hidden');
+        
+        // Calculate tax without deductions (approximate)
+        // Base Gravable + Deducciones = Base sin optimizar
+        const baseWithoutDeductions = data.taxable_base + totalDeductions;
+        
+        // Estimate tax without deductions (rough approximation using effective rate)
+        const effectiveRate = data.taxable_base > 0 ? data.determined_tax / data.taxable_base : 0;
+        const taxWithoutDeductions = baseWithoutDeductions * effectiveRate;
+        
+        // Savings = difference in tax
+        const savings = taxWithoutDeductions - data.determined_tax;
+        
+        document.getElementById('tax-without-deductions').textContent = formatCurrency(taxWithoutDeductions);
+        document.getElementById('tax-with-deductions').textContent = formatCurrency(data.determined_tax);
+        document.getElementById('total-savings').textContent = formatCurrency(savings);
+        
+        // Add celebration effect for significant savings
+        if (savings > 5000) {
+            setTimeout(() => {
+                if (typeof celebrateSavings === 'function') {
+                    celebrateSavings('total-savings');
+                }
+                
+                // Small confetti for savings celebration
+                if (typeof confetti === 'function' && savings > 8000) {
+                    confetti({
+                        particleCount: 50,
+                        spread: 50,
+                        origin: { y: 0.7, x: 0.8 },
+                        colors: ['#8B5CF6', '#14B8A6', '#10B981']
+                    });
+                }
+            }, 300);
+        }
+    } else {
+        document.getElementById('optimization-impact').classList.add('hidden');
     }
 }

@@ -99,6 +99,231 @@ function formatCurrency(amount) {
     }).format(amount);
 }
 
+// Form Progress Tracking
+function updateFormProgress() {
+    const requiredFields = [
+        'monthly_gross_income',
+        'monthly_net_income',
+        'bonus_days',
+        'vacation_days',
+        'vacation_premium_percentage'
+    ];
+    
+    const optionalFields = [
+        'general_deductions',
+        'total_tuition',
+        'total_ppr'
+    ];
+    
+    let filledRequired = 0;
+    let filledOptional = 0;
+    
+    requiredFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            const value = parseCurrencyValue(field.value) || parseFloat(field.value) || 0;
+            // Consider fields filled if they have non-zero values (for days, bonus_days starts at 15 by default)
+            if (fieldId === 'bonus_days') {
+                if (parseInt(field.value) >= 15) filledRequired++;
+            } else if (fieldId === 'vacation_days') {
+                if (parseInt(field.value) >= 12) filledRequired++;
+            } else if (fieldId === 'vacation_premium_percentage') {
+                if (parseFloat(field.value) >= 0.25) filledRequired++;
+            } else {
+                if (value > 0) filledRequired++;
+            }
+        }
+    });
+    
+    optionalFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            const value = parseCurrencyValue(field.value) || 0;
+            if (value > 0) filledOptional++;
+        }
+    });
+    
+    const totalFields = requiredFields.length + optionalFields.length;
+    const filledFields = filledRequired + filledOptional;
+    const percentage = Math.round((filledFields / totalFields) * 100);
+    
+    const progressBar = document.getElementById('form-progress-bar');
+    const progressText = document.getElementById('form-progress-text');
+    const progressPercent = document.getElementById('form-progress-percent');
+    const progressHint = document.getElementById('form-progress-hint');
+    
+    if (progressBar && progressText) {
+        progressBar.style.width = `${percentage}%`;
+        progressText.textContent = `${filledFields}/${totalFields} campos`;
+        
+        if (progressPercent) {
+            progressPercent.textContent = `(${percentage}%)`;
+        }
+        
+        // Update hint based on progress
+        if (progressHint) {
+            if (percentage === 100) {
+                progressHint.innerHTML = '✨ ¡Formulario completo! Obtén tu análisis AI ahora';
+                progressHint.className = 'text-[10px] sm:text-xs text-teal-400 mt-1.5 font-medium';
+            } else if (percentage >= 60) {
+                progressHint.innerHTML = '🎯 ¡Casi listo! Agrega tus deducciones para maximizar tu saldo a favor';
+                progressHint.className = 'text-[10px] sm:text-xs text-amber-400 mt-1.5';
+            } else if (percentage >= 30) {
+                progressHint.innerHTML = '💡 Completa más campos para obtener recomendaciones AI más precisas';
+                progressHint.className = 'text-[10px] sm:text-xs text-slate-500 mt-1.5';
+            } else {
+                progressHint.innerHTML = '📝 Empieza ingresando tu salario mensual';
+                progressHint.className = 'text-[10px] sm:text-xs text-slate-500 mt-1.5';
+            }
+        }
+        
+        // Sync with AI Preview card counter
+        syncAIPreviewProgress(filledFields, totalFields, percentage);
+        
+        // Add celebration effect at 100%
+        if (percentage === 100) {
+            progressBar.classList.add('animate-pulse');
+            progressText.innerHTML = `<span class="text-teal-400">✓ ¡Completo!</span>`;
+        } else {
+            progressBar.classList.remove('animate-pulse');
+        }
+    }
+    
+    // Update validation indicators
+    updateValidationIndicators();
+}
+
+// Validation Indicators
+function updateValidationIndicators() {
+    // Validate gross income
+    const grossField = document.getElementById('monthly_gross_income');
+    const grossIndicator = document.getElementById('validation-gross-income');
+    
+    if (grossField && grossIndicator) {
+        const value = parseCurrencyValue(grossField.value) || 0;
+        if (value > 0) {
+            grossIndicator.innerHTML = '<span class="text-teal-400">✓</span>';
+            grossIndicator.classList.remove('hidden');
+            grossField.classList.add('valid');
+            grossField.classList.remove('invalid');
+        } else {
+            grossIndicator.innerHTML = '';
+            grossIndicator.classList.add('hidden');
+            grossField.classList.remove('valid', 'invalid');
+        }
+    }
+    
+    // Validate net income
+    const netField = document.getElementById('monthly_net_income');
+    const netIndicator = document.getElementById('validation-net-income');
+    
+    if (netField && netIndicator) {
+        const value = parseCurrencyValue(netField.value) || 0;
+        if (value > 0) {
+            netIndicator.innerHTML = '<span class="text-teal-400">✓</span>';
+            netIndicator.classList.remove('hidden');
+            netField.classList.add('valid');
+        } else {
+            netIndicator.innerHTML = '';
+            netIndicator.classList.add('hidden');
+            netField.classList.remove('valid', 'invalid');
+        }
+    }
+    
+    // Validate bonus days (typical range 15-90)
+    const bonusDaysField = document.getElementById('bonus_days');
+    const bonusDaysIndicator = document.getElementById('validation-bonus_days');
+    
+    if (bonusDaysField && bonusDaysIndicator) {
+        const value = parseInt(bonusDaysField.value) || 0;
+        if (value >= 15 && value <= 90) {
+            bonusDaysIndicator.innerHTML = '<span class="text-teal-400">✓</span>';
+            bonusDaysIndicator.classList.remove('hidden');
+        } else if (value > 0 && value < 15) {
+            bonusDaysIndicator.innerHTML = '<span class="text-amber-400" title="Por ley son mínimo 15 días">⚠️</span>';
+            bonusDaysIndicator.classList.remove('hidden');
+        } else {
+            bonusDaysIndicator.innerHTML = '';
+            bonusDaysIndicator.classList.add('hidden');
+        }
+    }
+    
+    // Validate vacation days (typical range 12-50)
+    const vacationDaysField = document.getElementById('vacation_days');
+    const vacationDaysIndicator = document.getElementById('validation-vacation_days');
+    
+    if (vacationDaysField && vacationDaysIndicator) {
+        const value = parseInt(vacationDaysField.value) || 0;
+        if (value >= 12 && value <= 50) {
+            vacationDaysIndicator.innerHTML = '<span class="text-teal-400">✓</span>';
+            vacationDaysIndicator.classList.remove('hidden');
+        } else if (value > 0 && value < 12) {
+            vacationDaysIndicator.innerHTML = '<span class="text-amber-400" title="Por ley son mínimo 12 días (1er año)">⚠️</span>';
+            vacationDaysIndicator.classList.remove('hidden');
+        } else {
+            vacationDaysIndicator.innerHTML = '';
+            vacationDaysIndicator.classList.add('hidden');
+        }
+    }
+}
+
+// Tooltip Toggle
+function initTooltips() {
+    const tooltipTriggers = document.querySelectorAll('.tooltip-trigger');
+    
+    tooltipTriggers.forEach(trigger => {
+        const parent = trigger.closest('.form-field-group');
+        const tooltip = parent?.querySelector('.tooltip-content');
+        
+        if (tooltip) {
+            // Show on hover (desktop)
+            trigger.addEventListener('mouseenter', function() {
+                // Close all other tooltips first
+                document.querySelectorAll('.tooltip-content').forEach(t => {
+                    if (t !== tooltip) t.classList.add('hidden');
+                });
+                tooltip.classList.remove('hidden');
+            });
+            
+            trigger.addEventListener('mouseleave', function() {
+                tooltip.classList.add('hidden');
+            });
+            
+            // Toggle on click (mobile)
+            trigger.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                // Close all other tooltips first
+                document.querySelectorAll('.tooltip-content').forEach(t => {
+                    if (t !== tooltip) t.classList.add('hidden');
+                });
+                tooltip.classList.toggle('hidden');
+            });
+        }
+    });
+    
+    // Close tooltips when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.tooltip-trigger') && !e.target.closest('.tooltip-content')) {
+            document.querySelectorAll('.tooltip-content').forEach(t => t.classList.add('hidden'));
+        }
+    });
+}
+
+// Initialize form tracking
+function initFormTracking() {
+    const form = document.getElementById('taxForm');
+    if (form) {
+        form.addEventListener('input', updateFormProgress);
+        form.addEventListener('change', updateFormProgress);
+        
+        // Initial progress update
+        setTimeout(updateFormProgress, 100);
+    }
+    
+    initTooltips();
+}
+
 async function calculateTaxes() {
     const loadingElement = document.getElementById('loading');
     const resultsElement = document.getElementById('results');

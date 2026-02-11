@@ -1,11 +1,43 @@
 <form id="taxForm" class="space-y-3 sm:space-y-4">
+    <!-- Form Progress Indicator -->
+    <div id="form-progress-container" class="rounded-xl bg-gradient-to-r from-slate-900/70 via-slate-800/50 to-slate-900/70 p-2 sm:p-3 border border-slate-700/50 animate-fade-in">
+        <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+                <span class="text-base">📊</span>
+                <span class="text-xs font-semibold text-slate-400">PROGRESO DEL FORMULARIO</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <button type="button" id="load-example-btn" class="text-[10px] px-2 py-1 rounded bg-purple-500/20 border border-purple-500/30 text-purple-400 hover:bg-purple-500/30 hover:text-purple-300 transition-colors flex items-center gap-1">
+                    <span>✨</span>
+                    <span class="hidden sm:inline">Ver Ejemplo</span>
+                    <span class="sm:hidden">Ejemplo</span>
+                </button>
+                <span id="form-progress-text" class="text-xs font-bold text-amber-400">2/8 campos</span>
+                <span id="form-progress-percent" class="text-[10px] text-slate-500">(25%)</span>
+            </div>
+        </div>
+        <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
+            <div id="form-progress-bar" class="h-full bg-gradient-to-r from-amber-500 via-teal-500 to-emerald-500 transition-all duration-500 ease-out" style="width: 25%"></div>
+        </div>
+        <p id="form-progress-hint" class="text-[10px] sm:text-xs text-slate-500 mt-1.5">
+            💡 Completa más campos para obtener recomendaciones AI más precisas
+        </p>
+    </div>
+
     <!-- Información de Ingresos -->
-    <div class="rounded-xl bg-slate-900/70 p-2 sm:p-3 animate-fade-in transition-smooth hover:bg-slate-900/80">
-        <h3 class="text-sm font-semibold text-slate-300 mb-2 sm:mb-3">💰 Información de Ingresos</h3>
+    <div class="rounded-xl bg-slate-900/70 p-2 sm:p-3 animate-fade-in transition-all duration-300 hover:bg-slate-900/80 hover:shadow-lg hover:shadow-slate-700/20">
+        <h3 class="text-base sm:text-lg font-semibold text-slate-300 mb-2 sm:mb-3">💰 Información de Ingresos</h3>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-            <div>
-                <label for="monthly_gross_income" class="label">Ingreso Bruto Mensual</label>
+            <!-- Ingreso Bruto Mensual -->
+            <div class="form-field-group">
+                <div class="flex items-center justify-between">
+                    <label for="monthly_gross_income" class="label flex items-center gap-1">
+                        Ingreso Bruto Mensual
+                        <span class="tooltip-trigger text-slate-500 hover:text-amber-400 cursor-help transition-colors" data-tooltip="gross-income">❓</span>
+                    </label>
+                    <span id="validation-gross-income" class="validation-indicator hidden text-sm"></span>
+                </div>
                 <input type="text" 
                        id="monthly_gross_income" 
                        name="monthly_gross_income" 
@@ -13,9 +45,22 @@
                        value="$0.00"
                        inputmode="decimal"
                        placeholder="$0.00">
+                <div id="tooltip-gross-income" class="tooltip-content hidden">
+                    <strong class="text-amber-400">¿Qué es el ingreso bruto?</strong>
+                    <p class="mt-1">Es tu salario antes de deducciones de ISR, IMSS, etc. Lo encuentras en tu recibo de nómina como "Percepciones Totales".</p>
+                    <p class="mt-1 text-slate-400 text-[10px]">💡 Si solo conoces tu neto, déjalo en $0 y llena el campo de abajo.</p>
+                </div>
             </div>
-            <div>
-                <label for="monthly_net_income" class="label">Ingreso Neto Mensual</label>
+            
+            <!-- Ingreso Neto Mensual -->
+            <div class="form-field-group">
+                <div class="flex items-center justify-between">
+                    <label for="monthly_net_income" class="label flex items-center gap-1">
+                        Ingreso Neto Mensual
+                        <span class="tooltip-trigger text-slate-500 hover:text-amber-400 cursor-help transition-colors" data-tooltip="net-income">❓</span>
+                    </label>
+                    <span id="validation-net-income" class="validation-indicator hidden text-sm"></span>
+                </div>
                 <input type="text" 
                        id="monthly_net_income" 
                        name="monthly_net_income" 
@@ -23,9 +68,22 @@
                        value="$0.00"
                        inputmode="decimal"
                        placeholder="$0.00">
+                <div id="tooltip-net-income" class="tooltip-content hidden">
+                    <strong class="text-amber-400">¿Qué es el ingreso neto?</strong>
+                    <p class="mt-1">Es lo que recibes después de todas las deducciones. Es el monto que llega a tu cuenta bancaria.</p>
+                    <p class="mt-1 text-slate-400 text-[10px]">💡 Si conoces ambos (bruto y neto), ingresa los dos para mayor precisión.</p>
+                </div>
             </div>
-            <div>
-                <label for="bonus_days" class="label">Días de Aguinaldo</label>
+            
+            <!-- Días de Aguinaldo -->
+            <div class="form-field-group">
+                <div class="flex items-center justify-between">
+                    <label for="bonus_days" class="label flex items-center gap-1">
+                        Días de Aguinaldo
+                        <span class="tooltip-trigger text-slate-500 hover:text-amber-400 cursor-help transition-colors" data-tooltip="bonus-days">❓</span>
+                    </label>
+                    <span id="validation-bonus-days" class="validation-indicator text-sm text-green-400">✓</span>
+                </div>
                 <input type="number" 
                        id="bonus_days" 
                        name="bonus_days" 
@@ -33,9 +91,25 @@
                        min="0" 
                        max="365" 
                        value="15">
+                <div id="tooltip-bonus-days" class="tooltip-content hidden">
+                    <strong class="text-amber-400">¿Cuántos días de aguinaldo?</strong>
+                    <p class="mt-1">Por ley son mínimo 15 días. Muchas empresas dan más (20, 30, hasta 45 días).</p>
+                    <p class="mt-1 text-teal-400 text-[10px]">🎁 El aguinaldo tiene exención fiscal de ~30 UMAs. ¡Entre más días, mayor ahorro!</p>
+                </div>
+                <p class="field-suggestion text-[10px] text-slate-500 mt-1">
+                    📌 Estándar: 15 días • Empresas generosas: 20-40 días
+                </p>
             </div>
-            <div>
-                <label for="vacation_days" class="label">Días de Vacaciones</label>
+            
+            <!-- Días de Vacaciones -->
+            <div class="form-field-group">
+                <div class="flex items-center justify-between">
+                    <label for="vacation_days" class="label flex items-center gap-1">
+                        Días de Vacaciones
+                        <span class="tooltip-trigger text-slate-500 hover:text-amber-400 cursor-help transition-colors" data-tooltip="vacation-days">❓</span>
+                    </label>
+                    <span id="validation-vacation-days" class="validation-indicator text-sm text-green-400">✓</span>
+                </div>
                 <input type="number" 
                        id="vacation_days" 
                        name="vacation_days" 
@@ -43,9 +117,25 @@
                        min="0" 
                        max="365" 
                        value="12">
+                <div id="tooltip-vacation-days" class="tooltip-content hidden">
+                    <strong class="text-amber-400">¿Cuántos días de vacaciones?</strong>
+                    <p class="mt-1">Desde 2023, el mínimo por ley es 12 días el primer año, aumentando con antigüedad.</p>
+                    <p class="mt-1 text-teal-400 text-[10px]">🏖️ La prima vacacional también tiene exención fiscal.</p>
+                </div>
+                <p class="field-suggestion text-[10px] text-slate-500 mt-1">
+                    📌 Año 1: 12 días • Año 5: 20 días • Año 10+: 24 días
+                </p>
             </div>
-            <div class="md:col-span-2">
-                <label for="vacation_premium_percentage" class="label">Prima Vacacional (%)</label>
+            
+            <!-- Prima Vacacional -->
+            <div class="form-field-group md:col-span-2">
+                <div class="flex items-center justify-between">
+                    <label for="vacation_premium_percentage" class="label flex items-center gap-1">
+                        Prima Vacacional (%)
+                        <span class="tooltip-trigger text-slate-500 hover:text-amber-400 cursor-help transition-colors" data-tooltip="vacation-premium">❓</span>
+                    </label>
+                    <span id="validation-vacation-premium" class="validation-indicator text-sm text-green-400">✓</span>
+                </div>
                 <input type="number" 
                        id="vacation_premium_percentage" 
                        name="vacation_premium_percentage" 
@@ -55,15 +145,32 @@
                        max="1" 
                        value="0.25"
                        placeholder="0.25">
+                <div id="tooltip-vacation-premium" class="tooltip-content hidden">
+                    <strong class="text-amber-400">¿Qué es la prima vacacional?</strong>
+                    <p class="mt-1">Es un extra de mínimo 25% sobre tu salario de vacaciones. Algunas empresas dan más.</p>
+                    <p class="mt-1 text-teal-400 text-[10px]">💰 0.25 = 25% (estándar) • 0.50 = 50% (generoso)</p>
+                </div>
+                <p class="field-suggestion text-[10px] text-slate-500 mt-1">
+                    📌 Por ley: 25% (0.25) • Algunas empresas: 30-50%
+                </p>
             </div>
         </div>
     </div>
 
     <!-- Deducciones (Accordions) -->
-    <div class="rounded-xl bg-slate-900/70 p-3 space-y-3 animate-fade-in [animation-delay:100ms] transition-smooth hover:bg-slate-900/80">
-        <h3 class="text-sm font-semibold text-accent-primary mb-3 pb-2 border-b border-border">
-            📋 Deducciones Personales
-        </h3>
+    <div class="rounded-xl bg-slate-900/70 p-3 space-y-3 animate-fade-in [animation-delay:100ms] transition-all duration-300 hover:bg-slate-900/80 hover:shadow-lg hover:shadow-amber-500/10">
+        <div class="flex items-center justify-between border-b border-border pb-2 mb-3">
+            <h3 class="text-base sm:text-lg font-semibold text-accent-primary">
+                📋 Deducciones Personales
+            </h3>
+            <span class="tooltip-trigger text-slate-500 hover:text-amber-400 cursor-help transition-colors" data-tooltip="deducciones-info">❓</span>
+        </div>
+        
+        <div id="tooltip-deducciones-info" class="tooltip-content hidden mb-3">
+            <strong class="text-amber-400">Deducciones Personales en México</strong>
+            <p class="mt-1">Son gastos que reduces de tu base gravable. Hay un límite de 5 UMAs (~$198,000) o 15% de tus ingresos, lo que sea menor.</p>
+            <p class="mt-1 text-teal-400 text-[10px]">💡 ¡Entre más deduzcas (legalmente), menos impuestos pagas!</p>
+        </div>
         
         <!-- General Deductions -->
         <details open class="group">
@@ -71,7 +178,10 @@
                 🏥 General
             </summary>
             <div class="mt-2 pl-2">
-                <label for="general_deductions" class="label">Total Deducciones Generales</label>
+                <div class="flex items-center justify-between">
+                    <label for="general_deductions" class="label">Total Deducciones Generales</label>
+                    <span id="validation-general-deductions" class="validation-indicator hidden text-sm"></span>
+                </div>
                 <small class="block text-xs text-slate-500 italic mb-2">
                     Médico/Dental • Funeral • Donaciones • Intereses Hipotecarios • Jubilación • Primas de Seguro de Gastos Médicos • Pediatra • Ginecólogo • Psicología • Nutriología
                 </small>
@@ -82,6 +192,9 @@
                        value="$0.00"
                        inputmode="decimal"
                        placeholder="$0.00">
+                <p class="field-suggestion text-[10px] text-slate-500 mt-1">
+                    💡 Promedio deducido por usuarios: $15,000 - $50,000 anuales
+                </p>
             </div>
         </details>
 
@@ -91,7 +204,10 @@
                 🎓 Colegiaturas
             </summary>
             <div class="mt-2 pl-2">
-                <label for="total_tuition" class="label">Total Colegiaturas</label>
+                <div class="flex items-center justify-between">
+                    <label for="total_tuition" class="label">Total Colegiaturas</label>
+                    <span id="validation-tuition" class="validation-indicator hidden text-sm"></span>
+                </div>
                 <small class="block text-xs text-slate-500 italic mb-2">
                     Preescolar • Primaria • Secundaria • Técnico • Preparatoria
                 </small>
@@ -102,6 +218,9 @@
                        value="$0.00"
                        inputmode="decimal"
                        placeholder="$0.00">
+                <p class="field-suggestion text-[10px] text-slate-500 mt-1">
+                    📌 Límites anuales: Preescolar $14,200 • Primaria $12,900 • Secundaria $19,900 • Preparatoria $24,500
+                </p>
             </div>
         </details>
 
@@ -111,7 +230,10 @@
                 💰 PPR & AFORE
             </summary>
             <div class="mt-2 pl-2">
-                <label for="total_ppr" class="label">Total Contribuciones</label>
+                <div class="flex items-center justify-between">
+                    <label for="total_ppr" class="label">Total Contribuciones</label>
+                    <span id="validation-ppr" class="validation-indicator hidden text-sm"></span>
+                </div>
                 <small class="block text-xs text-slate-500 italic mb-2">
                     Contribuciones PPR • Contribuciones Afore
                 </small>
@@ -122,6 +244,9 @@
                        value="$0.00"
                        inputmode="decimal"
                        placeholder="$0.00">
+                <p class="field-suggestion text-[10px] text-slate-500 mt-1">
+                    💡 PPR tiene beneficio fiscal adicional: deducible hasta 10% de tus ingresos (~5 UMAs)
+                </p>
             </div>
         </details>
     </div>

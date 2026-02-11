@@ -1,0 +1,112 @@
+// ============================================
+// AI PREVIEW & FORM PROGRESS TRACKING
+// ============================================
+
+// Sync function called from form_handlers.js
+function syncAIPreviewProgress(filledFields, totalFields, percentage) {
+    const progressBar = document.getElementById('ai-progress-bar');
+    const progressText = document.getElementById('ai-progress-text');
+    const iconElement = progressText?.parentElement?.querySelector('.text-sm');
+    
+    if (progressBar) {
+        progressBar.style.width = percentage + '%';
+    }
+    
+    if (progressText) {
+        if (percentage === 0) {
+            progressText.textContent = 'Completa el formulario para desbloquear análisis AI';
+            if (iconElement) iconElement.textContent = '📊';
+        } else if (percentage < 50) {
+            progressText.textContent = `${filledFields}/${totalFields} campos • Sigue agregando datos`;
+            if (iconElement) iconElement.textContent = '📝';
+        } else if (percentage < 80) {
+            progressText.textContent = `¡Buen progreso! ${filledFields}/${totalFields} campos • ${percentage}% listo`;
+            if (iconElement) iconElement.textContent = '⚡';
+        } else {
+            progressText.textContent = `¡Listo! ${filledFields}/${totalFields} campos completos`;
+            if (iconElement) iconElement.textContent = '✨';
+            
+            // Add glow effect when ready
+            const aiCard = progressText.closest('.rounded-xl');
+            if (aiCard && !aiCard.classList.contains('ai-ready')) {
+                aiCard.classList.add('ai-ready');
+            }
+        }
+    }
+    
+    // Update usage preview for logged users
+    updateAIUsagePreview();
+}
+
+// Legacy function - kept for backwards compatibility but now uses sync
+function updateAIProgressIndicator() {
+    // This function is now called via syncAIPreviewProgress from updateFormProgress
+    // Keeping empty stub for any direct calls
+}
+
+function updateAIUsagePreview() {
+    const usagePreview = document.getElementById('ai-usage-preview');
+    const usageCounter = document.getElementById('usage-counter');
+    
+    if (usagePreview && usageCounter) {
+        // Mirror the main usage counter info
+        const counterText = usageCounter.textContent || usageCounter.innerText;
+        
+        if (counterText.includes('Cargando')) {
+            usagePreview.innerHTML = '<div class="text-xs text-slate-400">Cargando disponibilidad...</div>';
+        } else if (counterText.includes('restante') || counterText.includes('análisis')) {
+            // Extract usage info and show compact version
+            const match = counterText.match(/(\d+)\s*(análisis|restante)/);
+            if (match) {
+                const remaining = match[1];
+                if (parseInt(remaining) === 0) {
+                    usagePreview.innerHTML = `
+                        <div class="text-xs text-orange-400 font-semibold">
+                            🔥 Sin análisis restantes hoy
+                        </div>
+                        <div class="text-xs text-slate-500 mt-1">
+                            Se resetean a medianoche
+                        </div>
+                    `;
+                } else {
+                    usagePreview.innerHTML = `
+                        <div class="text-xs text-green-400 font-semibold">
+                            ✨ ${remaining} análisis disponibles hoy
+                        </div>
+                        <a href="#recommendations-section" class="text-xs text-accent-primary hover:underline mt-1 inline-block">
+                            Ir a recomendaciones ↓
+                        </a>
+                    `;
+                }
+            }
+        }
+    }
+}
+
+// Scroll to recommendations section smoothly
+function scrollToRecommendations() {
+    const recommendationsSection = document.getElementById('recommendations-section');
+    if (recommendationsSection) {
+        recommendationsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+// Initialize AI progress tracking
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('taxForm');
+    if (form) {
+        // Update progress on any input change
+        form.addEventListener('input', updateAIProgressIndicator);
+        form.addEventListener('change', updateAIProgressIndicator);
+        
+        // Initial update
+        setTimeout(updateAIProgressIndicator, 500);
+    }
+    
+    // Update usage preview when main counter updates
+    const usageCounter = document.getElementById('usage-counter');
+    if (usageCounter) {
+        const observer = new MutationObserver(updateAIUsagePreview);
+        observer.observe(usageCounter, { childList: true, characterData: true, subtree: true });
+    }
+});

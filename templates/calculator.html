@@ -10,14 +10,18 @@
             {% include 'calculator/form_section.html' %}
         </section>
 
-        <!-- RIGHT COLUMN: Results (4 cols, sticky) -->
-        <aside class="lg:col-span-4">
+        <!-- RIGHT COLUMN: Results + AI Preview (4 cols, sticky) -->
+        <aside class="lg:col-span-4 space-y-3 sm:space-y-4 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-1 scrollbar-thin">
+            <!-- Results Section -->
             {% include 'calculator/results_section.html' %}
+            
+            <!-- AI Preview Card (Visible without scroll) -->
+            {% include 'calculator/ai_preview_card.html' %}
         </aside>
     </div>
 
     <!-- RECOMMENDATIONS SECTION (full width below) -->
-    <section class="mt-2 sm:mt-3">
+    <section id="recommendations-section" class="mt-2 sm:mt-3">
         {% include 'calculator/recommendations_section.html' %}
     </section>
 </div>
@@ -31,6 +35,9 @@
 {% include 'scripts/results.html' %}
 {% include 'scripts/recommendations.html' %}
 {% include 'scripts/chat.html' %}
+{% include 'scripts/ai_preview.html' %}
+{% include 'scripts/microanimations.html' %}
+{% include 'scripts/onboarding.html' %}
 {% include 'scripts/init.html' %}
 </script>
 {% endblock %}

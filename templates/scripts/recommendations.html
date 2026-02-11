@@ -2,6 +2,179 @@
 // RECOMMENDATIONS & AI STREAMING
 // ============================================
 
+// Generation Progress State
+let generationStepTimers = [];
+let insightsCount = 0;
+let generationStartTime = null;
+
+const GENERATION_STEPS = [
+    { id: 'step-1', label: 'Analizando tus ingresos...', minDuration: 1500 },
+    { id: 'step-2', label: 'Revisando deducciones...', minDuration: 2000 },
+    { id: 'step-3', label: 'Consultando con 3 expertos AI...', minDuration: 2500 },
+    { id: 'step-4', label: 'Generando estrategias personalizadas...', minDuration: 3000 }
+];
+
+function startGenerationProgress() {
+    generationStartTime = Date.now();
+    insightsCount = 0;
+    
+    // Reset all steps
+    GENERATION_STEPS.forEach((step, index) => {
+        const stepEl = document.getElementById(step.id);
+        if (stepEl) {
+            stepEl.classList.remove('opacity-50', 'border', 'border-accent-primary/50');
+            stepEl.querySelector('.step-icon').textContent = '⏳';
+            stepEl.querySelector('.step-status').textContent = '';
+            if (index > 0) stepEl.classList.add('opacity-50');
+        }
+    });
+    
+    // Show insights counter
+    const insightsCounter = document.getElementById('insights-counter');
+    if (insightsCounter) insightsCounter.classList.remove('hidden');
+    updateInsightsCount(0);
+    
+    // Start animating steps
+    let accumulatedDelay = 0;
+    GENERATION_STEPS.forEach((step, index) => {
+        // Activate step after delay
+        const activateTimer = setTimeout(() => {
+            activateStep(index);
+        }, accumulatedDelay);
+        generationStepTimers.push(activateTimer);
+        
+        // Complete step after its duration (except last one - it completes when streaming ends)
+        if (index < GENERATION_STEPS.length - 1) {
+            const completeTimer = setTimeout(() => {
+                completeStep(index);
+            }, accumulatedDelay + step.minDuration);
+            generationStepTimers.push(completeTimer);
+        }
+        
+        accumulatedDelay += step.minDuration;
+    });
+}
+
+function activateStep(stepIndex) {
+    const step = GENERATION_STEPS[stepIndex];
+    const stepEl = document.getElementById(step.id);
+    if (!stepEl) return;
+    
+    stepEl.classList.remove('opacity-50');
+    stepEl.classList.add('border', 'border-accent-primary/50');
+    stepEl.querySelector('.step-icon').textContent = '⏳';
+    stepEl.querySelector('.step-icon').classList.add('animate-spin');
+    stepEl.querySelector('.step-text').classList.remove('text-slate-400');
+    stepEl.querySelector('.step-text').classList.add('text-slate-200');
+}
+
+function completeStep(stepIndex) {
+    const step = GENERATION_STEPS[stepIndex];
+    const stepEl = document.getElementById(step.id);
+    if (!stepEl) return;
+    
+    stepEl.classList.remove('border', 'border-accent-primary/50');
+    const icon = stepEl.querySelector('.step-icon');
+    icon.textContent = '✅';
+    icon.classList.remove('animate-spin');
+    stepEl.querySelector('.step-status').textContent = 'Listo';
+    stepEl.querySelector('.step-status').classList.add('text-green-400');
+}
+
+function completeAllSteps() {
+    // Clear any pending timers
+    generationStepTimers.forEach(timer => clearTimeout(timer));
+    generationStepTimers = [];
+    
+    // Complete all steps immediately
+    GENERATION_STEPS.forEach((step, index) => {
+        completeStep(index);
+    });
+}
+
+function resetGenerationProgress() {
+    // Clear timers
+    generationStepTimers.forEach(timer => clearTimeout(timer));
+    generationStepTimers = [];
+    insightsCount = 0;
+    generationStartTime = null;
+}
+
+function updateRecommendationsSummary(markdownContent) {
+    // Count insights from markdown
+    const listItems = (markdownContent.match(/^[\s]*[-•✓✅⭐💡🔹▸►]\s|^\s*\d+\.\s/gm) || []).length;
+    const summaryInsights = document.getElementById('summary-insights');
+    if (summaryInsights) summaryInsights.textContent = listItems || insightsCount;
+    
+    // Try to extract savings amounts from content (look for $X,XXX patterns)
+    const moneyPattern = /\$[\d,]+(?:\.\d{2})?/g;
+    const amounts = markdownContent.match(moneyPattern) || [];
+    let maxSavings = 0;
+    amounts.forEach(amount => {
+        const num = parseFloat(amount.replace(/[$,]/g, ''));
+        if (num > maxSavings && num < 1000000) maxSavings = num;
+    });
+    const summarySavings = document.getElementById('summary-savings');
+    if (summarySavings) {
+        summarySavings.textContent = maxSavings > 0 ? 
+            `$${maxSavings.toLocaleString('es-MX')}` : 
+            '¡Calcula!';
+    }
+    
+    // Calculate fiscal score based on content analysis
+    let score = 50; // Base score
+    
+    // Positive indicators
+    if (markdownContent.toLowerCase().includes('excelente')) score += 15;
+    if (markdownContent.toLowerCase().includes('muy bien')) score += 10;
+    if (markdownContent.toLowerCase().includes('optimizado')) score += 10;
+    if (markdownContent.toLowerCase().includes('deducciones')) score += 5;
+    
+    // Negative indicators
+    if (markdownContent.toLowerCase().includes('alerta')) score -= 10;
+    if (markdownContent.toLowerCase().includes('urgente')) score -= 15;
+    if (markdownContent.toLowerCase().includes('perdiendo')) score -= 10;
+    if (markdownContent.toLowerCase().includes('no estás')) score -= 5;
+    
+    // Clamp score
+    score = Math.max(20, Math.min(95, score));
+    
+    const fiscalScore = document.getElementById('fiscal-score');
+    const fiscalScoreBar = document.getElementById('fiscal-score-bar');
+    if (fiscalScore) fiscalScore.textContent = score;
+    if (fiscalScoreBar) fiscalScoreBar.style.width = `${score}%`;
+    
+    // Set priority based on score
+    const summaryPriority = document.getElementById('summary-priority');
+    if (summaryPriority) {
+        if (score >= 75) {
+            summaryPriority.textContent = '✅ Bajo';
+            summaryPriority.className = 'font-bold text-green-400';
+        } else if (score >= 50) {
+            summaryPriority.textContent = '⚠️ Medio';
+            summaryPriority.className = 'font-bold text-amber-400';
+        } else {
+            summaryPriority.textContent = '🔴 Alto';
+            summaryPriority.className = 'font-bold text-red-400';
+        }
+    }
+}
+
+function updateInsightsCount(count) {
+    const insightsCountEl = document.getElementById('insights-count');
+    if (insightsCountEl) {
+        insightsCountEl.textContent = count;
+        // Add pop animation
+        insightsCountEl.classList.add('scale-125');
+        setTimeout(() => insightsCountEl.classList.remove('scale-125'), 200);
+    }
+}
+
+function incrementInsights() {
+    insightsCount++;
+    updateInsightsCount(insightsCount);
+}
+
 async function getRecommendationUsage() {
     try {
         const response = await fetch('/api/recommendations/usage');
@@ -30,12 +203,156 @@ async function getRecommendationUsage() {
 
 function updateUsageCounter(used, limit, message = null) {
     const usageCounter = document.getElementById('usage-counter');
-    if (usageCounter) {
-        if (message) { 
-            usageCounter.innerHTML = message; 
-        } else { 
-            usageCounter.innerHTML = `Recomendaciones hoy: ${used}/${limit} usadas`; 
+    const usageRemaining = document.getElementById('usage-remaining');
+    const usageIcon = document.getElementById('usage-icon');
+    const usageLabel = document.getElementById('usage-label');
+    const usageProgressBar = document.getElementById('usage-progress-bar');
+    const usageStatus = document.getElementById('usage-status');
+    const usageCountdown = document.getElementById('usage-countdown');
+    
+    if (!usageCounter) return;
+    
+    if (message) {
+        // Fallback for error messages
+        usageCounter.innerHTML = `<div class="text-center text-slate-400">${message}</div>`;
+        return;
+    }
+    
+    const remaining = Math.max(0, limit - used);
+    const percentUsed = limit > 0 ? (used / limit) * 100 : 0;
+    const percentRemaining = 100 - percentUsed;
+    
+    // Update remaining count
+    if (usageRemaining) {
+        usageRemaining.textContent = remaining;
+        usageRemaining.classList.remove('text-white', 'text-amber-400', 'text-red-400');
+        
+        if (remaining === 0) {
+            usageRemaining.classList.add('text-red-400');
+        } else if (remaining === 1) {
+            usageRemaining.classList.add('text-amber-400');
+        } else {
+            usageRemaining.classList.add('text-white');
         }
+    }
+    
+    // Update icon and label based on urgency
+    if (usageIcon && usageLabel) {
+        usageCounter.classList.remove('usage-urgent', 'usage-critical');
+        
+        if (remaining === 0) {
+            usageIcon.textContent = '🚫';
+            usageLabel.textContent = 'SIN ANÁLISIS';
+            usageLabel.classList.remove('text-amber-400');
+            usageLabel.classList.add('text-red-400');
+            usageCounter.classList.add('usage-critical');
+        } else if (remaining === 1) {
+            usageIcon.textContent = '⚠️';
+            usageLabel.textContent = '¡ÚLTIMO ANÁLISIS!';
+            usageLabel.classList.remove('text-amber-400');
+            usageLabel.classList.add('text-amber-400');
+            usageCounter.classList.add('usage-urgent');
+        } else if (remaining === 2) {
+            usageIcon.textContent = '🔥';
+            usageLabel.textContent = 'TE QUEDAN';
+            usageLabel.classList.add('text-amber-400');
+        } else {
+            usageIcon.textContent = '✨';
+            usageLabel.textContent = 'TE QUEDAN';
+            usageLabel.classList.add('text-amber-400');
+        }
+    }
+    
+    // Update progress bar
+    if (usageProgressBar) {
+        usageProgressBar.style.width = `${percentRemaining}%`;
+        
+        // Change color based on remaining
+        usageProgressBar.classList.remove('from-green-500', 'from-amber-500', 'from-red-500');
+        if (remaining === 0) {
+            usageProgressBar.className = 'h-full bg-red-500 transition-all duration-500';
+        } else if (remaining <= 1) {
+            usageProgressBar.className = 'h-full bg-gradient-to-r from-red-500 to-amber-500 transition-all duration-500';
+        } else {
+            usageProgressBar.className = 'h-full bg-gradient-to-r from-green-500 via-amber-500 to-red-500 transition-all duration-500';
+        }
+    }
+    
+    // Update status message
+    if (usageStatus) {
+        if (remaining === 0) {
+            usageStatus.innerHTML = '⏰ Vuelve mañana';
+            usageStatus.classList.remove('text-amber-400', 'animate-pulse');
+            usageStatus.classList.add('text-red-400');
+        } else if (remaining === 1) {
+            usageStatus.innerHTML = '🔥 ¡Último disponible!';
+            usageStatus.classList.add('animate-pulse');
+        } else {
+            usageStatus.innerHTML = '✨ Premium activo';
+        }
+    }
+    
+    // Start countdown timer
+    startUsageCountdown();
+}
+
+function startUsageCountdown() {
+    const usageCountdown = document.getElementById('usage-countdown');
+    if (!usageCountdown) return;
+    
+    // Calculate time until midnight (Mexico City time)
+    const updateCountdown = () => {
+        const now = new Date();
+        const midnight = new Date();
+        midnight.setHours(24, 0, 0, 0);
+        
+        const diff = midnight - now;
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        
+        usageCountdown.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    };
+    
+    updateCountdown();
+    
+    // Clear existing interval if any
+    if (window.countdownInterval) {
+        clearInterval(window.countdownInterval);
+    }
+    
+    // Update every second
+    window.countdownInterval = setInterval(updateCountdown, 1000);
+}
+
+// Confetti animation for unlock
+function showConfetti() {
+    const colors = ['#F59E0B', '#2DD4BF', '#A855F7', '#EF4444', '#22C55E'];
+    
+    for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti-piece';
+        confetti.style.left = Math.random() * 100 + 'vw';
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.animationDelay = Math.random() * 2 + 's';
+        confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+        document.body.appendChild(confetti);
+        
+        setTimeout(() => confetti.remove(), 3000);
+    }
+}
+
+// Unlock animation
+function playUnlockAnimation() {
+    const unlockIcon = document.getElementById('unlock-icon');
+    if (unlockIcon) {
+        unlockIcon.textContent = '🔓';
+        unlockIcon.classList.add('unlock-animation');
+        showConfetti();
+        
+        setTimeout(() => {
+            unlockIcon.classList.remove('unlock-animation');
+        }, 600);
     }
 }
 
@@ -43,6 +360,7 @@ async function generateRecommendations() {
     const generateBtn = document.getElementById('generateRecommendationsBtn');
     const stopBtn = document.getElementById('stopRecommendationsBtn');
     const recommendationsContent = document.getElementById('recommendations-content');
+    const recommendationsWrapper = document.getElementById('recommendations-wrapper');
     const debateContent = document.getElementById('debate-content');
 
     if (!generateBtn || !stopBtn || !recommendationsContent) return;
@@ -56,11 +374,13 @@ async function generateRecommendations() {
         enterFocusMode();
 
         if (debateContent) debateContent.style.display = 'none';
-        recommendationsContent.style.display = 'block';
+        if (recommendationsWrapper) recommendationsWrapper.classList.add('hidden');
         
         const skeleton = document.getElementById('recommendations-skeleton');
         if (skeleton) skeleton.classList.remove('hidden');
-
+        
+        // Start progress animation
+        startGenerationProgress();
         recommendationsContent.innerHTML = `<div id="streaming-text" style="display: none;"></div>`;
 
         const formData = getFormData();
@@ -92,6 +412,10 @@ async function generateRecommendations() {
         recommendationsAbortController = null;
         generateBtn.style.display = 'block';
         stopBtn.style.display = 'none';
+        
+        // Complete and reset progress
+        completeAllSteps();
+        setTimeout(() => resetGenerationProgress(), 1000);
 
         setTimeout(() => {
             if (userHasModifiedInputs || checkFormModified()) {
@@ -232,12 +556,29 @@ async function generateWithStreaming(formData, recommendationsContent) {
                             streamingTextEl.innerHTML = `<div style="white-space: pre-wrap; color: var(--color-text-primary);">
                                 ${streamingText}
                             </div>`;
+                            
+                            // Count insights (list items, recommendations)
+                            const insightPatterns = /^[\s]*[-•✓✅⭐💡🔹▸►]\s|^\s*\d+\.\s/gm;
+                            const matches = data.content.match(insightPatterns);
+                            if (matches) {
+                                for (let i = 0; i < matches.length; i++) {
+                                    incrementInsights();
+                                }
+                            }
                         } else if (data.type === 'complete') {
                             const skeleton = document.getElementById('recommendations-skeleton');
                             if (skeleton) skeleton.classList.add('hidden');
                             const markdownContent = data.markdown || '';
                             const htmlContent = marked.parse(markdownContent);
                             recommendationsContent.innerHTML = `<div class="markdown-content">${htmlContent}</div>`;
+                            
+                            // Show wrapper with summary
+                            const wrapper = document.getElementById('recommendations-wrapper');
+                            if (wrapper) wrapper.classList.remove('hidden');
+                            
+                            // Update summary stats
+                            updateRecommendationsSummary(markdownContent);
+                            
                             clearInterval(catEnhancer);
                             break;
                         } else if (data.type === 'error') {

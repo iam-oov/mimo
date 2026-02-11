@@ -1,0 +1,97 @@
+// ============================================
+// MICROANIMACIONES
+// ============================================
+
+// Confetti celebration for large positive balance
+function celebrateBalance(amount) {
+    if (amount > 10000) {
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#F59E0B', '#2DD4BF', '#10B981', '#8B5CF6'],
+            gravity: 1.2,
+            ticks: 200
+        });
+    }
+}
+
+// Shake animation for AI button
+function shakeElement(elementId) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.classList.add('animate-shake');
+        setTimeout(() => {
+            element.classList.remove('animate-shake');
+        }, 500);
+    }
+}
+
+// Success checkmark animation
+function animateCheckmark(elementId) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.classList.add('animate-check');
+        setTimeout(() => {
+            element.classList.remove('animate-check');
+        }, 600);
+    }
+}
+
+// Celebration bounce for savings
+function celebrateSavings(elementId) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.classList.add('animate-celebration');
+        setTimeout(() => {
+            element.classList.remove('animate-celebration');
+        }, 600);
+    }
+}
+
+// Number pop animation
+function animateNumberChange(elementId) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.classList.add('animate-number-pop');
+        setTimeout(() => {
+            element.classList.remove('animate-number-pop');
+        }, 300);
+    }
+}
+
+// Auto-shake AI button if user has completed form but hasn't generated recommendations
+function checkAndShakeAIButton() {
+    const form = document.getElementById('taxForm');
+    const aiButton = document.getElementById('generateRecommendationsBtn');
+    
+    if (!form || !aiButton) return;
+    
+    // Check if form is sufficiently filled
+    const grossIncome = parseCurrencyValue(document.getElementById('monthly_gross_income')?.value || '0');
+    const hasDeductions = parseCurrencyValue(document.getElementById('general_deductions')?.value || '0') > 0 ||
+                         parseCurrencyValue(document.getElementById('total_tuition')?.value || '0') > 0 ||
+                         parseCurrencyValue(document.getElementById('total_ppr')?.value || '0') > 0;
+    
+    if (grossIncome > 0 && hasDeductions) {
+        // Shake button every 10 seconds if recommendations haven't been generated
+        const shakeInterval = setInterval(() => {
+            if (!aiButton.disabled && aiButton.offsetParent !== null) {
+                shakeElement('generateRecommendationsBtn');
+            } else {
+                clearInterval(shakeInterval);
+            }
+        }, 10000);
+    }
+}
+
+// Initialize microanimations
+function initMicroAnimations() {
+    // Shake AI button after form completion
+    const form = document.getElementById('taxForm');
+    if (form) {
+        form.addEventListener('input', debounce(() => {
+            checkAndShakeAIButton();
+        }, 2000));
+    }
+}

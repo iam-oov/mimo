@@ -35,20 +35,20 @@
 
 **Áreas de Mejora Críticas:**
 
-- ⚠️ El valor de AI está "escondido" - necesita mucha más visibilidad
-- ⚠️ Falta urgencia y exclusividad en los CTAs (Call-To-Action)
+- ✅ ~~El valor de AI está "escondido"~~ → RESUELTO con AI Preview Card (#1)
+- ✅ ~~Falta urgencia y exclusividad en los CTAs~~ → RESUELTO con contador urgente + CTA mejorado (#2, #3)
 - ⚠️ Los resultados AI necesitan más impacto visual y gamificación
 - ⚠️ Falta clara diferenciación entre experiencia free vs premium
 - ⚠️ Responsive design en mobile puede mejorarse (especialmente spacing)
 
 ### ROI Esperado de Implementar Mejoras
 
-| Métrica                   | Mejora Esperada | Mejoras Aplicadas |
-| ------------------------- | --------------- | ----------------- |
-| Conversión a Login        | +40-60%         | #1, #2, #3        |
-| Uso de Recomendaciones AI | +30%            | #4, #5            |
-| Tiempo en Sitio           | +25%            | #6, #7, #11       |
-| Disposición a Pagar       | +50%            | #13-17 + pricing  |
+| Métrica                   | Mejora Esperada | Mejoras Aplicadas   | Estado     |
+| ------------------------- | --------------- | ------------------- | ---------- |
+| Conversión a Login        | +40-60%         | #1, #2, #3          | ✅ HECHO   |
+| Uso de Recomendaciones AI | +30%            | #4, #5, #11         | ✅ HECHO   |
+| Tiempo en Sitio           | +25%            | #6, #7, #8, #9, #10 | ✅ HECHO   |
+| Disposición a Pagar       | +50%            | pricing pendiente   | 🔄 PRÓXIMO |
 
 ### Costo Estimado de Implementación
 
@@ -134,11 +134,21 @@ calculator.html (página principal)
 
 ## ⭐ Mejoras de Alto Impacto (Hacer AI Irresistible)
 
-### 1. Hacer el Valor de AI Más Visible Desde el Inicio
+### 1. ✅ COMPLETADA: Hacer el Valor de AI Más Visible Desde el Inicio
 
 **Impacto:** ⭐⭐⭐ (Máximo)  
 **Esfuerzo:** 4-6 horas  
-**Prioridad:** P0 (Implementar primero)
+**Prioridad:** P0 (Implementar primero)  
+**Estado:** ✅ COMPLETADO - 29 de Enero 2026
+
+**Cambios Implementados:**
+
+- ✅ Badge "AI-Powered" con dot pulsante en navbar
+- ✅ AI Preview Card visible sin scroll en sidebar derecho
+- ✅ Progress indicator del formulario
+- ✅ Layout de 2 columnas (form + sidebar sticky)
+- ✅ CTA mejorado "🔓 Desbloquear Análisis AI"
+- ✅ Estilos CSS y animaciones
 
 #### Problemas Actuales
 
@@ -222,13 +232,47 @@ Campos faltantes: 2 (Prima Vacacional, Deducciones)
 
 ---
 
-### 2. Crear Sensación de Exclusividad y Valor
+### 2. ✅ COMPLETADA: Crear Sensación de Exclusividad y Valor
 
 **Impacto:** ⭐⭐⭐ (Máximo)  
 **Esfuerzo:** 3-5 horas  
-**Prioridad:** P0
+**Prioridad:** P0  
+**Estado:** ✅ COMPLETADO - 29 de Enero 2026
 
-#### Problemas Actuales
+**Cambios Implementados:**
+
+- ✅ Contador de uso rediseñado con urgencia visual (🔥, ⚠️, 🚫)
+- ✅ Progress bar animado que cambia de color según uso
+- ✅ Countdown timer hasta medianoche (reseteo)
+- ✅ Indicador de valor equivalente ($500 MXN en asesoría)
+- ✅ Animaciones CSS: urgency-pulse, shake, confetti, unlock
+- ✅ Badge "PREMIUM" en botón de recomendaciones
+- ✅ CTA de login mejorado con 4 beneficios claros
+- ✅ Social proof (5 estrellas + testimonio)
+- ✅ Trust indicators (login seguro, sin tarjeta)
+- ✅ **Limpieza:** Eliminado header redundante "¡Descubre cuánto dinero puedes recuperar!" + botón 📍 pin-toggle (redundante con AI Preview Card en sidebar)
+
+**Archivos modificados:**
+
+- `templates/calculator/recommendations_section.html`
+- `templates/scripts/recommendations.html`
+- `static/input.css`
+
+---
+
+### 3. ✅ COMPLETADA: Mejorar el CTA de Login/Upgrade
+
+**Impacto:** ⭐⭐⭐ (Máximo)  
+**Esfuerzo:** 2-4 horas  
+**Prioridad:** P0  
+**Estado:** ✅ COMPLETADO - 29 de Enero 2026 (integrado en Mejora #2)
+
+**Nota:** Esta mejora fue implementada como parte de la Mejora #2. Los CTAs de login ahora incluyen:
+
+- 4 beneficios específicos con checkmarks
+- Social proof con 5 estrellas y testimonio
+- Trust indicators (login seguro, sin tarjeta)
+- Gradientes y animaciones atractivas
 
 ```javascript
 // Actual muestra:
@@ -444,13 +488,29 @@ showUnlockingAnimation();
 
 ---
 
-### 4. Feedback Visual Durante Generación AI
+### 4. ✅ COMPLETADA: Feedback Visual Durante Generación AI
 
 **Impacto:** ⭐⭐ (Alto)  
 **Esfuerzo:** 5-7 horas  
-**Prioridad:** P1
+**Prioridad:** P1  
+**Estado:** ✅ COMPLETADO - 29 de Enero 2026
 
-#### Problemas Actuales
+**Cambios Implementados:**
+
+- ✅ Progress steps visibles (4 pasos: Analizando ingresos → Revisando deducciones → Consultando expertos AI → Generando estrategias)
+- ✅ Animación del gatito pensando 🐱 con dots bouncing
+- ✅ Contador de insights en tiempo real (detecta items de lista durante streaming)
+- ✅ Transiciones suaves entre estados de cada step
+- ✅ Cada step muestra ⏳ (pendiente) → ✅ (completado) con animación
+- ✅ CSS para pop animation en contador de insights
+
+**Archivos modificados:**
+
+- `templates/calculator/recommendations_section.html` - Nuevo skeleton con progress steps
+- `templates/scripts/recommendations.html` - Funciones de control de progress
+- `static/input.css` - Estilos para steps y animaciones
+
+#### Problemas Anteriores
 
 ```javascript
 // Actual: Solo skeleton loading
@@ -573,11 +633,36 @@ const onChunk = (content) => {
 
 ---
 
-### 5. Resultados AI Más Impactantes
+### 5. ✅ COMPLETADA: Resultados AI Más Impactantes
 
 **Impacto:** ⭐⭐⭐ (Máximo)  
 **Esfuerzo:** 8-12 horas  
-**Prioridad:** P0
+**Prioridad:** P0  
+**Estado:** ✅ COMPLETADO - 29 de Enero 2026
+
+**Cambios Implementados:**
+
+- ✅ Summary header con Score Fiscal visual (0-100) con barra de progreso colorida
+- ✅ Quick stats: Insights encontrados, Ahorro potencial, Nivel de prioridad
+- ✅ CSS mejorado para markdown de recomendaciones:
+  - Headers con text-shadow dorado y border-bottom
+  - Strong/bold en amber para resaltar valores importantes
+  - Listas con ✓ en teal como marcador
+  - Blockquotes estilizados para tips
+  - Code highlighting para montos
+- ✅ Clases para recommendation cards (top, alert, savings, tip)
+- ✅ Impact comparison grid (antes/después)
+- ✅ Action footer con call-to-action para implementar recomendaciones
+- ✅ Función `updateRecommendationsSummary()` que analiza el contenido y calcula:
+  - Score fiscal basado en indicadores positivos/negativos
+  - Extrae montos de ahorro del texto
+  - Determina nivel de prioridad
+
+**Archivos modificados:**
+
+- `templates/calculator/recommendations_section.html` - Nuevo wrapper con summary
+- `templates/scripts/recommendations.html` - Función de análisis de contenido
+- `static/input.css` - Estilos mejorados para prose/markdown
 
 #### Problemas Actuales
 
@@ -799,11 +884,12 @@ const onChunk = (content) => {
 
 ## 🎯 Mejoras de UX General (Comodidad)
 
-### 6. Mejorar el Formulario Principal
+### 6. 🔄 PRÓXIMO: Mejorar el Formulario Principal
 
 **Impacto:** ⭐⭐ (Alto)  
 **Esfuerzo:** 6-8 horas  
-**Prioridad:** P1
+**Prioridad:** P1  
+**Estado:** 🔄 PRÓXIMO A IMPLEMENTAR
 
 #### Problemas Identificados
 
@@ -954,11 +1040,32 @@ document
 
 ---
 
-### 7. Panel de Resultados Más Atractivo
+### 7. ✅ COMPLETADA: Panel de Resultados Más Atractivo
 
 **Impacto:** ⭐⭐ (Alto)  
 **Esfuerzo:** 6-8 horas  
-**Prioridad:** P1
+**Prioridad:** P1  
+**Estado:** ✅ COMPLETADO - 29 de Enero 2026
+
+**Cambios Implementados:**
+
+- ✅ Gráfica visual de distribución fiscal con barras horizontales animadas
+- ✅ Tres componentes: Impuesto Causado (naranja), Retenciones (azul), Saldo (verde/rojo)
+- ✅ KPIs destacados en grid 2x2:
+  - 📊 Tasa Efectiva ISR (calculada automáticamente)
+  - 💰 % Ahorro vs Bruto (basado en deducciones)
+- ✅ Comparador "Antes/Después" (se muestra solo si hay deducciones):
+  - Sin deducciones vs Con deducciones
+  - Highlight del ahorro total con💎
+  - Animación pulse para ahorros >$5,000
+- ✅ Barras de progreso animadas con transición de 500ms
+- ✅ Colores dinámicos según tipo de saldo (verde favor, rojo a pagar)
+- ✅ Delays escalonados en animaciones (150ms, 200ms, 250ms, 300ms)
+
+**Archivos modificados:**
+
+- `templates/calculator/results_section.html` - Nuevos componentes visuales
+- `templates/scripts/results.html` - Funciones de cálculo y actualización
 
 #### Soluciones
 
@@ -1082,6 +1189,63 @@ document
 
 ---
 
+### 8. Onboarding/Tour Inicial ✅ **COMPLETADA**
+
+**Impacto:** ⭐⭐ (Alto)  
+**Esfuerzo:** 5-7 horas  
+**Prioridad:** P2  
+**Estado:** ✅ Implementado (Ver Ejemplo + Tour Spotlight + Toast notifications)
+
+#### Implementación Realizada
+
+**A) Botón "Ver Ejemplo" Funcional**
+
+- ✅ Botón agregado en header del formulario (morado, responsive)
+- ✅ Carga datos de ejemplo realistas (ingreso $18,000, deducciones $35K + $15K + $8K)
+- ✅ Formatea campos currency automáticamente
+- ✅ Trigger automático de cálculo
+- ✅ Toast notification de confirmación ("✨ Datos de ejemplo cargados")
+- ✅ localStorage tracking (`mimo-seen-example`)
+
+**B) Tour Spotlight Interactivo**
+
+- ✅ Modal de bienvenida con tres características destacadas (cálculo, AI, visualización)
+- ✅ Botones: "Ver Ejemplo" (carga datos + cierra modal), "Comenzar" (tour guiado), "Saltar"
+- ✅ Quick tips con spotlight visual (ring amber) en:
+  - Form progress bar
+  - KPI Balance panel
+  - CTA Login Google
+- ✅ Navegación secuencial con scroll automático
+- ✅ localStorage tracking (`mimo-tour-completed`) para no repetir
+
+**C) Sistema de Notificaciones**
+
+- ✅ Toast notifications con animación slide-in-right
+- ✅ Auto-dismiss después de 3 segundos con fade-out
+- ✅ Colores contextuales (success/error/info)
+
+#### Archivos Modificados
+
+- `templates/calculator/form_section.html` - Botón "Ver Ejemplo"
+- `templates/scripts/onboarding.html` - Funciones tour + ejemplo (NUEVO)
+- `templates/scripts/init.html` - Llamada a `initOnboarding()`
+- `templates/calculator.html` - Include script onboarding
+- `static/input.css` - Animaciones (slide-in-right, fade-out, scale-in, fade-in)
+
+#### Datos de Ejemplo Utilizados
+
+```javascript
+monthly_gross_income: '$18,000';
+bonus_days: '20';
+vacation_days: '15';
+vacation_premium_percentage: '0.30';
+general_deductions: '$35,000';
+total_tuition: '$15,000';
+total_ppr: '$8,000';
+```
+
+---
+
 ### 8. Onboarding/Tour Inicial
 
 **Impacto:** ⭐⭐ (Alto)  
@@ -1092,7 +1256,7 @@ document
 
 **A) Spotlight Tour (Primera Vez)**
 
-```javascript
+````javascript
 // En scripts/init.html
 if (!localStorage.getItem('mimo-tour-completed')) {
   showOnboardingTour();
@@ -1121,85 +1285,58 @@ async function showOnboardingTour() {
         'Una vez que completes el cálculo, obtén recomendaciones personalizadas de expertos AI.',
       action: 'Entendido',
     },
-  ];
+---
 
-  // Implementation using Shepherd.js o similar
-}
-```
+### 9. Responsive Mobile Mejorado ✅ **COMPLETADA**
 
-**B) Botón "Ver Ejemplo"**
+**Impacto:** ⭐ (Medio)
+**Esfuerzo:** 3-4 horas
+**Prioridad:** P2
+**Estado:** ✅ Implementado (Spacing mejorado, carousel features, gatito adaptativo)
 
-```html
-<!-- En form header -->
-<div class="flex justify-between items-center mb-3">
-  <h3 class="text-sm font-semibold text-slate-300">
-    💰 Información de Ingresos
-  </h3>
-  <button
-    id="load-example-btn"
-    class="text-xs text-orange-400 hover:text-orange-300 transition"
-  >
-    ✨ Ver Ejemplo
-  </button>
-</div>
+#### Implementación Realizada
 
-<script>
-  document.getElementById('load-example-btn').addEventListener('click', () => {
-    // Llenar con datos de ejemplo realista
-    document.getElementById('monthly_gross_income').value = '$35,000.00';
-    document.getElementById('monthly_net_income').value = '$28,000.00';
-    document.getElementById('general_deductions').value = '$12,500.00';
+**A) Spacing Mejorado en Botones**
 
-    // Trigger calculation
-    document.getElementById('taxForm').dispatchEvent(new Event('input'));
+- ✅ Botones de recomendaciones ahora en 1 columna en mobile con `gap-3`
+- ✅ Más espacio entre elementos para evitar clicks accidentales
+- ✅ Grid de KPIs con `gap-3` en lugar de `gap-2`
 
-    // Show hint
-    showHint(
-      '💡 Estos son datos de ejemplo. Reemplaza con tus números para un cálculo preciso.',
-    );
-  });
-</script>
-```
+**B) Features Carousel en Mobile**
 
-**C) Video Explicativo**
+- ✅ Desktop: Texto horizontal "🤖 Motores de IA • 📊 Análisis • 💬 3 Expertos"
+- ✅ Mobile: Carousel horizontal scrolleable con tarjetas individuales
+- ✅ Estilo: fondo slate-800, border slate-700, sin scrollbar visible
+- ✅ Tres tarjetas: "🤖 Motores IA", "📊 Análisis Experto", "💬 3 Especialistas"
 
-```html
-<!-- En navbar o modal -->
-<button class="text-orange-400 hover:text-orange-300 text-sm">
-  📺 ¿Cómo funciona?
-</button>
+**C) Gatito Flotante Adaptativo**
 
-<!-- Modal con video (embeddable) -->
-<div
-  id="video-modal"
-  class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50"
->
-  <div class="bg-slate-900 rounded-lg p-4 max-w-2xl w-full mx-4">
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="font-bold text-slate-100">¿Cómo Funciona Mimo?</h3>
-      <button class="text-slate-400 hover:text-slate-200">✕</button>
-    </div>
+- ✅ Tamaño reducido en mobile: `text-3xl` → `text-5xl` en desktop
+- ✅ Posición más cercana a esquina: `bottom-4 right-4` en mobile
+- ✅ Auto-atenuación al hacer scroll en mobile:
+  - Opacity 0.3 y pointer-events none después de 150px de scroll
+  - Solo en mobile (< 768px)
+  - Vuelve a opacity 1 al subir
 
-    <div
-      class="aspect-video bg-slate-800 rounded-lg flex items-center justify-center"
-    >
-      <!-- Placeholder para video -->
-      <span class="text-4xl">🎬</span>
-    </div>
+**D) Transiciones Suaves**
 
-    <p class="text-xs text-slate-400 mt-3">
-      Video de 30 segundos explicando el flujo de cálculo y análisis AI
-    </p>
-  </div>
-</div>
-```
+- ✅ Gatito con `transition-all duration-300` para animaciones fluidas
+- ✅ Hover effects mantienen funcionalidad completa
+
+#### Archivos Modificados
+
+- [templates/calculator/recommendations_section.html](templates/calculator/recommendations_section.html#L4-L24) - Grid 1 col mobile + carousel
+- [templates/base.html](templates/base.html#L41-L45) - Gatito responsive
+- [templates/calculator/results_section.html](templates/calculator/results_section.html#L93) - Gap 3 en KPIs
+- [templates/scripts/init.html](templates/scripts/init.html#L116-L127) - Scroll listener para gatito
+- [static/input.css](static/input.css#L579-L591) - Utilidad scrollbar-hide
 
 ---
 
 ### 9. Responsive Mobile Mejorado
 
-**Impacto:** ⭐ (Medio)  
-**Esfuerzo:** 3-4 horas  
+**Impacto:** ⭐ (Medio)
+**Esfuerzo:** 3-4 horas
 **Prioridad:** P2
 
 #### Problemas Identificados en Mobile
@@ -1217,7 +1354,7 @@ async function showOnboardingTour() {
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-4">
   <!-- Cambiar gap-2 a gap-2 sm:gap-3 para más espacio en mobile -->
 </div>
-```
+````
 
 **B) Features Carousel en Mobile**
 
@@ -1271,68 +1408,131 @@ async function showOnboardingTour() {
 
 ## 🎨 Mejoras Visuales de Diseño
 
+### 10. Jerarquía Visual Más Clara ✅ **COMPLETADA**
+
+**Impacto:** ⭐⭐ (Alto)  
+**Esfuerzo:** 4-6 horas  
+**Prioridad:** P1
+**Estado:** ✅ Implementado (Tipografía mejorada, sombras, elevación)
+
+#### Implementación Realizada
+
+**A) Tamaños de Fuente Aumentados**
+
+- ✅ Labels: `text-xs` → `text-sm` con `mb-1.5` (más legibles)
+- ✅ Headings principales: `text-sm` → `text-base sm:text-lg`
+  - "💰 Información de Ingresos"
+  - "📋 Deducciones Personales"
+- ✅ KPI Principal (Balance): `text-xl sm:text-3xl` → `text-3xl sm:text-4xl`
+- ✅ KPI Secundario (Impuesto): `text-lg sm:text-xl` → `text-xl sm:text-2xl`
+- ✅ Subtítulos de secciones: `text-xs sm:text-sm` → `text-sm sm:text-base`
+- ✅ Labels de KPI con `font-medium` para mayor peso visual
+
+**B) Sombras y Elevación en Cards**
+
+- ✅ Sección AI: `drop-shadow-2xl shadow-purple-500/10` (destaca sobre todo)
+- ✅ Distribución Fiscal: `hover:shadow-lg hover:shadow-teal-500/10`
+- ✅ Optimization Impact: `hover:shadow-lg hover:shadow-purple-500/20`
+- ✅ Desglose Colapsable: `hover:shadow-md hover:shadow-slate-700/30`
+- ✅ Sección Ingresos: `hover:shadow-lg hover:shadow-slate-700/20`
+- ✅ Sección Deducciones: `hover:shadow-lg hover:shadow-amber-500/10`
+
+**C) Hover Effects Mejorados**
+
+- ✅ Todas las cards con `transition-all duration-300` (animaciones suaves)
+- ✅ KPI Balance mantiene `hover:scale-[1.02]` con shadow emerald
+- ✅ Optimization Impact con `hover:scale-[1.02]`
+- ✅ Contraste de colores mejorado en hover states
+
+**D) Jerarquía de Información**
+
+- ✅ KPIs principales más grandes y prominentes
+- ✅ Labels más legibles con mejor spacing
+- ✅ Headings diferenciados por tamaño y peso
+- ✅ Sombras dan profundidad y jerarquía visual clara
+
+#### Archivos Modificados
+
+- [static/input.css](static/input.css#L6-L8) - Label base `text-sm` con `mb-1.5`
+- [templates/calculator/form_section.html](templates/calculator/form_section.html#L28-L29) - Headings aumentados
+- [templates/calculator/results_section.html](templates/calculator/results_section.html#L36-L38) - KPIs aumentados + sombras
+- [templates/calculator/recommendations_section.html](templates/calculator/recommendations_section.html#L1) - Drop-shadow AI section
+
+---
+
 ### 10. Jerarquía Visual Más Clara
 
 **Impacto:** ⭐⭐ (Alto)  
 **Esfuerzo:** 4-6 horas  
 **Prioridad:** P1
 
-#### Estrategia de Colores
+---
 
-**Usar naranja SOLO para CTAs críticos:**
+### 11. Animaciones de Microinteracción ✅ **COMPLETADA**
+
+**Impacto:** ⭐⭐ (Alto)  
+**Esfuerzo:** 4-5 horas  
+**Prioridad:** P2
+**Estado:** ✅ Implementado (Confetti, shake, celebration, number-pop)
+
+#### Implementación Realizada
+
+**A) Confetti Celebration**
+
+- ✅ Confetti cuando balance a favor > $10,000 (100 partículas)
+- ✅ Confetti secundario cuando ahorro > $8,000 (50 partículas)
+- ✅ Colores personalizados: naranja, teal, verde esmeralda, morado
+- ✅ Librería: canvas-confetti@1.9.2 desde CDN
+
+**B) Shake Animation**
+
+- ✅ Botón AI se agita cada 10 segundos si formulario completo y no se han generado recomendaciones
+- ✅ Animación smooth de 0.5s con translateX
+- ✅ Auto-detección de formulario listo
+
+**C) Celebration Bounce**
+
+- ✅ Animación en cantidad de ahorro cuando > $5,000
+- ✅ Effect de bounce con scale 1.15 → 0.95 → 1.05 → 1
+- ✅ Duración 0.6s ease-in-out
+
+**D) Number Pop Animation**
+
+- ✅ Animación al cambiar monto de balance (scale 1 → 1.1 → 1)
+- ✅ Se activa tanto para balance a favor como a pagar
+- ✅ Duración 0.3s para feedback visual inmediato
+
+**E) Success Checkmark**
+
+- ✅ Animación con rotate + scale para validación
+- ✅ Keyframe: opacity 0 → scale 1.2 rotate 0 → scale 1
+- ✅ Preparado para futura integración con validación de campos
+
+#### Keyframes CSS Agregados
 
 ```css
-/* Primary CTA - Naranja */
-.cta-primary {
-  @apply bg-gradient-to-r from-accent-primary to-orange-500;
+@keyframes shake {
+  /* translateX -3px ↔ 3px */
 }
-
-/* Secondary CTA - Oscuro con borde */
-.cta-secondary {
-  @apply bg-slate-900 border border-slate-700 hover:bg-slate-800;
+@keyframes check-appear {
+  /* scale 0 rotate -180 → 1.2 → 1 */
 }
-
-/* AI Accent - Morado/Pink */
-.ai-accent {
-  @apply text-purple-400 border-purple-500/30;
+@keyframes celebration-bounce {
+  /* scale 1 → 1.15 → 0.95 → 1.05 → 1 */
+}
+@keyframes number-pop {
+  /* scale 1 → 1.1 → 1 */
 }
 ```
 
-#### Tamaños de Fuente Mejorados
+#### Archivos Modificados
 
-```html
-<!-- Labels (aumentar) -->
-<label class="label">
-  <!-- De text-xs a text-sm -->
-  Ingreso Bruto Mensual
-</label>
-
-<!-- Headings (aumentar) -->
-<h3 class="text-base sm:text-lg font-semibold text-slate-300">
-  <!-- De text-sm a text-base sm:text-lg -->
-  💰 Información de Ingresos
-</h3>
-
-<!-- Main KPI (más grande) -->
-<div class="text-3xl sm:text-4xl font-bold text-emerald-400">
-  <!-- De text-xl sm:text-3xl a text-3xl sm:text-4xl -->
-  $10,900
-</div>
-```
-
-#### Sombras y Elevación
-
-```css
-/* Sección AI debe destacar */
-#recommendations-section {
-  @apply drop-shadow-2xl shadow-orange-500/20;
-}
-
-/* Hover effects más notorios */
-.card:hover {
-  @apply scale-[1.02] shadow-lg shadow-accent-primary/30 transition-all duration-300;
-}
-```
+- [templates/base.html](templates/base.html#L48) - Agregado canvas-confetti CDN
+- [static/input.css](static/input.css#L590-L658) - Keyframes de microanimaciones
+- [templates/scripts/microanimations.html](templates/scripts/microanimations.html) - Funciones JS (NUEVO)
+- [templates/scripts/results.html](templates/scripts/results.html#L55-L75) - Confetti + animaciones en balance
+- [templates/scripts/init.html](templates/scripts/init.html#L46-L48) - Inicialización
+- [templates/calculator.html](templates/calculator.html#L39) - Include microanimations script
 
 ---
 
@@ -1342,132 +1542,23 @@ async function showOnboardingTour() {
 **Esfuerzo:** 4-5 horas  
 **Prioridad:** P2
 
-#### Animaciones a Agregar
-
-**A) Confetti al Encontrar Saldo Positivo Grande**
-
-```javascript
-if (balance > 10000) {
-  confetti({
-    particleCount: 100,
-    spread: 70,
-    origin: { y: 0.6 },
-    colors: ['#F59E0B', '#2DD4BF', '#10B981'],
-  });
-}
-```
-
-**B) Shake Animation en Botón AI**
-
-```css
-@keyframes shake {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  10%,
-  30%,
-  50%,
-  70%,
-  90% {
-    transform: translateX(-2px);
-  }
-  20%,
-  40%,
-  60%,
-  80% {
-    transform: translateX(2px);
-  }
-}
-
-.shake {
-  animation: shake 0.5s ease-in-out;
-}
-```
-
-**C) Pulse Effect en Contador**
-
-```css
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.8;
-    transform: scale(1.05);
-  }
-}
-
-#usage-counter {
-  animation: pulse 2s ease-in-out infinite;
-}
-```
-
-**D) Success Checkmark Animado**
-
-```css
-@keyframes check-appear {
-  0% {
-    opacity: 0;
-    transform: scale(0);
-  }
-  50% {
-    transform: scale(1.2);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.check-icon {
-  animation: check-appear 0.6s ease-out;
-}
-```
-
 ---
 
-### 12. Tema de Colores Mejorado
+
+### 12. ✅ COMPLETADA: Tema de Colores Mejorado
 
 **Impacto:** ⭐ (Medio)  
 **Esfuerzo:** 2-3 horas  
-**Prioridad:** P3
+**Prioridad:** P3  
+**Estado:** ✅ COMPLETADO - 29 de Enero 2026
 
-#### Gradientes Ricos
+**Cambios Implementados:**
+- Gradientes ricos para saldo positivo, premium, alerta y neutral
+- Animación de gradiente en `.kpi-balance`
+- Variables CSS globales para fácil mantenimiento
+- Compilado y aplicado en Tailwind
 
-```css
-:root {
-  /* Saldo positivo - Gradiente verde-teal */
-  --gradient-positive: linear-gradient(135deg, #10b981, #14b8a6, #06b6d4);
-
-  /* AI Premium - Gradiente púrpura-naranja */
-  --gradient-premium: linear-gradient(135deg, #a855f7, #f43f5e, #f59e0b);
-
-  /* Alerta/Urgencia - Gradiente naranja-rojo */
-  --gradient-warning: linear-gradient(135deg, #f59e0b, #ef4444);
-
-  /* Neutral */
-  --gradient-neutral: linear-gradient(135deg, #64748b, #475569);
-}
-
-.kpi-balance {
-  background: var(--gradient-positive);
-  background-size: 200% 200%;
-  animation: gradient-shift 3s ease-in-out infinite;
-}
-
-@keyframes gradient-shift {
-  0%,
-  100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-}
-```
+---
 
 ---
 

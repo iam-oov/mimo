@@ -39,6 +39,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     initializeCurrencyInputs();
     captureInitialFormState();
+    initFormTracking(); // Initialize form progress and tooltips
+    initOnboarding(); // Initialize onboarding tour
+    
+    // Initialize microanimations
+    if (typeof initMicroAnimations === 'function') {
+        initMicroAnimations();
+    }
     
     inputs.forEach(input => {
         if (input.type === 'hidden') return;
@@ -114,5 +121,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 floatingCat.textContent = catExpressions[currentCatIndex];
             }
         }, 5000);
+        
+        // Atenuar gatito al hacer scroll en mobile
+        let lastScrollY = window.scrollY;
+        window.addEventListener('scroll', () => {
+            if (window.innerWidth < 768) { // Mobile only
+                if (window.scrollY > 150) {
+                    floatingCat.style.opacity = '0.3';
+                    floatingCat.style.pointerEvents = 'none';
+                } else {
+                    floatingCat.style.opacity = '1';
+                    floatingCat.style.pointerEvents = 'auto';
+                }
+            }
+        });
     }
 });

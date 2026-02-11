@@ -46,12 +46,12 @@ async def lifespan(app: FastAPI):
 
     logger.info("🚀 Starting Mimo Tax Calculator...")
 
-    # Initialize PostgreSQL database (required)
-    if not settings.is_postgres:
-        raise RuntimeError(
-            "DATABASE_URL must be a PostgreSQL connection string. "
-            "SQLite is no longer supported."
-        )
+    # # Initialize PostgreSQL database (required)
+    # if not settings.is_postgres:
+    #     raise RuntimeError(
+    #         "DATABASE_URL must be a PostgreSQL connection string. "
+    #         "SQLite is no longer supported."
+    #     )
 
     _ = PostgresUsageRepository(settings.database_url)
     logger.info("✅ PostgreSQL database initialized")
